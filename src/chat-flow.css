@@ -1,0 +1,2045 @@
+/* Chat flow modal styles */
+
+/* Dialog fullscreen overrides */
+forge-dialog.chat-dialog {
+  --forge-dialog-width: 100vw;
+  --forge-dialog-height: 100vh;
+  --forge-dialog-max-width: 100vw;
+  --forge-dialog-max-height: 100vh;
+  --forge-dialog-border-radius: 0;
+  --forge-dialog-padding: 0;
+}
+
+forge-dialog.chat-dialog::part(root) {
+  width: 100vw;
+  height: 100vh;
+  max-width: 100vw;
+  max-height: 100vh;
+}
+
+forge-dialog.chat-dialog::part(dialog) {
+  width: 100vw;
+  height: 100vh;
+  max-width: 100vw;
+  max-height: 100vh;
+  margin: 0;
+}
+
+/* Dialog inner layout */
+.chat-dialog-content {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Dialog header bar */
+.chat-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 0px 8px 16px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+  width: auto;
+  border-bottom:1px solid lightgrey
+}
+
+.ai-header-icon {
+  flex-shrink: 0;
+}
+
+.ai-icon-wrapper {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid #c2c2c2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  background: #fff;
+}
+
+.ai-icon-wrapper forge-icon {
+  --forge-icon-font-size: 18px;
+  color: rgba(0, 0, 0, 0.54);
+}
+
+.chat-header-title {
+  flex: 1;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 36px;
+  color: rgba(0, 0, 0, 0.6);
+  letter-spacing: 0.15px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-shrink: 0;
+}
+
+/* Chat body with gradient */
+.chat-body {
+  flex: 1;
+  display: flex;
+  width: 100%;
+  overflow: hidden;
+  border-bottom: 1px solid #e0e0e0;
+  position: relative;
+  z-index: 1;
+}
+
+/* Chat container (before split view) */
+.chat-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 32px 24px 32px;
+  background: linear-gradient(180deg, #fff 9.615%, #f7f8ff 100%);
+  width: 100%;
+}
+
+/* Spacer pushes messages to bottom when content is short */
+.chat-messages-spacer {
+  flex: 1;
+}
+
+.chat-messages {
+  width: 100%;
+  max-width: 800px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  flex-shrink: 0;
+}
+
+/* Forge AI message component overrides to match Figma design */
+forge-ai-user-message {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  width: 100%;
+  margin: 8px 0;
+}
+
+forge-ai-user-message::part(content) {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px 8px 0 8px;
+  padding: 8px 16px;
+  max-width: 485px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px;
+  line-height: 18px;
+  letter-spacing: 0.5px;
+  color: rgba(0, 0, 0, 0.87);
+  box-shadow: none;
+}
+
+/* In split view, user messages should be narrower */
+.split-chat-messages forge-ai-user-message::part(content) {
+  max-width: 320px;
+}
+
+forge-ai-response-message {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  margin: 8px 0;
+}
+
+forge-ai-response-message::part(content) {
+  background: transparent;
+  border: none;
+  padding: 8px 0;
+  max-width: 100%;
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px;
+  line-height: 18px;
+  letter-spacing: 0.5px;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+/* Chat footer with prompt area */
+.chat-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: #fff;
+  flex-shrink: 0;
+  width: 100%;
+  margin-top: auto;
+  min-width: 0;
+}
+
+/* Responsive padding for smaller screens */
+@media (max-width: 768px) {
+  .chat-footer {
+    padding: 16px;
+  }
+}
+
+.prompt-area {
+  width: 100%;
+  max-width: 800px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-radius: 8px;
+  min-width: 0;
+}
+
+.prompt-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  min-width: 0;
+}
+
+.prompt-input-row input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-family: 'Roboto', sans-serif;
+  font-size: 15px;
+  line-height: 20px;
+  letter-spacing: 0.25px;
+  color: rgba(0, 0, 0, 0.87);
+  padding: 4px 0;
+  background: transparent;
+  min-height: 20px;
+  min-width: 0;
+}
+
+.prompt-input-row input::placeholder {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.prompt-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 6px 6px 10px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 0 0 8px 8px;
+  min-width: 0;
+}
+
+/* AI response content styling */
+.ai-response-content {
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px;
+  line-height: 22px;
+  color: rgba(0, 0, 0, 0.87);
+  max-width: 800px;
+}
+
+.ai-response-content p {
+  margin: 0 0 12px 0;
+}
+
+.ai-response-content ul {
+  margin: 8px 0 16px 0;
+  padding-left: 24px;
+}
+
+.ai-response-content li {
+  margin-bottom: 6px;
+}
+
+.ai-response-content strong {
+  font-weight: 500;
+}
+
+/* Data source badge */
+.data-source-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: #f5f5f5;
+  border-radius: 4px;
+  font-size: 12px;
+  line-height: 16px;
+  color: rgba(0, 0, 0, 0.6);
+  margin-top: 12px;
+  margin-bottom: 4px;
+}
+
+.data-source-badge forge-icon {
+  --forge-icon-font-size: 14px;
+}
+
+.data-source-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #4caf50;
+  flex-shrink: 0;
+}
+
+/* Open Report button */
+.open-report-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 10px 24px;
+  background: #3f51b5;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 16px;
+  letter-spacing: 0.25px;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 4px rgba(63, 81, 181, 0.3);
+}
+
+.open-report-btn:hover {
+  background: #354499;
+  box-shadow: 0 2px 8px rgba(63, 81, 181, 0.35);
+  transform: translateY(-1px);
+}
+
+.open-report-btn:active {
+  background: #2c3a7f;
+  transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(63, 81, 181, 0.25);
+}
+
+.open-report-btn forge-icon {
+  --forge-icon-font-size: 18px;
+  color: #fff;
+}
+
+/* Report opened badge (replaces button after click) */
+.report-opened-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 8px 16px;
+  background: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #4caf50;
+  border-radius: 4px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  letter-spacing: 0.25px;
+}
+
+.report-opened-badge forge-icon {
+  --forge-icon-font-size: 16px;
+  color: #2e7d32;
+}
+
+.report-opened-badge span {
+  color: #2e7d32;
+}
+
+/* Legacy split view styles - kept for reference but not used */
+
+/* Custom split container */
+.custom-split-container {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  overflow: hidden;
+  position: relative;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Left panel in custom split */
+.custom-split-container > forge-split-view-panel:first-child {
+  width: 450px;
+  flex: 0 0 450px;
+  min-width: 320px;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideInLeft 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Right panel in custom split */
+.custom-split-container > forge-split-view-panel:last-child {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+  animation: slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(40px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Custom divider */
+.custom-divider {
+  width: 8px;
+  background: #e0e0e0;
+  cursor: col-resize;
+  flex-shrink: 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+  z-index: 10;
+  animation: fadeIn 0.4s ease 0.2s both;
+}
+
+.custom-divider:hover {
+  background: #3f51b5;
+}
+
+.custom-divider.dragging {
+  background: #2c3a7f;
+}
+
+.divider-handle {
+  width: 3px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+/* Fade out animation for elements being removed */
+.fade-out {
+  animation: fadeOut 0.2s ease forwards;
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Left chat panel container */
+.split-chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background: #fff;
+}
+
+/* Split chat header (separate from main header) */
+.split-chat-header {
+  border-bottom: 1px solid #e0e0e0;
+  border-right: 1px solid #e0e0e0;
+}
+
+/* Chat messages area in split view */
+.split-chat-messages {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 24px 16px;
+  background: linear-gradient(180deg, #fff 9.615%, #f7f8ff 100%);
+  width: auto;
+  min-height: 0;
+}
+
+.split-chat-messages #chat-messages {
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Footer in split view */
+.split-chat-footer {
+  flex-shrink: 0;
+  width: auto;
+  margin-top: 0;
+  border-top: 1px solid #e0e0e0;
+  padding: 12px;
+  background: #fff;
+  min-width: 0;
+}
+
+.split-chat-footer .prompt-area {
+  max-width: 100%;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.split-chat-footer .prompt-input-row {
+  padding: 8px 10px;
+  gap: 6px;
+}
+
+.split-chat-footer .prompt-input-row input {
+  font-size: 14px;
+  line-height: 18px;
+}
+
+.split-chat-footer .prompt-actions-row {
+  padding: 4px 4px 4px 8px;
+  gap: 0;
+}
+
+/* Ensure icon buttons are appropriately sized */
+.prompt-input-row forge-icon-button,
+.prompt-actions-row forge-icon-button {
+  flex-shrink: 0;
+}
+
+/* Make prompt area more compact in narrow split views */
+.split-chat-footer .prompt-area {
+  width: 100%;
+  min-width: 0;
+}
+
+/* Responsive adjustments for very narrow panels */
+@media (max-width: 400px) {
+  .split-chat-footer {
+    padding: 8px;
+  }
+
+  .split-chat-footer .prompt-input-row {
+    gap: 4px;
+    padding: 6px 8px;
+  }
+
+  .split-chat-footer .prompt-actions-row {
+    gap: 0;
+    padding: 4px;
+  }
+}
+
+/* Right report panel */
+.report-panel {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #fafafa;
+  border-left: 1px solid #e0e0e0;
+}
+
+/* Report title bar */
+.report-title-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  border-bottom: 1px solid #e0e0e0;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.report-title-bar-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.report-title-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Action bar — view toggle + export/schedule/share */
+.report-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  border-bottom: 1px solid #e0e0e0;
+  background: #fafafa;
+  flex-shrink: 0;
+  gap: 12px;
+}
+
+.report-action-bar-left {
+  display: flex;
+  align-items: center;
+}
+
+.report-action-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Canvas action buttons (Export, Schedule, Share) */
+.canvas-action-group {
+  position: relative;
+}
+
+.canvas-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border: 1px solid #dadce0;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.7);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.canvas-action-btn:hover {
+  background: #f5f5f5;
+  border-color: #bdbdbd;
+}
+
+.canvas-action-btn.action-success {
+  background: #e8f5e9;
+  border-color: #4caf50;
+  color: #2e7d32;
+}
+
+.canvas-action-btn forge-icon {
+  --forge-icon-font-size: 16px;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.canvas-action-btn.action-success forge-icon {
+  color: #2e7d32;
+}
+
+.action-dropdown-arrow {
+  --forge-icon-font-size: 16px !important;
+  margin-left: -3px;
+  margin-right: -4px;
+}
+
+/* Canvas dropdown menus */
+.canvas-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 220px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  z-index: 100;
+  overflow: hidden;
+  animation: dropdownIn 0.15s ease;
+}
+
+.canvas-dropdown.open {
+  display: block;
+}
+
+@keyframes dropdownIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.canvas-dropdown-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s ease;
+}
+
+.canvas-dropdown-item:hover {
+  background: #f5f5f5;
+}
+
+.canvas-dropdown-item:not(:last-child) {
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.dropdown-item-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dropdown-item-row forge-icon {
+  --forge-icon-font-size: 18px;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.dropdown-item-label {
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.dropdown-item-desc {
+  font-family: 'Roboto', sans-serif;
+  font-size: 11px;
+  color: rgba(0, 0, 0, 0.45);
+  padding-left: 26px;
+}
+
+/* Schedule dropdown form */
+.dropdown-schedule-form {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 240px;
+}
+
+.schedule-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.schedule-label {
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.6);
+  min-width: 70px;
+}
+
+.schedule-create-btn {
+  margin-top: 4px;
+  padding: 8px 16px;
+  background: #3f51b5;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background 0.15s ease;
+}
+
+.schedule-create-btn:hover {
+  background: #354499;
+}
+
+/* Chart view */
+.report-chart-view {
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.chart-container {
+  width: 100%;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.chart-title {
+  font-family: 'Roboto', sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.87);
+  margin-bottom: 20px;
+}
+
+.chart-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chart-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.chart-bar-label {
+  font-family: 'Roboto', sans-serif;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.6);
+  min-width: 80px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.chart-bar-track {
+  flex: 1;
+  height: 24px;
+  background: #f0f0f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.chart-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3f51b5 0%, #5c6bc0 100%);
+  border-radius: 4px;
+  transition: width 0.4s ease;
+  min-width: 2px;
+}
+
+.chart-bar-value {
+  font-family: 'Roboto', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.7);
+  min-width: 50px;
+  flex-shrink: 0;
+}
+
+/* Custom view toggle group (replaces fragile forge-button-toggle-group) */
+.view-toggle-group {
+  display: inline-flex;
+  border: 1px solid #c7c7c7;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.view-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: none;
+  background: #fff;
+  cursor: pointer;
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.25px;
+  color: #5f6368;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.view-toggle-btn:not(:last-child) {
+  border-right: 1px solid #c7c7c7;
+}
+
+.view-toggle-btn:hover {
+  background: #f5f5f5;
+}
+
+.view-toggle-btn.active {
+  background: #e8eaf6;
+  color: #3f51b5;
+}
+
+.view-toggle-btn.active forge-icon {
+  color: #3f51b5;
+}
+
+.view-toggle-btn forge-icon {
+  --forge-icon-font-size: 16px;
+  color: #5f6368;
+}
+
+/* Report toolbar title (used in title bar) */
+.report-toolbar-title {
+  font-family: 'Roboto', sans-serif;
+  font-weight: 500;
+  font-size: 17px;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+/* Clean icon buttons for toolbar */
+.toolbar-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  padding: 0;
+}
+
+.toolbar-icon-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.toolbar-icon-btn:active {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.toolbar-icon-btn forge-icon {
+  --forge-icon-font-size: 20px;
+  color: rgba(0, 0, 0, 0.54);
+}
+
+/* Filter bar */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 20px;
+  background: #fafafa;
+  border-bottom: 1px solid #e0e0e0;
+  flex-shrink: 0;
+}
+
+.filter-bar-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.6);
+  letter-spacing: 0.25px;
+}
+
+.filter-bar-label forge-icon {
+  --forge-icon-font-size: 20px;
+  color: rgba(0, 0, 0, 0.54);
+}
+
+.filter-chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+/* Clean filter chip buttons (replaces forge-chip) */
+.filter-chip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 32px;
+  padding: 0 12px;
+  background: #fff;
+  border: 1px solid #dadce0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  color: rgba(0, 0, 0, 0.87);
+  letter-spacing: 0.25px;
+  transition: all 0.15s ease;
+}
+
+.filter-chip-btn:hover {
+  background: #f5f5f5;
+  border-color: #bdbdbd;
+}
+
+.filter-chip-btn:active {
+  background: #eeeeee;
+}
+
+.filter-chip-btn forge-icon {
+  --forge-icon-font-size: 18px;
+  color: rgba(0, 0, 0, 0.45);
+  margin-left: -2px;
+}
+
+/* Canvas view (table) */
+.report-canvas-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.report-table-container {
+  flex: 1;
+  overflow: auto;
+  padding: 0 20px 20px;
+  min-height: 0;
+}
+
+.report-table-container forge-table {
+  width: 100%;
+  height: 100%;
+}
+
+/* Code view (SQL) */
+.report-code-view {
+  flex: 1;
+  overflow: auto;
+  padding: 20px;
+  background: #1e1e1e;
+  min-height: 0;
+}
+
+.report-code-view pre {
+  margin: 0;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #d4d4d4;
+}
+
+.report-code-view code {
+  color: #d4d4d4;
+}
+
+/* ===== Refinement Suggestion Chips (§3.3) ===== */
+
+.refinement-chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+  margin-bottom: 4px;
+}
+
+.refinement-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  background: #f7f8ff;
+  border: 1px solid #d0d4f7;
+  border-radius: 16px;
+  cursor: pointer;
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: #3f51b5;
+  letter-spacing: 0.25px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.refinement-chip:hover {
+  background: #eeeffe;
+  border-color: #3f51b5;
+  box-shadow: 0 1px 3px rgba(63, 81, 181, 0.15);
+}
+
+.refinement-chip:active {
+  background: #d0d4f7;
+}
+
+.refinement-chip.chip-used {
+  opacity: 0.5;
+  cursor: default;
+  pointer-events: none;
+}
+
+.refinement-chip.chip-active {
+  background: #3f51b5;
+  color: #fff;
+  border-color: #3f51b5;
+  opacity: 1;
+}
+
+/* ===== Transparency Panel (§4.1) ===== */
+
+.transparency-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.54);
+  letter-spacing: 0.25px;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.transparency-toggle:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.transparency-toggle.open {
+  color: #3f51b5;
+}
+
+.transparency-toggle forge-icon {
+  --forge-icon-font-size: 16px;
+}
+
+.transparency-arrow {
+  transition: transform 0.2s ease;
+}
+
+.transparency-panel {
+  margin-top: 8px;
+  background: #fafafa;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+  animation: fadeIn 0.2s ease;
+}
+
+.transparency-section {
+  padding: 0;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.transparency-section:last-child {
+  border-bottom: none;
+}
+
+.transparency-section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: rgba(0, 0, 0, 0.54);
+  text-transform: uppercase;
+  background: #f5f5f5;
+}
+
+.transparency-section-header forge-icon {
+  --forge-icon-font-size: 16px;
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.transparency-section-body {
+  padding: 10px 16px;
+}
+
+.transparency-row {
+  margin-bottom: 4px;
+}
+
+.transparency-label {
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.transparency-meta {
+  font-family: 'Roboto', sans-serif;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.54);
+}
+
+.transparency-sql {
+  background: #1e1e1e;
+  border-radius: 4px;
+  padding: 12px;
+  overflow-x: auto;
+  margin: 0;
+}
+
+.transparency-sql code {
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #d4d4d4;
+}
+
+.transparency-sql-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.transparency-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: transparent;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'Roboto', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.6);
+  transition: all 0.15s ease;
+}
+
+.transparency-action-btn:hover {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: #bdbdbd;
+}
+
+.transparency-action-btn forge-icon {
+  --forge-icon-font-size: 14px;
+}
+
+.transparency-assumptions {
+  margin: 0;
+  padding-left: 20px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px;
+  line-height: 1.6;
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.transparency-assumptions li {
+  margin-bottom: 4px;
+}
+
+.citation-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.citation-item:last-child {
+  border-bottom: none;
+}
+
+.citation-label {
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.citation-detail {
+  font-family: 'Roboto', sans-serif;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.54);
+}
+
+/* ===== Handoff Card (§1.5) ===== */
+
+.handoff-card {
+  margin-top: 16px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.handoff-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #f5f0ff 0%, #eef0ff 100%);
+  border-bottom: 1px solid #e0e0e0;
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: #5c2d91;
+}
+
+.handoff-card-header forge-icon {
+  --forge-icon-font-size: 20px;
+  color: #5c2d91;
+}
+
+.handoff-card-body {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.handoff-context-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.handoff-context-item forge-icon {
+  --forge-icon-font-size: 16px;
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.handoff-card-actions {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.handoff-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 20px;
+  background: #5c2d91;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  transition: background 0.2s ease;
+}
+
+.handoff-btn:hover {
+  background: #4a2475;
+}
+
+.handoff-btn forge-icon {
+  --forge-icon-font-size: 16px;
+  color: #fff;
+}
+
+.handoff-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 20px;
+  background: transparent;
+  color: rgba(0, 0, 0, 0.6);
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  transition: all 0.2s ease;
+}
+
+.handoff-btn-secondary:hover {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: #bdbdbd;
+}
+
+/* ===== Report Designer (§1.3) ===== */
+
+.designer-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.designer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: #1a1a2e;
+  color: #fff;
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.designer-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.designer-header-left forge-icon-button {
+  --forge-icon-button-color: rgba(255, 255, 255, 0.7);
+}
+
+.designer-header-icon {
+  --forge-icon-font-size: 20px;
+  color: #b39ddb;
+}
+
+.designer-header-title {
+  font-family: 'Roboto', sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  color: #fff;
+}
+
+.designer-header-divider {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.designer-header-report-name {
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.designer-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.designer-header-right forge-icon-button {
+  --forge-icon-button-color: rgba(255, 255, 255, 0.7);
+}
+
+.designer-header-right forge-button {
+  --forge-button-outlined-border-color: rgba(255, 255, 255, 0.3);
+  --forge-button-color: rgba(255, 255, 255, 0.9);
+}
+
+.designer-save-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.designer-save-btn forge-icon {
+  --forge-icon-font-size: 16px;
+}
+
+.designer-publish-btn {
+  font-size: 13px;
+  background: #7c4dff;
+  color: #fff;
+  border: none;
+  padding: 6px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s ease;
+}
+
+.designer-publish-btn:hover {
+  background: #651fff;
+}
+
+.designer-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* Left sidebar */
+.designer-sidebar {
+  width: 260px;
+  background: #f5f5f5;
+  border-right: 1px solid #e0e0e0;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.designer-sidebar-section {
+  padding: 16px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.designer-sidebar-heading {
+  font-family: 'Roboto', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.54);
+  margin-bottom: 12px;
+}
+
+.designer-dataset-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.87);
+  cursor: pointer;
+  margin-bottom: 4px;
+}
+
+.designer-dataset-item:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.designer-dataset-item.active {
+  background: #e8eaf6;
+  color: #3f51b5;
+}
+
+.designer-dataset-item.active forge-icon {
+  color: #3f51b5;
+}
+
+.designer-dataset-item.pending {
+  color: rgba(0, 0, 0, 0.4);
+  border: 1px dashed #ccc;
+}
+
+.designer-dataset-item forge-icon {
+  --forge-icon-font-size: 18px;
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.pipeline-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.87);
+  border-left: 2px solid #3f51b5;
+  margin-left: 12px;
+  margin-bottom: 4px;
+}
+
+.pipeline-step-num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #3f51b5;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.pipeline-step.add-step {
+  border-left-color: transparent;
+  color: rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+.pipeline-step.add-step:hover {
+  color: #3f51b5;
+}
+
+.pipeline-step.add-step forge-icon {
+  --forge-icon-font-size: 18px;
+}
+
+.layout-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.7);
+  cursor: pointer;
+  margin-bottom: 4px;
+}
+
+.layout-option:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.layout-option forge-icon {
+  --forge-icon-font-size: 18px;
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.layout-active-badge {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 500;
+  color: #4caf50;
+  background: #e8f5e9;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+/* Main content area */
+.designer-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.designer-sql-panel {
+  flex-shrink: 0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.designer-sql-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: #fafafa;
+  border-bottom: 1px solid #e0e0e0;
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.designer-sql-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.designer-run-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #3f51b5;
+}
+
+.designer-run-btn forge-icon {
+  --forge-icon-font-size: 16px;
+}
+
+.designer-sql-editor {
+  background: #1e1e1e;
+  padding: 16px;
+  max-height: 200px;
+  overflow: auto;
+}
+
+.designer-sql-editor pre {
+  margin: 0;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #d4d4d4;
+}
+
+.designer-results-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.designer-results-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: #fafafa;
+  border-bottom: 1px solid #e0e0e0;
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.designer-results-meta {
+  font-weight: 400;
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.designer-results-table {
+  flex: 1;
+  overflow: auto;
+  padding: 0 16px 16px;
+  min-height: 0;
+}
+
+.designer-results-table forge-table {
+  width: 100%;
+  height: 100%;
+}
+
+/* Right chat sidebar in Designer */
+.designer-chat-sidebar {
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-left: 1px solid #e0e0e0;
+  flex-shrink: 0;
+}
+
+.designer-chat-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e0e0e0;
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.ai-icon-wrapper.small {
+  width: 28px;
+  height: 28px;
+  border-width: 1.5px;
+  padding: 3px;
+}
+
+.ai-icon-wrapper.small forge-icon {
+  --forge-icon-font-size: 14px;
+}
+
+.designer-chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  background: linear-gradient(180deg, #fff 9.615%, #f7f8ff 100%);
+}
+
+.designer-chat-system-msg {
+  padding: 10px 14px;
+  background: #e8eaf6;
+  border-radius: 8px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.designer-chat-input {
+  padding: 12px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.prompt-input-row.compact {
+  padding: 6px 8px;
+  gap: 4px;
+}
+
+.prompt-input-row.compact input {
+  font-size: 13px;
+}
+
+/* ===== Saved Reports Library (§1.4) ===== */
+
+.library-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  background: #fafafa;
+}
+
+.library-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  background: #fff;
+  border-bottom: 1px solid #e0e0e0;
+  flex-shrink: 0;
+}
+
+.library-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.library-header-title {
+  font-family: 'Roboto', sans-serif;
+  font-weight: 500;
+  font-size: 20px;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.library-header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.library-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: #f5f5f5;
+  border: 1px solid #e0e0e0;
+  border-radius: 24px;
+  min-width: 280px;
+}
+
+.library-search forge-icon {
+  --forge-icon-font-size: 20px;
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.library-search-input {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.87);
+  width: 100%;
+}
+
+.library-search-input::placeholder {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.library-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+}
+
+.library-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.library-filter-label {
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.54);
+  margin-right: 4px;
+}
+
+.library-category-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 14px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 16px;
+  cursor: pointer;
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.6);
+  transition: all 0.15s ease;
+}
+
+.library-category-chip:hover {
+  background: #f5f5f5;
+  border-color: #bdbdbd;
+}
+
+.library-category-chip.active {
+  background: #3f51b5;
+  color: #fff;
+  border-color: #3f51b5;
+}
+
+.library-stats {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.54);
+}
+
+.library-stats-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.library-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 16px;
+}
+
+.library-report-card {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+  transition: all 0.2s ease;
+  cursor: default;
+}
+
+.library-report-card:hover {
+  border-color: #bdbdbd;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.library-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.library-card-type {
+  font-family: 'Roboto', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.library-card-type.standard {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.library-card-type.custom-variant {
+  background: #f3e5f5;
+  color: #7b1fa2;
+}
+
+.library-card-type.ad-hoc-saved {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.library-card-category {
+  font-family: 'Roboto', sans-serif;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.library-card-title {
+  font-family: 'Roboto', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.87);
+  margin-bottom: 6px;
+}
+
+.library-card-description {
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(0, 0, 0, 0.6);
+  margin-bottom: 12px;
+}
+
+.library-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.library-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.library-meta-item forge-icon {
+  --forge-icon-font-size: 14px;
+}
+
+.library-card-actions {
+  display: flex;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.library-action-btn {
+  padding: 5px 12px;
+  background: transparent;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'Roboto', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.6);
+  transition: all 0.15s ease;
+}
+
+.library-action-btn:hover {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: #bdbdbd;
+}
+
+.library-action-btn.primary {
+  background: #3f51b5;
+  color: #fff;
+  border-color: #3f51b5;
+}
+
+.library-action-btn.primary:hover {
+  background: #354499;
+}

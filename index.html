@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TIRA</title>
+  <link rel="stylesheet" href="https://cdn.forge.tylertech.com/v1/css/tyler-font.css" />
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    #app {
+      height: 100%;
+    }
+
+    forge-scaffold {
+      --forge-scaffold-body-background: #ffffff;
+    }
+
+    forge-app-bar {
+      --forge-app-bar-theme-background: #3f51b5;
+      --forge-app-bar-theme-on-background: #ffffff;
+    }
+
+    .home-body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      padding: 0 16px;
+    }
+
+    .home-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      max-width: 666px;
+    }
+
+    .title-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 51px;
+      width: 100%;
+    }
+
+    .title-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 22px;
+    }
+
+    .tyler-logo {
+      width: 35px;
+      height: 35px;
+    }
+
+    .title-text {
+      font-family: 'Roboto', sans-serif;
+      font-weight: 500;
+      font-size: 36px;
+      line-height: 42px;
+      letter-spacing: -0.1px;
+      color: rgba(0, 0, 0, 0.87);
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    /* Prompt area */
+    .prompt-area {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      width: 100%;
+    }
+
+    .prompt-input-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 16px;
+      padding: 10px 16px;
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-bottom: none;
+      border-radius: 10px 10px 0 0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .prompt-area:focus-within .prompt-input-row {
+      border-color: #3f51b5;
+      box-shadow: 0 2px 12px rgba(63, 81, 181, 0.12);
+    }
+
+    .prompt-input-row input {
+      flex: 1;
+      border: none;
+      outline: none;
+      font-family: 'Roboto', sans-serif;
+      font-size: 16px;
+      line-height: 22px;
+      letter-spacing: 0.25px;
+      color: rgba(0, 0, 0, 0.87);
+      padding: 8px 0;
+      background: transparent;
+    }
+
+    .prompt-input-row input::placeholder {
+      color: rgba(0, 0, 0, 0.6);
+    }
+
+    .prompt-button-row {
+      display: flex;
+      align-items: center;
+      padding: 8px 16px 8px 8px;
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-top: none;
+      border-radius: 0 0 10px 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .prompt-area:focus-within .prompt-button-row {
+      border-color: #3f51b5;
+      box-shadow: 0 2px 12px rgba(63, 81, 181, 0.12);
+    }
+
+    .prompt-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .source-toggle {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 12px;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      background: transparent;
+      cursor: pointer;
+      font-family: 'Roboto', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(0, 0, 0, 0.6);
+      letter-spacing: 0.25px;
+      transition: all 0.15s ease;
+    }
+
+    .source-toggle:hover {
+      background: #f5f5f5;
+      border-color: #bdbdbd;
+    }
+
+    .source-toggle forge-icon {
+      --forge-icon-font-size: 18px;
+    }
+
+    .disclaimer {
+      font-family: 'Roboto', sans-serif;
+      font-size: 12px;
+      line-height: 20px;
+      letter-spacing: 0.5px;
+      color: rgba(0, 0, 0, 0.6);
+      text-align: center;
+      padding-top: 4px;
+      width: 100%;
+    }
+
+    /* Suggestions */
+    .suggestions-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding-top: 16px;
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    .suggestion-group {
+      display: flex;
+      gap: 8px;
+      padding: 0 16px;
+    }
+
+    .suggestion-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 34px;
+      padding: 0 18px;
+      background: #f7f8ff;
+      border: 1px solid #d0d4f7;
+      border-radius: 17px;
+      cursor: pointer;
+      font-family: 'Roboto', sans-serif;
+      font-weight: 500;
+      font-size: 13px;
+      letter-spacing: 0.25px;
+      color: #3f51b5;
+      text-align: center;
+      white-space: nowrap;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.2s ease;
+    }
+
+    .suggestion-btn:hover {
+      background: #eeeffe;
+      border-color: #3f51b5;
+      box-shadow: 0 1px 4px rgba(63, 81, 181, 0.15);
+      transform: translateY(-1px);
+    }
+
+    .suggestion-btn:active {
+      transform: translateY(0);
+      box-shadow: none;
+    }
+
+    /* Library entry button */
+    .library-entry {
+      display: flex;
+      justify-content: center;
+      padding-top: 16px;
+      width: 100%;
+    }
+
+    .library-entry-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 20px;
+      background: transparent;
+      border: 1px solid #e0e0e0;
+      border-radius: 20px;
+      cursor: pointer;
+      font-family: 'Roboto', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      color: rgba(0, 0, 0, 0.6);
+      letter-spacing: 0.25px;
+      transition: all 0.2s ease;
+    }
+
+    .library-entry-btn:hover {
+      background: #f7f8ff;
+      border-color: #3f51b5;
+      color: #3f51b5;
+    }
+
+    .library-entry-btn forge-icon {
+      --forge-icon-font-size: 18px;
+    }
+
+    /* App bar adjustments */
+    .app-bar-logo {
+      width: 28px;
+      height: 28px;
+      margin-left: 8px;
+    }
+
+    forge-app-bar-search input {
+      border: none;
+      outline: none;
+      width: 100%;
+      font-size: 14px;
+      padding: 8px;
+    }
+  </style>
+</head>
+<body class="forge-typography">
+  <div id="app">
+    <forge-scaffold>
+      <forge-app-bar title-text="Title" slot="header">
+        <forge-app-bar-menu-button slot="start"></forge-app-bar-menu-button>
+        <img slot="start" class="app-bar-logo" src="https://www.figma.com/api/mcp/asset/e5931261-9f1b-4ce8-87e7-74663b70e0b8" alt="Tyler Logo" />
+        <forge-app-bar-search slot="center">
+          <input type="text" placeholder="Search" />
+        </forge-app-bar-search>
+        <forge-icon-button slot="end" aria-label="Help">
+          <forge-icon name="help_outline"></forge-icon>
+        </forge-icon-button>
+        <forge-icon-button slot="end" aria-label="Notifications">
+          <forge-icon name="notifications"></forge-icon>
+        </forge-icon-button>
+        <forge-button variant="text" slot="end" style="--forge-button-color: white;">
+          <button type="button">Sign In</button>
+        </forge-button>
+        <forge-avatar slot="end" text="TF" style="margin-right: 8px;"></forge-avatar>
+      </forge-app-bar>
+
+      <div slot="body" class="home-body">
+        <div class="home-content">
+          <div class="title-section">
+            <div class="title-row">
+              <img class="tyler-logo" src="https://www.figma.com/api/mcp/asset/e5931261-9f1b-4ce8-87e7-74663b70e0b8" alt="Tyler Logo" />
+              <span class="title-text">Find the report you need</span>
+            </div>
+
+            <div class="prompt-area">
+              <div class="prompt-input-row">
+                <input type="text" placeholder="Ask a question about your data..." />
+                <forge-icon-button aria-label="Send">
+                  <forge-icon name="send"></forge-icon>
+                </forge-icon-button>
+              </div>
+              <div class="prompt-button-row">
+                <div class="prompt-actions">
+                  <forge-icon-button aria-label="Add attachment">
+                    <forge-icon name="add"></forge-icon>
+                  </forge-icon-button>
+                  <button class="source-toggle" type="button">
+                    <forge-icon name="database_outline"></forge-icon>
+                    All sources
+                    <forge-icon name="arrow_drop_down"></forge-icon>
+                  </button>
+                </div>
+              </div>
+              <div class="disclaimer">AI can make mistakes. Always verify responses.</div>
+            </div>
+          </div>
+
+          <div class="suggestions-row">
+            <div class="suggestion-group">
+              <button class="suggestion-btn" type="button" data-suggestion="0">Building Permits by Month</button>
+              <button class="suggestion-btn" type="button" data-suggestion="1">Code Violations Summary</button>
+              <button class="suggestion-btn" type="button" data-suggestion="2">Budget vs. Actuals</button>
+            </div>
+          </div>
+
+          <div class="library-entry">
+            <button class="library-entry-btn" type="button" id="library-btn">
+              <forge-icon name="folder"></forge-icon>
+              Browse Saved Reports
+            </button>
+          </div>
+        </div>
+      </div>
+    </forge-scaffold>
+  </div>
+  <script type="module" src="/src/main.js"></script>
+  <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
+</body>
+</html>
