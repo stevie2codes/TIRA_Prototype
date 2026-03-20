@@ -461,188 +461,128 @@ function showHandoffNudge(container, suggestion) {
       container.appendChild(responseMsg);
       scrollToBottom(container);
 
-      // Wire handoff button to open Designer
+      // Wire handoff button to launch Report Designer in-dialog
       const handoffBtn = responseContent.querySelector('.handoff-btn');
       handoffBtn.addEventListener('click', () => {
-        openDesignerView(suggestion);
+        // Write chat context to sessionStorage so report-canvas can pick it up
+        const handoffContext = {
+          reportTitle: suggestion.reportTitle,
+          dataSource: suggestion.dataSource,
+          freshness: suggestion.freshness,
+          sqlCode: suggestion.sqlCode,
+          columns: suggestion.columns,
+          data: suggestion.data,
+          query: suggestion.query,
+          aiSummary: suggestion.aiSummary,
+          transparency: suggestion.transparency,
+          handoffReason: suggestion.handoffTrigger?.userMessage || '',
+        };
+        sessionStorage.setItem('tira-handoff-context', JSON.stringify(handoffContext));
+
+        // Mount React report designer inside the dialog
+        const dialog = document.querySelector('#chat-dialog');
+        if (dialog) mountReportDesigner(dialog);
       });
     }, 1500);
   }, 400);
 }
 
 /**
- * Opens the Report Designer stub view (§1.3)
+ * Mounts the React Report Designer inside the dialog.
+ * Lazy-loads React and the report-canvas App on first use.
  */
-function openDesignerView(suggestion) {
-  let dialog = document.querySelector('#chat-dialog');
-  if (!dialog) return;
+let _reactRoot = null;
 
+async function mountReportDesigner(dialog) {
   const content = dialog.querySelector('.chat-dialog-content');
-  content.innerHTML = '';
-  content.className = 'chat-dialog-content designer-layout';
 
+  // Save current chat content so we can restore on back
+  const chatSnapshot = content.innerHTML;
+  const chatClassName = content.className;
+
+  // Show loading state
+  content.innerHTML = '';
+  content.className = 'chat-dialog-content designer-fullscreen';
   content.innerHTML = `
-    <div class="designer-header">
-      <div class="designer-header-left">
-        <forge-icon-button aria-label="Back to Chat" id="designer-back-btn">
+    <div style="display:flex;flex-direction:column;height:100%;background:#f0f1f4;">
+      <div style="display:flex;align-items:center;gap:12px;padding:16px;background:#fff;border-bottom:1px solid #e0e0e0;">
+        <button type="button" id="designer-back-btn" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid #dadce0;border-radius:6px;background:#fff;cursor:pointer;font-size:13px;font-weight:500;color:rgba(0,0,0,0.7);">
           <forge-icon name="arrow_back"></forge-icon>
-        </forge-icon-button>
-        <forge-icon name="auto_awesome" class="designer-header-icon"></forge-icon>
-        <span class="designer-header-title">Report Designer</span>
-        <span class="designer-header-divider">|</span>
-        <span class="designer-header-report-name">${suggestion.reportTitle}</span>
+          Back to Chat
+        </button>
+        <span style="font-size:14px;font-weight:500;color:rgba(0,0,0,0.87);">Loading Report Designer...</span>
       </div>
-      <div class="designer-header-right">
-        <forge-button variant="outlined">
-          <button type="button" class="designer-save-btn">
-            <forge-icon name="save"></forge-icon>
-            Save Draft
-          </button>
-        </forge-button>
-        <forge-button variant="raised">
-          <button type="button" class="designer-publish-btn">
-            Publish to Library
-          </button>
-        </forge-button>
-        <forge-icon-button aria-label="Close" id="designer-close-btn">
-          <forge-icon name="close"></forge-icon>
-        </forge-icon-button>
-      </div>
-    </div>
-    <div class="designer-body">
-      <div class="designer-sidebar">
-        <div class="designer-sidebar-section">
-          <div class="designer-sidebar-heading">Datasets</div>
-          <div class="designer-dataset-item active">
-            <forge-icon name="database_outline"></forge-icon>
-            <span>${suggestion.dataSource}</span>
-          </div>
-          <div class="designer-dataset-item pending">
-            <forge-icon name="add"></forge-icon>
-            <span>Add dataset...</span>
-          </div>
-        </div>
-        <div class="designer-sidebar-section">
-          <div class="designer-sidebar-heading">Transform Pipeline</div>
-          <div class="pipeline-step">
-            <span class="pipeline-step-num">1</span>
-            <span>Source: ${suggestion.dataSource}</span>
-          </div>
-          <div class="pipeline-step">
-            <span class="pipeline-step-num">2</span>
-            <span>Filter: Last 12 months</span>
-          </div>
-          <div class="pipeline-step">
-            <span class="pipeline-step-num">3</span>
-            <span>Group by: Month, District</span>
-          </div>
-          <div class="pipeline-step add-step">
-            <forge-icon name="add"></forge-icon>
-            <span>Add step</span>
-          </div>
-        </div>
-        <div class="designer-sidebar-section">
-          <div class="designer-sidebar-heading">Report Layout</div>
-          <div class="layout-option">
-            <forge-icon name="grid_view"></forge-icon>
-            <span>Table</span>
-            <span class="layout-active-badge">Active</span>
-          </div>
-          <div class="layout-option">
-            <forge-icon name="bar_chart"></forge-icon>
-            <span>Bar Chart</span>
-          </div>
-          <div class="layout-option">
-            <forge-icon name="insert_chart"></forge-icon>
-            <span>Line Chart</span>
-          </div>
-        </div>
-      </div>
-      <div class="designer-main">
-        <div class="designer-sql-panel">
-          <div class="designer-sql-header">
-            <span>SQL Editor</span>
-            <div class="designer-sql-actions">
-              <forge-button variant="outlined" dense>
-                <button type="button" class="designer-run-btn">
-                  <forge-icon name="play_arrow"></forge-icon>
-                  Run Query
-                </button>
-              </forge-button>
-            </div>
-          </div>
-          <div class="designer-sql-editor">
-            <pre><code>${suggestion.sqlCode}</code></pre>
-          </div>
-        </div>
-        <div class="designer-results-panel">
-          <div class="designer-results-header">
-            <span>Results</span>
-            <span class="designer-results-meta">${suggestion.data.length} rows · ${suggestion.columns.length} columns</span>
-          </div>
-          <div class="designer-results-table" id="designer-table-container">
-          </div>
-        </div>
-      </div>
-      <div class="designer-chat-sidebar">
-        <div class="designer-chat-header">
-          <div class="ai-icon-wrapper small">
-            <forge-icon name="auto_awesome"></forge-icon>
-          </div>
-          <span>Chat Assistant</span>
-        </div>
-        <div class="designer-chat-messages">
-          <div class="designer-chat-system-msg">
-            Context transferred from chat. Your query and filters are loaded in the SQL editor. Ask me anything about this dataset.
-          </div>
-        </div>
-        <div class="designer-chat-input">
-          <div class="prompt-input-row compact">
-            <input type="text" placeholder="Ask about this dataset..." />
-            <forge-icon-button aria-label="Send">
-              <forge-icon name="send"></forge-icon>
-            </forge-icon-button>
-          </div>
-        </div>
+      <div style="flex:1;display:flex;align-items:center;justify-content:center;">
+        <forge-ai-thinking-indicator></forge-ai-thinking-indicator>
       </div>
     </div>
   `;
 
-  // Wire close/back buttons
-  content.querySelector('#designer-close-btn').addEventListener('click', () => {
-    dialog.open = false;
-  });
+  // Wire back button immediately (works even while loading)
   content.querySelector('#designer-back-btn').addEventListener('click', () => {
-    dialog.open = false;
-    // Re-open chat flow
-    setTimeout(() => openChatFlow(suggestions.indexOf(suggestion)), 200);
+    // Unmount React
+    if (_reactRoot) {
+      _reactRoot.unmount();
+      _reactRoot = null;
+    }
+    // Restore chat
+    content.className = chatClassName;
+    content.innerHTML = chatSnapshot;
   });
 
-  // Wire publish button to go to Library
-  const publishBtn = content.querySelector('.designer-publish-btn');
-  publishBtn.addEventListener('click', () => {
-    // Show brief success message then navigate to library
-    publishBtn.textContent = 'Published!';
-    publishBtn.style.background = '#4caf50';
-    setTimeout(() => {
-      dialog.open = false;
-      // Open library view
-      setTimeout(() => openLibraryView(), 300);
-    }, 1000);
-  });
+  try {
+    // Patch customElements.define to skip already-registered elements
+    // (TIRA's main.js already registers Forge components; forge-react tries again)
+    const originalDefine = customElements.define.bind(customElements);
+    customElements.define = function(name, constructor, options) {
+      if (customElements.get(name)) return; // skip if already registered
+      originalDefine(name, constructor, options);
+    };
 
-  // Render the results table
-  requestAnimationFrame(() => {
-    const tableContainer = content.querySelector('#designer-table-container');
-    const table = document.createElement('forge-table');
-    table.setAttribute('dense', '');
-    table.setAttribute('fixed-headers', '');
-    tableContainer.appendChild(table);
-    requestAnimationFrame(() => {
-      table.columnConfigurations = suggestion.columns;
-      table.data = suggestion.data;
+    // Lazy-load the mount helper (keeps React in a single bundle — avoids duplicate instances)
+    const { mountDesigner } = await import('../report-canvas/src/mount.jsx');
+
+    // Restore original define
+    customElements.define = originalDefine;
+
+    // Build the designer container with a back-bar + React mount point
+    content.innerHTML = '';
+    content.innerHTML = `
+      <div style="display:flex;flex-direction:column;height:100%;">
+        <div class="designer-nav-bar">
+          <button type="button" id="designer-back-btn" class="designer-back-btn">
+            <forge-icon name="arrow_back"></forge-icon>
+            Back to Chat
+          </button>
+        </div>
+        <div id="report-designer-root" style="flex:1;overflow:hidden;"></div>
+      </div>
+    `;
+
+    // Wire back button
+    content.querySelector('#designer-back-btn').addEventListener('click', () => {
+      if (_reactRoot) {
+        _reactRoot.unmount();
+        _reactRoot = null;
+      }
+      content.className = chatClassName;
+      content.innerHTML = chatSnapshot;
     });
-  });
+
+    // Mount React app (returns the root for later unmounting)
+    const mountPoint = content.querySelector('#report-designer-root');
+    _reactRoot = mountDesigner(mountPoint);
+
+  } catch (err) {
+    console.error('Failed to load Report Designer:', err);
+    content.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:16px;">
+        <forge-icon name="error_outline" style="--forge-icon-font-size:48px;color:#e57373;"></forge-icon>
+        <span style="font-size:16px;color:rgba(0,0,0,0.6);">Failed to load Report Designer</span>
+        <button type="button" onclick="location.reload()" style="padding:8px 16px;border:1px solid #dadce0;border-radius:6px;background:#fff;cursor:pointer;">Reload</button>
+      </div>
+    `;
+  }
 }
 
 /**

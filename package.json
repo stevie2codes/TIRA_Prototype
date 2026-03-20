@@ -1,7 +1,7 @@
 {
   "name": "tira",
   "version": "1.0.0",
-  "description": "",
+  "description": "TIRA Reporting Prototype",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,9 +9,20 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "@tylertech/forge": "^3.13.1",
     "@tylertech/forge-ai": "^0.10.1",
+    "@tylertech/forge-react": "^3.2.0",
     "@tylertech/tyler-icons": "^2.1.0",
+    "@xyflow/react": "^12.6.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "recharts": "^2.15.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.0.0",
     "vite": "^8.0.0"
   }
 }
