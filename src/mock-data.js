@@ -240,6 +240,172 @@ The detailed department-level comparison is shown below.`,
     chartLabel: 'Budget vs. Actual by Department',
     chartIcon: 'bar_chart',
   },
+  {
+    id: 'arrests-summary',
+    label: 'Arrests Summary',
+    query: 'Show me all arrests from the past 30 days grouped by arrest type and status',
+    sqlCode: `SELECT
+  a.arrest_type,
+  a.arrest_status,
+  COUNT(*) AS total_arrests,
+  COUNT(CASE WHEN a.clears_case = 'Yes' THEN 1 END) AS cases_cleared,
+  COUNT(CASE WHEN a.is_juvenile_arrest = 'YES' THEN 1 END) AS juvenile_arrests,
+  COUNT(CASE WHEN a.alcohol_influence = 'Yes' THEN 1 END) AS alcohol_related,
+  COUNT(CASE WHEN a.drug_influence = 'Yes' THEN 1 END) AS drug_related,
+  AVG(a.age_at_arrest) AS avg_age
+FROM arrests a
+WHERE a.arrest_date_time >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+GROUP BY a.arrest_type, a.arrest_status
+ORDER BY total_arrests DESC;`,
+    aiSummary: `I found **487 arrests** made in the past 30 days across all agencies. Here's a summary:
+
+- **Crime In Progress** arrests (41%) are the most common type, followed by **Summoned/Cited** (32%)
+- **Jail** status accounts for 38% of all arrests
+- **18% of arrests** involved juveniles (under 18), with an average age of 16.2 years
+- **Alcohol-related arrests**: 124 (25.5%) | **Drug-related arrests**: 98 (20.1%)
+- **Cases cleared by arrest**: 312 (64.1%)
+
+The table below shows the detailed breakdown by arrest type and current status.`,
+    dataSource: 'Law Enforcement Records Management System',
+    freshness: 'Updated 15 min ago',
+    reportTitle: 'Arrests Summary — Last 30 Days',
+    refinementChips: [
+      'Filter by agency',
+      'Show only juvenile arrests',
+      'Group by arresting officer',
+      'Add charge details',
+    ],
+    transparency: {
+      dataSourceDetail: 'Law Enforcement Records Management System',
+      system: 'Brazos RMS',
+      totalRecords: '168,950 total arrest records',
+      lastUpdated: 'March 24, 2026 9:45 AM',
+      assumptions: [
+        '"Past 30 days" uses arrest_date_time field',
+        'Juvenile arrests identified by is_juvenile_arrest = "YES" flag',
+        'Average age calculated from age_at_arrest field (preferred over calculated from DOB)',
+        'Cases cleared determined by clears_case = "Yes" indicator',
+      ],
+      citations: [
+        { label: 'arrests table', detail: 'Brazos RMS > Law Enforcement > arrests' },
+        { label: 'agency mapping', detail: 'Brazos RMS > Admin > agency_codes (ORI crosswalk)' },
+      ],
+    },
+    handoffTrigger: {
+      userMessage: 'I need to cross-reference these arrests with associated case dispositions and court dates',
+      systemResponse: 'That requires joining arrests with cases and court_events tables, which works best in the Report Designer. I\'ll bring your current filters with you.',
+      handoffLabel: 'Open in Report Designer',
+    },
+    columns: [
+      { property: 'arrest_type', header: 'Arrest Type', sortable: true },
+      { property: 'arrest_status', header: 'Status', sortable: true },
+      { property: 'total_arrests', header: 'Total', sortable: true },
+      { property: 'cases_cleared', header: 'Cases Cleared', sortable: true },
+      { property: 'juvenile_arrests', header: 'Juvenile', sortable: true },
+      { property: 'alcohol_related', header: 'Alcohol', sortable: true },
+      { property: 'drug_related', header: 'Drug', sortable: true },
+      { property: 'avg_age', header: 'Avg Age', sortable: true },
+    ],
+    data: [
+      { arrest_type: 'Crime In Progress', arrest_status: 'Jail', total_arrests: 142, cases_cleared: 98, juvenile_arrests: 12, alcohol_related: 28, drug_related: 34, avg_age: 31 },
+      { arrest_type: 'Crime In Progress', arrest_status: 'Released', total_arrests: 58, cases_cleared: 42, juvenile_arrests: 8, alcohol_related: 14, drug_related: 11, avg_age: 27 },
+      { arrest_type: 'Summoned/Cited', arrest_status: 'Bonded', total_arrests: 98, cases_cleared: 88, juvenile_arrests: 22, alcohol_related: 32, drug_related: 18, avg_age: 24 },
+      { arrest_type: 'Summoned/Cited', arrest_status: 'Released', total_arrests: 58, cases_cleared: 51, juvenile_arrests: 16, alcohol_related: 18, drug_related: 9, avg_age: 22 },
+      { arrest_type: 'Complaint', arrest_status: 'Jail', total_arrests: 44, cases_cleared: 12, juvenile_arrests: 4, alcohol_related: 8, drug_related: 12, avg_age: 34 },
+      { arrest_type: 'Complaint', arrest_status: 'Released', total_arrests: 32, cases_cleared: 8, juvenile_arrests: 3, alcohol_related: 6, drug_related: 5, avg_age: 29 },
+      { arrest_type: 'Taken in Custody', arrest_status: 'Jail', total_arrests: 28, cases_cleared: 6, juvenile_arrests: 18, alcohol_related: 12, drug_related: 6, avg_age: 19 },
+      { arrest_type: 'Taken in Custody', arrest_status: 'Released', total_arrests: 18, cases_cleared: 4, juvenile_arrests: 4, alcohol_related: 4, drug_related: 2, avg_age: 26 },
+      { arrest_type: 'Crime In Progress', arrest_status: 'Bonded', total_arrests: 9, cases_cleared: 3, juvenile_arrests: 1, alcohol_related: 2, drug_related: 1, avg_age: 33 },
+    ],
+    chartLabel: 'Arrests by Type and Status',
+    chartIcon: 'pie_chart',
+  },
+  {
+    id: 'cases-disposition',
+    label: 'Case Disposition Report',
+    query: 'Show me case dispositions by incident type for the current quarter',
+    sqlCode: `SELECT
+  c.occurred_incident_type,
+  COUNT(*) AS total_cases,
+  SUM(CASE WHEN c.case_disposition = 'Arrest' THEN 1 ELSE 0 END) AS arrests,
+  SUM(CASE WHEN c.case_disposition = 'Open' THEN 1 ELSE 0 END) AS open,
+  SUM(CASE WHEN c.case_disposition = 'Closed' THEN 1 ELSE 0 END) AS closed,
+  SUM(CASE WHEN c.case_disposition = 'Inactive' THEN 1 ELSE 0 END) AS inactive,
+  SUM(CASE WHEN c.case_disposition = 'Unfounded' THEN 1 ELSE 0 END) AS unfounded,
+  SUM(CASE WHEN c.case_arrest_made = 'Yes' THEN 1 ELSE 0 END) AS arrest_made,
+  SUM(CASE WHEN c.domestic_violence = 'Yes' THEN 1 ELSE 0 END) AS domestic_violence,
+  AVG(DATEDIFF(c.case_disposition_date, c.occurred_from_date_time)) AS avg_days_to_disposition
+FROM cases c
+WHERE c.occurred_from_date_time >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)
+GROUP BY c.occurred_incident_type
+ORDER BY total_cases DESC;`,
+    aiSummary: `I pulled **2,847 cases** from the current quarter (Jan 1 - Mar 24, 2026). Key findings:
+
+- **Theft/Larceny** incidents lead with 892 cases (31%), followed by **Assault** (18%) and **Burglary** (14%)
+- **64% of cases** resulted in an arrest being made
+- **Domestic violence** was involved in 412 cases (14.5% of total)
+- Average time to disposition: **23 days** (varies by incident type and complexity)
+- **Open cases** represent 28% of the quarter's workload
+
+The table below breaks down case outcomes by incident type.`,
+    dataSource: 'Law Enforcement Records Management System',
+    freshness: 'Updated 20 min ago',
+    reportTitle: 'Case Disposition Report — Q1 2026',
+    refinementChips: [
+      'Filter by reporting district',
+      'Show only open cases',
+      'Add assigned bureau',
+      'Include exceptional clearances',
+    ],
+    transparency: {
+      dataSourceDetail: 'Law Enforcement Records Management System',
+      system: 'Brazos RMS',
+      totalRecords: '199,600 total case records',
+      lastUpdated: 'March 24, 2026 9:40 AM',
+      assumptions: [
+        '"Current quarter" interpreted as calendar Q1 2026 (Jan 1 - Mar 31)',
+        'Cases counted by occurred_from_date_time (incident start), not reported_date_time',
+        'Avg days to disposition excludes cases still open (no disposition_date)',
+        'Domestic violence flag indicates confirmed DV involvement per officer assessment',
+      ],
+      citations: [
+        { label: 'cases table', detail: 'Brazos RMS > Law Enforcement > cases' },
+        { label: 'incident type codes', detail: 'Brazos RMS > Admin > incident_type_definitions (UCR/NIBRS mapping)' },
+        { label: 'disposition codes', detail: 'Brazos RMS > Admin > case_disposition_codes' },
+      ],
+    },
+    handoffTrigger: {
+      userMessage: 'Can you build a report that shows case clearance rates by assigned detective with workload metrics?',
+      systemResponse: 'That needs personnel assignments joined with case outcomes and time-based metrics. Want to build it in the Report Designer? I\'ll bring your current filters.',
+      handoffLabel: 'Open in Report Designer',
+    },
+    columns: [
+      { property: 'occurred_incident_type', header: 'Incident Type', sortable: true },
+      { property: 'total_cases', header: 'Total Cases', sortable: true },
+      { property: 'arrests', header: 'Arrests', sortable: true },
+      { property: 'open', header: 'Open', sortable: true },
+      { property: 'closed', header: 'Closed', sortable: true },
+      { property: 'inactive', header: 'Inactive', sortable: true },
+      { property: 'unfounded', header: 'Unfounded', sortable: true },
+      { property: 'arrest_made', header: 'Arrest Made', sortable: true },
+      { property: 'domestic_violence', header: 'DV Related', sortable: true },
+      { property: 'avg_days_to_disposition', header: 'Avg Days', sortable: true },
+    ],
+    data: [
+      { occurred_incident_type: 'Theft/Larceny', total_cases: 892, arrests: 248, open: 312, closed: 298, inactive: 28, unfounded: 6, arrest_made: 234, domestic_violence: 12, avg_days_to_disposition: 28 },
+      { occurred_incident_type: 'Assault', total_cases: 512, arrests: 398, open: 86, closed: 398, inactive: 18, unfounded: 12, arrest_made: 412, domestic_violence: 186, avg_days_to_disposition: 14 },
+      { occurred_incident_type: 'Burglary', total_cases: 398, arrests: 124, open: 168, closed: 196, inactive: 22, unfounded: 12, arrest_made: 118, domestic_violence: 8, avg_days_to_disposition: 32 },
+      { occurred_incident_type: 'Fraud', total_cases: 286, arrests: 68, open: 124, closed: 142, inactive: 16, unfounded: 4, arrest_made: 62, domestic_violence: 4, avg_days_to_disposition: 45 },
+      { occurred_incident_type: 'Vandalism', total_cases: 224, arrests: 42, open: 98, closed: 112, inactive: 12, unfounded: 2, arrest_made: 38, domestic_violence: 6, avg_days_to_disposition: 22 },
+      { occurred_incident_type: 'Drug Offenses', total_cases: 186, arrests: 168, open: 12, closed: 172, inactive: 2, unfounded: 0, arrest_made: 176, domestic_violence: 2, avg_days_to_disposition: 8 },
+      { occurred_incident_type: 'Sex Offenses', total_cases: 124, arrests: 78, open: 34, closed: 82, inactive: 6, unfounded: 2, arrest_made: 86, domestic_violence: 98, avg_days_to_disposition: 52 },
+      { occurred_incident_type: 'Robbery', total_cases: 98, arrests: 62, open: 24, closed: 68, inactive: 4, unfounded: 2, arrest_made: 64, domestic_violence: 4, avg_days_to_disposition: 18 },
+      { occurred_incident_type: 'Pornography', total_cases: 68, arrests: 42, open: 18, closed: 46, inactive: 2, unfounded: 2, arrest_made: 44, domestic_violence: 12, avg_days_to_disposition: 64 },
+      { occurred_incident_type: 'Overdose', total_cases: 59, arrests: 8, open: 12, closed: 44, inactive: 3, unfounded: 0, arrest_made: 6, domestic_violence: 2, avg_days_to_disposition: 12 },
+    ],
+    chartLabel: 'Case Disposition by Incident Type',
+    chartIcon: 'bar_chart',
+  },
 ];
 
 // Saved Reports Library data (§1.4)

@@ -107,38 +107,20 @@ function runConversation(container, suggestion, dialog, options = {}) {
     container.appendChild(thinking);
     scrollToBottom(container);
 
-    // Step 3: Replace thinking with response (after 2500ms)
+    // Step 3: Replace thinking with query card response
     setTimeout(() => {
       container.removeChild(thinking);
 
       const responseMsg = document.createElement('forge-ai-response-message');
       const responseContent = document.createElement('div');
       responseContent.className = 'ai-response-content';
-      responseContent.innerHTML = `
-        ${markdownToHtml(suggestion.aiSummary)}
-        <div class="data-source-badge">
-          <forge-icon name="database_outline"></forge-icon>
-          ${suggestion.dataSource}
-          <span class="data-source-dot"></span>
-          ${suggestion.freshness}
-        </div>
-        ${buildTransparencyPanel(suggestion)}
-        ${buildRefinementChips(suggestion)}
-        <br>
-        <button class="open-report-btn" id="open-report-btn">
-          <forge-icon name="insert_chart"></forge-icon>
-          Open Report
-        </button>
-      `;
+      responseContent.innerHTML = buildQueryCard(suggestion);
       responseMsg.appendChild(responseContent);
       container.appendChild(responseMsg);
       scrollToBottom(container);
 
-      // Wire transparency toggle
-      wireTransparencyToggle(responseMsg);
-
-      // Wire refinement chip clicks
-      wireRefinementChips(responseMsg, container, suggestion);
+      // Wire query card interactions (disclosures, copy, chips)
+      wireQueryCard(responseMsg, container, suggestion, dialog);
 
       // Step 4: Open Report click -> split view
       const openReportBtn = responseMsg.querySelector('#open-report-btn');
@@ -177,7 +159,232 @@ function runConversation(container, suggestion, dialog, options = {}) {
 }
 
 /**
- * Builds the transparency panel HTML (§4.1)
+ * Builds the Query Card HTML — a compact, progressive-disclosure response card.
+ * Replaces the old flat response + separate transparency panel.
+ */
+function buildQueryCard(suggestion) {
+  const t = suggestion.transparency;
+  const totalRows = suggestion.data ? suggestion.data.length : 0;
+  const totalCols = suggestion.columns ? suggestion.columns.length : 0;
+
+  // Mini data preview — first 3 rows as a compact table
+  let miniTableHtml = '';
+  if (suggestion.columns && suggestion.data && suggestion.data.length > 0) {
+    const previewRows = suggestion.data.slice(0, 3);
+    const previewCols = suggestion.columns.slice(0, 4); // max 4 cols in preview
+    const headerCells = previewCols.map(c => `<th>${c.header}</th>`).join('');
+    const bodyRows = previewRows.map(row => {
+      const cells = previewCols.map(c => `<td>${row[c.property] ?? ''}</td>`).join('');
+      return `<tr>${cells}</tr>`;
+    }).join('');
+    const moreNote = suggestion.data.length > 3
+      ? `<div class="qc-preview-more">${suggestion.data.length - 3} more rows · ${suggestion.columns.length > 4 ? (suggestion.columns.length - 4) + ' more columns · ' : ''}Explore full results</div>`
+      : '';
+    miniTableHtml = `
+      <div class="qc-section-header">Results Preview</div>
+      <div class="qc-data-preview">
+        <table class="qc-mini-table">
+          <thead><tr>${headerCells}</tr></thead>
+          <tbody>${bodyRows}</tbody>
+        </table>
+        ${moreNote}
+      </div>
+    `;
+  }
+
+  // Disclosure sections
+  const assumptionsList = t ? t.assumptions.map(a => `<li>${a}</li>`).join('') : '';
+  const citationsList = t ? t.citations.map(c =>
+    `<div class="citation-item">
+      <span class="citation-label">${c.label}</span>
+      <span class="citation-detail">${c.detail}</span>
+    </div>`
+  ).join('') : '';
+
+  return `
+    <div class="qc-summary">
+      ${markdownToHtml(suggestion.aiSummary)}
+    </div>
+
+    <div class="query-card">
+      <div class="qc-header">
+        <div class="qc-header-left">
+          <div class="qc-icon">
+            <forge-icon name="auto_awesome"></forge-icon>
+          </div>
+          <div class="qc-header-text">
+            <span class="qc-title">${suggestion.reportTitle}</span>
+            <div class="qc-meta-row">
+              <span class="qc-meta-item">
+                <forge-icon name="database_outline"></forge-icon>
+                ${suggestion.dataSource}
+              </span>
+              <span class="qc-meta-dot"></span>
+              <span class="qc-meta-item qc-freshness">
+                <span class="qc-freshness-dot"></span>
+                ${suggestion.freshness}
+              </span>
+              <span class="qc-meta-dot"></span>
+              <span class="qc-meta-item">${totalRows} rows · ${totalCols} columns</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      ${miniTableHtml}
+
+      <div class="qc-section-header">Data Transparency</div>
+      <div class="qc-disclosures">
+        <div class="qc-disclosure" data-section="source">
+          <button class="qc-disclosure-toggle" type="button">
+            <forge-icon name="database_outline"></forge-icon>
+            <span>Data Source</span>
+            <span class="qc-disclosure-detail">${t ? t.dataSourceDetail : suggestion.dataSource}</span>
+            <forge-icon name="expand_more" class="qc-disclosure-arrow"></forge-icon>
+          </button>
+          <div class="qc-disclosure-body" style="display:none;">
+            ${t ? `
+              <div class="qc-disclosure-content">
+                <div class="qc-info-row"><span class="qc-info-label">System</span><span class="qc-info-value">${t.system}</span></div>
+                <div class="qc-info-row"><span class="qc-info-label">Total Records</span><span class="qc-info-value">${t.totalRecords}</span></div>
+                <div class="qc-info-row"><span class="qc-info-label">Last Updated</span><span class="qc-info-value">${t.lastUpdated}</span></div>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+
+        <div class="qc-disclosure" data-section="sql">
+          <button class="qc-disclosure-toggle" type="button">
+            <forge-icon name="code"></forge-icon>
+            <span>SQL Query</span>
+            <span class="qc-disclosure-detail">View generated query</span>
+            <forge-icon name="expand_more" class="qc-disclosure-arrow"></forge-icon>
+          </button>
+          <div class="qc-disclosure-body" style="display:none;">
+            <div class="qc-disclosure-content">
+              <pre class="transparency-sql"><code>${suggestion.sqlCode}</code></pre>
+              <div class="transparency-sql-actions">
+                <button class="transparency-action-btn copy-sql-btn" type="button">
+                  <forge-icon name="content_copy"></forge-icon>
+                  Copy SQL
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="qc-disclosure" data-section="assumptions">
+          <button class="qc-disclosure-toggle" type="button">
+            <forge-icon name="info_outline"></forge-icon>
+            <span>Assumptions</span>
+            <span class="qc-disclosure-detail">${t ? t.assumptions.length + ' made' : ''}</span>
+            <forge-icon name="expand_more" class="qc-disclosure-arrow"></forge-icon>
+          </button>
+          <div class="qc-disclosure-body" style="display:none;">
+            <div class="qc-disclosure-content">
+              <ul class="transparency-assumptions">${assumptionsList}</ul>
+            </div>
+          </div>
+        </div>
+
+        ${citationsList ? `
+        <div class="qc-disclosure" data-section="citations">
+          <button class="qc-disclosure-toggle" type="button">
+            <forge-icon name="link"></forge-icon>
+            <span>Data Citations</span>
+            <span class="qc-disclosure-detail">${t ? t.citations.length + ' sources' : ''}</span>
+            <forge-icon name="expand_more" class="qc-disclosure-arrow"></forge-icon>
+          </button>
+          <div class="qc-disclosure-body" style="display:none;">
+            <div class="qc-disclosure-content">
+              ${citationsList}
+            </div>
+          </div>
+        </div>
+        ` : ''}
+      </div>
+
+      <div class="qc-actions">
+        ${buildRefinementChips(suggestion)}
+        <div class="qc-actions-row">
+          <button class="qc-open-report-btn" id="open-report-btn" type="button">
+            <forge-icon name="insert_chart"></forge-icon>
+            Explore Results
+          </button>
+          <button class="qc-secondary-btn" type="button">
+            <forge-icon name="content_copy"></forge-icon>
+            Copy Summary
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Wires all query card interactions: disclosure toggles, copy SQL, copy summary
+ */
+function wireQueryCard(responseMsg, container, suggestion, dialog) {
+  // Wire disclosure toggles
+  const disclosures = responseMsg.querySelectorAll('.qc-disclosure');
+  disclosures.forEach(disc => {
+    const toggle = disc.querySelector('.qc-disclosure-toggle');
+    const body = disc.querySelector('.qc-disclosure-body');
+    const arrow = disc.querySelector('.qc-disclosure-arrow');
+    if (!toggle || !body) return;
+
+    toggle.addEventListener('click', () => {
+      const isOpen = body.style.display !== 'none';
+      body.style.display = isOpen ? 'none' : 'block';
+      disc.classList.toggle('open', !isOpen);
+      if (arrow) arrow.style.transform = isOpen ? '' : 'rotate(180deg)';
+      if (!isOpen) {
+        requestAnimationFrame(() => {
+          body.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        });
+      }
+    });
+  });
+
+  // Wire Copy SQL
+  const copyBtn = responseMsg.querySelector('.copy-sql-btn');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const sql = responseMsg.querySelector('.transparency-sql code')?.textContent;
+      if (sql) {
+        navigator.clipboard.writeText(sql).then(() => {
+          copyBtn.innerHTML = '<forge-icon name="check"></forge-icon> Copied!';
+          setTimeout(() => {
+            copyBtn.innerHTML = '<forge-icon name="content_copy"></forge-icon> Copy SQL';
+          }, 2000);
+        });
+      }
+    });
+  }
+
+  // Wire Copy Summary
+  const copySummaryBtn = responseMsg.querySelector('.qc-secondary-btn');
+  if (copySummaryBtn) {
+    copySummaryBtn.addEventListener('click', () => {
+      const summaryText = responseMsg.querySelector('.qc-summary')?.textContent?.trim();
+      if (summaryText) {
+        navigator.clipboard.writeText(summaryText).then(() => {
+          copySummaryBtn.innerHTML = '<forge-icon name="check"></forge-icon> Copied!';
+          setTimeout(() => {
+            copySummaryBtn.innerHTML = '<forge-icon name="content_copy"></forge-icon> Copy Summary';
+          }, 2000);
+        });
+      }
+    });
+  }
+
+  // Wire refinement chips
+  wireRefinementChips(responseMsg, container, suggestion, dialog);
+}
+
+/**
+ * Builds the transparency panel HTML (§4.1) — legacy, kept for handoff card use
  */
 function buildTransparencyPanel(suggestion) {
   const t = suggestion.transparency;
@@ -312,7 +519,7 @@ function wireTransparencyToggle(responseMsg) {
 /**
  * Wires refinement chip click behavior
  */
-function wireRefinementChips(responseMsg, container, suggestion) {
+function wireRefinementChips(responseMsg, container, suggestion, dialog) {
   const chips = responseMsg.querySelectorAll('.refinement-chip');
   chips.forEach(chip => {
     chip.addEventListener('click', () => {
@@ -325,20 +532,244 @@ function wireRefinementChips(responseMsg, container, suggestion) {
       chip.classList.add('chip-active');
 
       // Simulate a refinement interaction
-      simulateRefinement(container, label, suggestion);
+      simulateRefinement(container, label, suggestion, dialog);
     });
   });
 }
 
 /**
- * Simulates a refinement interaction when user clicks a suggestion chip
+ * Collapses an existing query card to its compact "previous result" state.
  */
-function simulateRefinement(container, chipLabel, suggestion) {
+function collapseQueryCard(card) {
+  if (!card || card.classList.contains('qc-collapsed')) return;
+  card.classList.add('qc-collapsed');
+
+  // Close any open disclosures
+  card.querySelectorAll('.qc-disclosure-body').forEach(b => b.style.display = 'none');
+  card.querySelectorAll('.qc-disclosure').forEach(d => d.classList.remove('open'));
+  card.querySelectorAll('.qc-disclosure-arrow').forEach(a => a.style.transform = '');
+
+  // Store original title for the collapsed header
+  const title = card.querySelector('.qc-title')?.textContent || 'Previous result';
+  const meta = card.querySelector('.qc-meta-row');
+  const metaText = meta ? meta.textContent.trim().replace(/\s+/g, ' ') : '';
+
+  // Build collapsed overlay — clicking expands it back
+  const collapsed = document.createElement('div');
+  collapsed.className = 'qc-collapsed-bar';
+  collapsed.innerHTML = `
+    <forge-icon name="auto_awesome"></forge-icon>
+    <span class="qc-collapsed-title">${title}</span>
+    <span class="qc-collapsed-meta">${metaText}</span>
+    <forge-icon name="expand_more" class="qc-collapsed-expand"></forge-icon>
+  `;
+  card.prepend(collapsed);
+
+  collapsed.addEventListener('click', () => {
+    card.classList.remove('qc-collapsed');
+    collapsed.remove();
+  });
+}
+
+/**
+ * Determines the refinement tier for a chip label:
+ *   'card'    — data-shaping refinement → new query card
+ *   'text'    — narrative/conversational → plain text response
+ *   'handoff' — too complex for chat → designer handoff
+ */
+function getRefinementTier(chipLabel) {
+  const lower = chipLabel.toLowerCase();
+  // These change the data shape → new card
+  if (lower.includes('break down') || lower.includes('breakdown') ||
+      lower.includes('filter') || lower.includes('only') ||
+      lower.includes('group by') || lower.includes('split')) {
+    return 'card';
+  }
+  // These are conversational / narrative
+  if (lower.includes('compare') || lower.includes('chart') ||
+      lower.includes('trend') || lower.includes('export') ||
+      lower.includes('schedule')) {
+    return 'text';
+  }
+  // Complex operations → handoff
+  if (lower.includes('cross-reference') || lower.includes('join') ||
+      lower.includes('calculated field') || lower.includes('workload') ||
+      lower.includes('inspector') || lower.includes('efficiency')) {
+    return 'handoff';
+  }
+  return 'card'; // default to card for data refinements
+}
+
+/**
+ * Builds a refined suggestion object based on the chip clicked.
+ * Returns a new "suggestion-like" object with updated data for the new query card.
+ */
+function buildRefinedSuggestion(chipLabel, parentSuggestion) {
+  const lower = chipLabel.toLowerCase();
+
+  // --- Break down by permit type (or similar breakdown) ---
+  if (lower.includes('break down') || lower.includes('breakdown') || lower.includes('split')) {
+    return {
+      reportTitle: `${parentSuggestion.reportTitle} — By Permit Type`,
+      dataSource: parentSuggestion.dataSource,
+      freshness: parentSuggestion.freshness,
+      sqlCode: `SELECT\n  DATE_FORMAT(p.issue_date, '%b %Y') AS month,\n  p.permit_type AS type,\n  COUNT(*) AS permits\nFROM permits p\nWHERE p.issue_date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)\n  AND p.status = 'ISSUED'\nGROUP BY month, p.permit_type\nORDER BY p.issue_date, permits DESC;`,
+      aiSummary: `I've broken down the permits by type. **Residential renovations** dominate at 41% of all permits, followed by **commercial new construction** at 23% and **residential new build** at 18%.\n\n- Residential renovations peaked in **June** with 142 permits\n- Commercial construction is trending upward — **+18% year-over-year**\n- Demolition permits remain steady at ~30/month`,
+      columns: [
+        { property: 'month', header: 'Month', sortable: true },
+        { property: 'residential_reno', header: 'Residential Reno', sortable: true },
+        { property: 'commercial_new', header: 'Commercial New', sortable: true },
+        { property: 'residential_new', header: 'Residential New', sortable: true },
+        { property: 'demolition', header: 'Demolition', sortable: true },
+        { property: 'total', header: 'Total', sortable: true },
+      ],
+      data: [
+        { month: 'Jan 2025', residential_reno: 82, commercial_new: 44, residential_new: 35, demolition: 31, total: 192 },
+        { month: 'Feb 2025', residential_reno: 88, commercial_new: 48, residential_new: 38, demolition: 33, total: 207 },
+        { month: 'Mar 2025', residential_reno: 101, commercial_new: 55, residential_new: 44, demolition: 36, total: 236 },
+        { month: 'Apr 2025', residential_reno: 112, commercial_new: 60, residential_new: 50, demolition: 38, total: 260 },
+        { month: 'May 2025', residential_reno: 124, commercial_new: 68, residential_new: 58, demolition: 41, total: 291 },
+        { month: 'Jun 2025', residential_reno: 142, commercial_new: 72, residential_new: 64, demolition: 44, total: 322 },
+      ],
+      transparency: parentSuggestion.transparency,
+      refinementChips: [
+        'Show only residential',
+        'Compare to last year',
+        'Filter by date range',
+      ],
+    };
+  }
+
+  // --- Filter by date range / zone / priority ---
+  if (lower.includes('filter') || lower.includes('only')) {
+    const isHighPriority = lower.includes('high') || lower.includes('priority');
+    if (isHighPriority) {
+      return {
+        reportTitle: `${parentSuggestion.reportTitle} — High Priority Only`,
+        dataSource: parentSuggestion.dataSource,
+        freshness: parentSuggestion.freshness,
+        sqlCode: parentSuggestion.sqlCode.replace('GROUP BY', "AND v.priority = 'High'\nGROUP BY"),
+        aiSummary: `Filtered to **high-priority violations only** — **206 cases** year-to-date. **Building code** violations lead with 56 high-priority cases (27%), followed by **property maintenance** at 42 cases.\n\n- Average resolution time for high-priority: **12.4 days** (vs. 17.8 overall)\n- **92%** of high-priority cases are resolved within 30 days\n- Fire safety has the fastest turnaround at **8 days average**`,
+        columns: [
+          { property: 'type', header: 'Violation Type', sortable: true },
+          { property: 'high', header: 'High Priority', sortable: true },
+          { property: 'open', header: 'Open', sortable: true },
+          { property: 'resolved', header: 'Resolved', sortable: true },
+          { property: 'avgDays', header: 'Avg Days', sortable: true },
+        ],
+        data: [
+          { type: 'Building Code', high: 56, open: 12, resolved: 44, avgDays: 14 },
+          { type: 'Property Maintenance', high: 42, open: 8, resolved: 34, avgDays: 18 },
+          { type: 'Fire Safety', high: 31, open: 5, resolved: 26, avgDays: 8 },
+          { type: 'Zoning Violations', high: 28, open: 6, resolved: 22, avgDays: 22 },
+          { type: 'Accessibility', high: 14, open: 3, resolved: 11, avgDays: 19 },
+          { type: 'Electrical', high: 12, open: 2, resolved: 10, avgDays: 12 },
+        ],
+        transparency: parentSuggestion.transparency,
+        refinementChips: [
+          'Group by month',
+          'Show resolution trend',
+          'Compare to last year',
+        ],
+      };
+    }
+    // Generic date filter
+    return {
+      reportTitle: `${parentSuggestion.reportTitle} — Last 6 Months`,
+      dataSource: parentSuggestion.dataSource,
+      freshness: parentSuggestion.freshness,
+      sqlCode: parentSuggestion.sqlCode.replace('INTERVAL 12 MONTH', 'INTERVAL 6 MONTH'),
+      aiSummary: `Filtered to the **last 6 months** (Oct 2025 – Mar 2026). This period shows **1,371 permits** issued — a slight dip compared to the first half of the year.\n\n- **October** was the strongest month with 218 permits\n- Seasonal slowdown is evident — **December** hit the lowest at 145\n- Downtown still leads across all months`,
+      columns: parentSuggestion.columns,
+      data: parentSuggestion.data.slice(6),
+      transparency: parentSuggestion.transparency,
+      refinementChips: [
+        'Break down by permit type',
+        'Compare to same period last year',
+        'Show trend chart',
+      ],
+    };
+  }
+
+  // --- Group by month ---
+  if (lower.includes('group by')) {
+    return {
+      reportTitle: `${parentSuggestion.reportTitle} — Monthly Trend`,
+      dataSource: parentSuggestion.dataSource,
+      freshness: parentSuggestion.freshness,
+      sqlCode: parentSuggestion.sqlCode,
+      aiSummary: `Regrouped by month to show the trend. The data reveals a clear **seasonal arc** — activity ramps up through spring, peaks in **June** (322 permits), then steadily declines into winter.\n\n- **Q2** (Apr–Jun) accounts for 34% of all annual permits\n- Month-over-month growth averaged **+8%** from Jan to Jun\n- The Dec-to-Jan transition shows a **32% rebound** historically`,
+      columns: parentSuggestion.columns,
+      data: parentSuggestion.data,
+      transparency: parentSuggestion.transparency,
+      refinementChips: [
+        'Break down by permit type',
+        'Filter by date range',
+        'Show year-over-year comparison',
+      ],
+    };
+  }
+
+  // Fallback — generic filtered result
+  return {
+    reportTitle: `${parentSuggestion.reportTitle} — Refined`,
+    dataSource: parentSuggestion.dataSource,
+    freshness: parentSuggestion.freshness,
+    sqlCode: parentSuggestion.sqlCode,
+    aiSummary: `I've updated the results based on your request. The refined dataset contains **${Math.floor(Math.random() * 200 + 80)} records** matching the new criteria.\n\nThe key patterns from the original data still hold, with some interesting shifts in the filtered view.`,
+    columns: parentSuggestion.columns,
+    data: parentSuggestion.data.slice(0, 6),
+    transparency: parentSuggestion.transparency,
+    refinementChips: [
+      'Filter further',
+      'Compare to last year',
+      'Break down by category',
+    ],
+  };
+}
+
+/**
+ * Returns a text-only response for narrative/conversational refinements.
+ */
+function getTextRefinementResponse(chipLabel, suggestion) {
+  const lower = chipLabel.toLowerCase();
+  if (lower.includes('compare')) {
+    return `Comparing to the same period last year, the overall trend is positive. **Total permits are up 14%**, driven primarily by a **22% increase in residential** activity. Commercial permits dipped slightly (**-8%**), likely due to two large projects completing in Q1 last year that haven't been replaced yet.\n\nThe strongest growth district is **Riverside** (+31%), while **Industrial** stayed essentially flat (+2%).`;
+  }
+  if (lower.includes('chart') || lower.includes('trend')) {
+    return `The trend line shows a clear seasonal pattern — activity climbs from January through a **June peak**, then gradually declines into December. This is consistent with prior years.\n\nOne notable shift: the **summer plateau is widening**. Last year, the peak was concentrated in June–July. This year, May through August all stayed above 270 permits/month, suggesting more sustained construction activity.`;
+  }
+  if (lower.includes('export') || lower.includes('excel')) {
+    return `I can export this in several formats:\n\n- **CSV** — Raw data, opens in any spreadsheet app\n- **Excel (.xlsx)** — Formatted with headers and column widths\n- **PDF** — Print-ready with summary and data table\n\nWhich format works best?`;
+  }
+  if (lower.includes('schedule')) {
+    return `I can set this up as a recurring report. Common schedules for this data:\n\n- **Daily at 6:00 AM** — Fresh data every morning\n- **Weekly on Monday** — Weekly digest for team meetings\n- **Monthly on the 1st** — Month-over-month comparison\n\nWho should receive it?`;
+  }
+  return `Good question. Based on the current data, **${Math.floor(Math.random() * 500 + 100)} records** match that criteria. The patterns are consistent with what we saw in the broader view — no major outliers.`;
+}
+
+/**
+ * Simulates a refinement interaction when user clicks a suggestion chip.
+ * Uses the tiered response system:
+ *   - 'card' → collapse previous card, show new query card
+ *   - 'text' → conversational text response
+ *   - 'handoff' → designer handoff nudge
+ */
+function simulateRefinement(container, chipLabel, suggestion, dialog) {
+  const tier = getRefinementTier(chipLabel);
+
   // Add user message
   const userMsg = document.createElement('forge-ai-user-message');
   userMsg.textContent = chipLabel;
   container.appendChild(userMsg);
   scrollToBottom(container);
+
+  // Collapse previous query card(s)
+  if (tier === 'card') {
+    container.querySelectorAll('.query-card:not(.qc-collapsed)').forEach(card => {
+      collapseQueryCard(card);
+    });
+  }
 
   // Thinking
   setTimeout(() => {
@@ -350,54 +781,52 @@ function simulateRefinement(container, chipLabel, suggestion) {
     setTimeout(() => {
       container.removeChild(thinking);
 
-      const responseMsg = document.createElement('forge-ai-response-message');
-      const responseContent = document.createElement('div');
-      responseContent.className = 'ai-response-content';
+      if (tier === 'card') {
+        // --- New query card ---
+        const refinedSuggestion = buildRefinedSuggestion(chipLabel, suggestion);
+        const responseMsg = document.createElement('forge-ai-response-message');
+        const responseContent = document.createElement('div');
+        responseContent.className = 'ai-response-content';
+        responseContent.innerHTML = buildQueryCard(refinedSuggestion);
+        responseMsg.appendChild(responseContent);
+        container.appendChild(responseMsg);
+        scrollToBottom(container);
 
-      // Generate a contextual response based on the chip
-      const refinementResponse = getRefinementResponse(chipLabel, suggestion);
-      responseContent.innerHTML = `
-        ${markdownToHtml(refinementResponse)}
-        <div class="data-source-badge">
-          <forge-icon name="database_outline"></forge-icon>
-          ${suggestion.dataSource}
-          <span class="data-source-dot"></span>
-          ${suggestion.freshness}
-        </div>
-      `;
-      responseMsg.appendChild(responseContent);
-      container.appendChild(responseMsg);
-      scrollToBottom(container);
+        // Wire interactions on the new card
+        wireQueryCard(responseMsg, container, refinedSuggestion, dialog);
 
-      // After refinement, show the handoff nudge
-      setTimeout(() => {
+        // Wire Explore Results button on the new card
+        const openBtn = responseMsg.querySelector('#open-report-btn');
+        if (openBtn && dialog) {
+          openBtn.addEventListener('click', () => {
+            transitionToSplitView(dialog, container, refinedSuggestion);
+          });
+        }
+
+      } else if (tier === 'text') {
+        // --- Conversational text response ---
+        const responseMsg = document.createElement('forge-ai-response-message');
+        const responseContent = document.createElement('div');
+        responseContent.className = 'ai-response-content';
+        responseContent.innerHTML = `
+          ${markdownToHtml(getTextRefinementResponse(chipLabel, suggestion))}
+          <div class="data-source-badge">
+            <forge-icon name="database_outline"></forge-icon>
+            ${suggestion.dataSource}
+            <span class="data-source-dot"></span>
+            ${suggestion.freshness}
+          </div>
+        `;
+        responseMsg.appendChild(responseContent);
+        container.appendChild(responseMsg);
+        scrollToBottom(container);
+
+      } else {
+        // --- Handoff nudge ---
         showHandoffNudge(container, suggestion);
-      }, 1500);
+      }
     }, 1500);
   }, 400);
-}
-
-/**
- * Returns a contextual refinement response
- */
-function getRefinementResponse(chipLabel, suggestion) {
-  const lower = chipLabel.toLowerCase();
-  if (lower.includes('chart') || lower.includes('trend')) {
-    return `Here's the trend visualization. The data shows a clear seasonal pattern with peak activity in summer months and a decline toward year-end.\n\nI can also show this as a line chart or area chart if you prefer a different view.`;
-  }
-  if (lower.includes('filter') || lower.includes('only')) {
-    return `I've applied the filter. The results now show a focused subset — **${Math.floor(Math.random() * 200 + 50)} records** matching your criteria.\n\nWant to narrow this down further, or export what we have?`;
-  }
-  if (lower.includes('export') || lower.includes('excel')) {
-    return `I can export this in several formats:\n\n- **CSV** — Raw data, opens in any spreadsheet app\n- **Excel (.xlsx)** — Formatted with headers and column widths\n- **PDF** — Print-ready with summary and data table\n\nWhich format do you prefer?`;
-  }
-  if (lower.includes('schedule')) {
-    return `I can set this up as a recurring report. Common schedules for this data:\n\n- **Daily at 6:00 AM** — Fresh data every morning\n- **Weekly on Monday** — Weekly summary for team meetings\n- **Monthly on the 1st** — Month-over-month comparison\n\nWho should receive it, and in what format?`;
-  }
-  if (lower.includes('compare') || lower.includes('breakdown') || lower.includes('break down')) {
-    return `Good call. Adding the comparison shows some interesting shifts — **residential permits are up 22%** while **commercial permits dipped 8%** in the same period.\n\nWant me to dig into a specific category?`;
-  }
-  return `Done — I've updated the results. **${Math.floor(Math.random() * 500 + 100)} records** match the new criteria.\n\nAnything else you'd like to adjust?`;
 }
 
 /**
@@ -1031,6 +1460,14 @@ function buildReportPanel(suggestion) {
             </div>
             <span class="dropdown-item-desc">Add to your saved reports</span>
           </button>
+          <div class="canvas-dropdown-divider"></div>
+          <button class="canvas-dropdown-item" type="button" data-action="designer">
+            <div class="dropdown-item-row">
+              <forge-icon name="open_in_new"></forge-icon>
+              <span class="dropdown-item-label">Open in Report Designer</span>
+            </div>
+            <span class="dropdown-item-desc">Advanced layout, joins, and formatting</span>
+          </button>
         </div>
       </div>
     </div>
@@ -1150,6 +1587,27 @@ function buildReportPanel(suggestion) {
       item.addEventListener('click', () => {
         const action = item.dataset.action;
         closeAllDropdowns(panel);
+
+        // "Open in Report Designer" launches the designer
+        if (action === 'designer') {
+          const handoffContext = {
+            reportTitle: suggestion.reportTitle,
+            dataSource: suggestion.dataSource,
+            freshness: suggestion.freshness,
+            sqlCode: suggestion.sqlCode,
+            columns: suggestion.columns,
+            data: suggestion.data,
+            query: suggestion.query,
+            aiSummary: suggestion.aiSummary,
+            transparency: suggestion.transparency,
+            handoffReason: 'Opened from Report Actions menu',
+          };
+          sessionStorage.setItem('tira-handoff-context', JSON.stringify(handoffContext));
+          const dialog = document.querySelector('#chat-dialog');
+          if (dialog) mountReportDesigner(dialog);
+          return;
+        }
+
         const actionLabel = reportActionsBtn.querySelector('span');
         const feedbackMap = {
           export: 'Exported!',
