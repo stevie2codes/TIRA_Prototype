@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
 import { fetchDataTypes, fetchData } from '../services/dataService.js';
+import { DEFAULT_MARGINS } from '../constants/pageSettings.js';
 
 const ReportContext = createContext(null);
 
@@ -127,6 +128,20 @@ export function ReportProvider({ children }) {
   // Start on Report Builder tab if we have handoff context, otherwise Data Layer
   const [activeTab, setActiveTab] = useState(handoffContext ? 1 : 0);
 
+  // Template state — initialized from handoff if available
+  const [activeTemplateId, setActiveTemplateId] = useState(
+    () => handoffContext?.activeTemplateId || null
+  );
+
+  // Canvas view state
+  const [viewMode, setViewMode] = useState('print'); // 'print' | 'dashboard'
+  const [zoom, setZoom] = useState(100); // 50-200
+  const [pageSize, setPageSize] = useState('letter'); // 'letter' | 'a4' | 'legal'
+  const [orientation, setOrientation] = useState('portrait'); // 'portrait' | 'landscape'
+  const [margins, setMargins] = useState(DEFAULT_MARGINS);
+  const [rightPanelTab, setRightPanelTab] = useState('properties'); // 'properties' | 'ai-chat'
+  const [showRulers, setShowRulers] = useState(true);
+
   // API-driven state
   const [availableSources, setAvailableSources] = useState([]);
   const [generatedData, setGeneratedData] = useState(() => {
@@ -214,6 +229,14 @@ export function ReportProvider({ children }) {
       generateNodeData,
       loadingNodes,
       handoffContext,
+      activeTemplateId, setActiveTemplateId,
+      viewMode, setViewMode,
+      zoom, setZoom,
+      pageSize, setPageSize,
+      orientation, setOrientation,
+      margins, setMargins,
+      rightPanelTab, setRightPanelTab,
+      showRulers, setShowRulers,
     }}>
       {children}
     </ReportContext.Provider>

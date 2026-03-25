@@ -710,69 +710,20 @@
 </head>
 <body class="forge-typography">
   <div id="app">
-    <!-- Side Menu - outside scaffold for proper layering -->
-    <nav class="side-menu" id="side-menu">
-      <div class="side-menu-header">
-        <span class="side-menu-title">TIRA</span>
-        <forge-icon-button id="menu-close-btn" aria-label="Close menu">
-          <forge-icon name="close"></forge-icon>
-        </forge-icon-button>
-      </div>
-
-      <div class="side-menu-content">
-        <!-- REPORTS Section -->
-        <div class="side-menu-section">
-          <div class="side-menu-section-label">REPORTS</div>
-          <button class="side-menu-item" type="button" data-action="my-reports">
-            <forge-icon name="folder"></forge-icon>
-            <span>My Reports</span>
-          </button>
-          <button class="side-menu-item" type="button" data-action="shared-reports">
-            <forge-icon name="people"></forge-icon>
-            <span>Shared</span>
-          </button>
-          <button class="side-menu-item" type="button" data-action="scheduled-reports">
-            <forge-icon name="schedule"></forge-icon>
-            <span>Scheduled</span>
-          </button>
-        </div>
-
-        <!-- LIBRARY Section -->
-        <div class="side-menu-section">
-          <div class="side-menu-section-label">LIBRARY</div>
-          <button class="side-menu-item" type="button" data-action="templates">
-            <forge-icon name="description"></forge-icon>
-            <span>Templates</span>
-          </button>
-          <button class="side-menu-item" type="button" data-action="data-sources">
-            <forge-icon name="database_outline"></forge-icon>
-            <span>Data Sources</span>
-          </button>
-        </div>
-      </div>
-
-      <div class="side-menu-footer">
-        <button class="side-menu-item" type="button" data-action="settings">
-          <forge-icon name="settings"></forge-icon>
-          <span>Settings</span>
-        </button>
-        <button class="side-menu-item" type="button" data-action="help">
-          <forge-icon name="help_outline"></forge-icon>
-          <span>Help</span>
-        </button>
-      </div>
-    </nav>
-
-    <!-- Overlay for mobile -->
-    <div class="side-menu-overlay" id="side-menu-overlay"></div>
-
     <forge-scaffold>
-      <forge-app-bar title-text="Title" slot="header">
+      <forge-app-bar title-text="" slot="header">
+        <forge-icon-button slot="start" aria-label="App Switcher" id="app-switcher-btn" style="position: relative;">
+          <forge-icon name="grid_view"></forge-icon>
+        </forge-icon-button>
+        <span slot="start" class="app-bar-title" id="app-bar-title" style="font-size: 16px; font-weight: 500; margin-left: 4px; cursor: default;">TIRA</span>
         <forge-app-bar-menu-button slot="start" id="menu-toggle-btn"></forge-app-bar-menu-button>
         <img slot="start" class="app-bar-logo" src="/images/tyler-logo-icon.png" alt="Tyler Logo" />
         <forge-app-bar-search slot="center">
           <input type="text" placeholder="Search" />
         </forge-app-bar-search>
+        <forge-icon-button slot="end" aria-label="Ask AI" id="sparkle-btn" style="display: none;">
+          <forge-icon name="auto_awesome"></forge-icon>
+        </forge-icon-button>
         <forge-icon-button slot="end" aria-label="Help">
           <forge-icon name="help_outline"></forge-icon>
         </forge-icon-button>
@@ -785,42 +736,7 @@
         <forge-avatar slot="end" text="TF" style="margin-right: 8px;"></forge-avatar>
       </forge-app-bar>
 
-      <div slot="body" class="home-body">
-        <div class="home-content">
-          <div class="title-section">
-            <div class="title-row">
-              <img class="tyler-logo" src="/images/tyler-logo-icon.png" alt="Tyler Logo" />
-              <span class="title-text" id="home-greeting">Find the report you need</span>
-            </div>
-
-            <div class="prompt-area">
-              <div class="prompt-input-row">
-                <input type="text" placeholder="Ask a question about your data..." />
-                <forge-icon-button aria-label="Send">
-                  <forge-icon name="send"></forge-icon>
-                </forge-icon-button>
-              </div>
-              <div class="prompt-button-row">
-                <div class="prompt-actions">
-                  <forge-icon-button aria-label="Add attachment">
-                    <forge-icon name="add"></forge-icon>
-                  </forge-icon-button>
-                  <button class="source-toggle" type="button" id="source-toggle">
-                    <forge-icon name="database_outline"></forge-icon>
-                    All sources
-                    <forge-icon name="arrow_drop_down"></forge-icon>
-                  </button>
-                </div>
-              </div>
-              <div class="disclaimer">AI can make mistakes. Always verify responses.</div>
-            </div>
-          </div>
-
-          <div class="suggestions-row" id="suggestions-container">
-            <!-- Populated dynamically by main.js based on selected source -->
-          </div>
-        </div>
-      </div>
+      <div slot="body" id="view-container" style="height: 100%;"></div>
     </forge-scaffold>
   </div>
   <script type="module" src="/src/main.js"></script>

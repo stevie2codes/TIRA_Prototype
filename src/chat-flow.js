@@ -1,4 +1,5 @@
 import { suggestions } from './mock-data.js';
+import { outputTemplates, getTemplateById } from './output-templates.js';
 import './chat-flow.css';
 
 /** @param {string} md */
@@ -1423,6 +1424,32 @@ function buildReportPanel(suggestion) {
           <span>SQL</span>
         </button>
       </div>
+      <div class="template-picker-group">
+        <button class="template-picker-btn" type="button" id="template-picker-btn">
+          <forge-icon name="palette"></forge-icon>
+          <span>Template: None</span>
+          <forge-icon name="arrow_drop_down" class="action-dropdown-arrow"></forge-icon>
+        </button>
+        <div class="canvas-dropdown template-dropdown" id="template-dropdown">
+          <button class="canvas-dropdown-item template-dropdown-item" type="button" data-template-id="">
+            <div class="dropdown-item-row">
+              <span class="template-color-dot" style="background: #9e9e9e;"></span>
+              <span class="dropdown-item-label">None</span>
+            </div>
+            <span class="dropdown-item-desc">Remove template formatting</span>
+          </button>
+          <div class="canvas-dropdown-divider"></div>
+          ${outputTemplates.map(t => `
+            <button class="canvas-dropdown-item template-dropdown-item" type="button" data-template-id="${t.id}">
+              <div class="dropdown-item-row">
+                <span class="template-color-dot" style="background: ${t.theme.primary};"></span>
+                <span class="dropdown-item-label">${t.name}</span>
+              </div>
+              <span class="dropdown-item-desc">${t.description}</span>
+            </button>
+          `).join('')}
+        </div>
+      </div>
     </div>
     <div class="report-action-bar-right">
       <div class="canvas-action-group">
@@ -1569,6 +1596,30 @@ function buildReportPanel(suggestion) {
       });
     });
 
+    // Template picker dropdown toggle + selection
+    const templateBtn = panel.querySelector('#template-picker-btn');
+    const templateDropdown = panel.querySelector('#template-dropdown');
+    let activeTemplateId = null;
+
+    templateBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = templateDropdown.classList.contains('open');
+      closeAllDropdowns(panel);
+      if (!isOpen) templateDropdown.classList.add('open');
+    });
+
+    panel.querySelectorAll('.template-dropdown-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const templateId = item.dataset.templateId;
+        closeAllDropdowns(panel);
+        activeTemplateId = templateId || null;
+        const template = templateId ? getTemplateById(templateId) : null;
+        const label = templateBtn.querySelector('span');
+        label.textContent = template ? `Template: ${template.name}` : 'Template: None';
+        applyTemplate(panel, template, suggestion);
+      });
+    });
+
     // Report Actions dropdown toggle
     const reportActionsBtn = panel.querySelector('#report-actions-btn');
     const reportActionsDropdown = panel.querySelector('#report-actions-dropdown');
@@ -1601,6 +1652,7 @@ function buildReportPanel(suggestion) {
             aiSummary: suggestion.aiSummary,
             transparency: suggestion.transparency,
             handoffReason: 'Opened from Report Actions menu',
+            activeTemplateId: activeTemplateId || null,
           };
           sessionStorage.setItem('tira-handoff-context', JSON.stringify(handoffContext));
           const dialog = document.querySelector('#chat-dialog');
@@ -1630,4 +1682,84 @@ function buildReportPanel(suggestion) {
 
 function closeAllDropdowns(panel) {
   panel.querySelectorAll('.canvas-dropdown').forEach(d => d.classList.remove('open'));
+}
+
+/**
+ * Applies or removes an output template on the report panel.
+ * Adds/updates a branded header, themed footer, and CSS custom properties.
+ */
+function applyTemplate(panel, template, suggestion) {
+  // Remove existing template elements
+  panel.querySelector('.report-template-header')?.remove();
+  panel.querySelector('.report-template-footer')?.remove();
+  panel.removeAttribute('data-template');
+
+  // Reset CSS custom properties
+  const props = ['--tpl-primary', '--tpl-secondary', '--tpl-accent', '--tpl-surface',
+    '--tpl-text', '--tpl-muted', '--tpl-border', '--tpl-table-border', '--tpl-table-stripe',
+    '--tpl-content-border', '--tpl-content-bg', '--tpl-content-radius', '--tpl-header-accent'];
+  props.forEach(p => panel.style.removeProperty(p));
+
+  if (!template) return;
+
+  // Set data attribute for CSS hooks
+  panel.setAttribute('data-template', template.id);
+
+  // Apply CSS custom properties
+  const t = template.theme;
+  panel.style.setProperty('--tpl-primary', t.primary);
+  panel.style.setProperty('--tpl-secondary', t.secondary);
+  panel.style.setProperty('--tpl-accent', t.accent);
+  panel.style.setProperty('--tpl-surface', t.surface);
+  panel.style.setProperty('--tpl-text', t.text);
+  panel.style.setProperty('--tpl-muted', t.muted);
+  panel.style.setProperty('--tpl-border', t.border);
+  panel.style.setProperty('--tpl-table-border', t.tableBorder);
+  panel.style.setProperty('--tpl-table-stripe', t.tableStripe);
+  panel.style.setProperty('--tpl-content-border', template.contentStyle.border);
+  panel.style.setProperty('--tpl-content-bg', template.contentStyle.background);
+  panel.style.setProperty('--tpl-content-radius', template.contentStyle.radius);
+  panel.style.setProperty('--tpl-header-accent', template.contentStyle.headerAccent);
+
+  // Build branded header
+  const header = document.createElement('div');
+  header.className = 'report-template-header';
+  header.innerHTML = `
+    <div class="tpl-header-inner" style="background: ${template.header.background}; color: ${template.header.text};">
+      <div class="tpl-header-logo">
+        <forge-icon name="${template.logo}"></forge-icon>
+      </div>
+      <div class="tpl-header-text">
+        <div class="tpl-header-department">${template.header.department || suggestion.reportTitle}</div>
+        <div class="tpl-header-subtitle">${template.header.subtitle} — ${suggestion.reportTitle}</div>
+      </div>
+      <div class="tpl-header-meta">
+        <span>${suggestion.dataSource}</span>
+        <span>${suggestion.freshness}</span>
+      </div>
+    </div>
+  `;
+
+  // Build footer
+  const footer = document.createElement('div');
+  footer.className = 'report-template-footer';
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  footer.innerHTML = `
+    <div class="tpl-footer-inner" style="border-top-color: ${t.border};">
+      <span class="tpl-footer-text">${template.footer.text}</span>
+      <span class="tpl-footer-meta">
+        ${template.footer.showDate ? `Generated ${dateStr} at ${timeStr}` : ''}
+        ${template.footer.showPageNumbers ? ' — Page 1 of 1' : ''}
+      </span>
+    </div>
+  `;
+
+  // Insert header after filter bar, footer at the end
+  const filterBar = panel.querySelector('.filter-bar');
+  if (filterBar) {
+    filterBar.insertAdjacentElement('afterend', header);
+  }
+  panel.appendChild(footer);
 }

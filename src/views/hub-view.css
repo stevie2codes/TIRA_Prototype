@@ -1,0 +1,322 @@
+/* ── Hub Layout — matches Chart Manager screenshot ── */
+.hub-layout {
+  display: flex;
+  height: 100%;
+  background: #fff;
+}
+
+/* ── Icon Rail Sidebar (~50px) ── */
+.hub-rail {
+  width: 52px;
+  background: #f8f9fa;
+  border-right: 1px solid #e0e0e0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 6px 0;
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+
+.hub-rail-top,
+.hub-rail-bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.hub-rail-item {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.hub-rail-item forge-icon {
+  --forge-icon-font-size: 20px;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.hub-rail-item:hover {
+  background: rgba(63, 81, 181, 0.08);
+}
+
+.hub-rail-item:hover forge-icon {
+  color: #3f51b5;
+}
+
+.hub-rail-item.active {
+  background: rgba(63, 81, 181, 0.12);
+}
+
+.hub-rail-item.active forge-icon {
+  color: #3f51b5;
+}
+
+/* ── Main Content Area ── */
+.hub-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── Page Header ── */
+.hub-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid #e0e0e0;
+  flex-shrink: 0;
+}
+
+.hub-page-title {
+  font-family: 'Roboto', sans-serif;
+  font-size: 20px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.87);
+  margin: 0;
+}
+
+.hub-page-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hub-btn-outlined {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border: 1px solid #dadce0;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: #3f51b5;
+  letter-spacing: 0.25px;
+  transition: background 0.15s ease;
+}
+
+.hub-btn-outlined:hover {
+  background: #f5f6fa;
+}
+
+.hub-btn-outlined forge-icon {
+  --forge-icon-font-size: 18px;
+  color: #3f51b5;
+}
+
+.hub-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 20px;
+  border: none;
+  border-radius: 4px;
+  background: #3f51b5;
+  cursor: pointer;
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: #fff;
+  letter-spacing: 0.25px;
+  transition: background 0.15s ease;
+}
+
+.hub-btn-primary:hover {
+  background: #3949ab;
+}
+
+.hub-btn-primary forge-icon {
+  --forge-icon-font-size: 18px;
+  color: #fff;
+}
+
+/* ── Filter bar ── */
+.hub-filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 20px;
+  padding: 10px 24px;
+  border-bottom: 1px solid #e0e0e0;
+  flex-shrink: 0;
+}
+
+.hub-filter-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: #3f51b5;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.hub-filter-link:hover {
+  text-decoration: underline;
+}
+
+.hub-filter-link forge-icon {
+  --forge-icon-font-size: 18px;
+  color: #3f51b5;
+}
+
+/* ── Data Table ── */
+.hub-table-wrapper {
+  flex: 1;
+  overflow: auto;
+}
+
+.hub-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px;
+}
+
+.hub-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.hub-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 500;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.6);
+  background: #fafafa;
+  border-bottom: 1px solid #e0e0e0;
+  white-space: nowrap;
+}
+
+.hub-table td {
+  padding: 12px 16px;
+  color: rgba(0, 0, 0, 0.87);
+  border-bottom: 1px solid #f0f0f0;
+  vertical-align: middle;
+}
+
+.hub-table tbody tr:hover {
+  background: #f5f7ff;
+}
+
+.hub-table-check {
+  width: 48px;
+  text-align: center;
+  padding-left: 16px;
+  padding-right: 8px;
+}
+
+.hub-table-check input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #3f51b5;
+}
+
+.hub-table-account {
+  font-family: 'Roboto Mono', 'Consolas', monospace;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.7);
+  white-space: nowrap;
+}
+
+.hub-table-desc {
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hub-table-actions {
+  width: 48px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.hub-table-actions forge-icon {
+  transform: rotate(0deg) !important;
+}
+
+/* ── Pagination ── */
+.hub-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 24px;
+  border-top: 1px solid #e0e0e0;
+  flex-shrink: 0;
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.hub-pagination-label {
+  margin-right: 4px;
+}
+
+.hub-pagination-select {
+  border: 1px solid #dadce0;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 13px;
+  font-family: 'Roboto', sans-serif;
+  color: rgba(0, 0, 0, 0.87);
+  background: #fff;
+  cursor: pointer;
+}
+
+.hub-pagination-info {
+  margin: 0 12px;
+}
+
+.hub-pagination-btn {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.hub-pagination-btn:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.hub-pagination-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.hub-pagination-btn forge-icon {
+  --forge-icon-font-size: 20px;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+/* ── Forge AI Floating Chat — expanded covers most of page, not full ── */
+forge-ai-floating-chat {
+  --forge-ai-modal-width: 85vw;
+  --forge-ai-modal-height: 85vh;
+}

@@ -1,15 +1,18 @@
 // Forge components: ForgeAppBar, ForgeButtonToggleGroup, ForgeButtonToggle, ForgeIcon, ForgeIconButton, ForgeButton, ForgeAvatar, ForgeToast
-import { useRef, useCallback, useState } from 'react';
+import { useRef, useCallback, useState, useEffect } from 'react';
 import {
   ForgeAppBar, ForgeIcon, ForgeIconButton, ForgeButton,
   ForgeAvatar, ForgeButtonToggleGroup, ForgeButtonToggle, ForgeToast,
 } from '@tylertech/forge-react';
 import { useReport } from '../context/ReportContext.jsx';
+import { outputTemplates, getTemplateById } from '../../../src/output-templates.js';
 import DataLayerCanvas from './data-layer/DataLayerCanvas.jsx';
 import SourcePalette from './data-layer/SourcePalette.jsx';
 import PropertiesPanel from './PropertiesPanel.jsx';
 import ReportCanvas from './report-builder/ReportCanvas.jsx';
 import WidgetPalette from './report-builder/WidgetPalette.jsx';
+import CanvasToolbar from './report-builder/CanvasToolbar.jsx';
+import AIChatPanel from './AIChatPanel.jsx';
 
 function HandoffBanner({ context, onDismiss }) {
   if (!context) return null;
@@ -40,18 +43,33 @@ function HandoffBanner({ context, onDismiss }) {
 }
 
 export default function AppShell() {
-  const { activeTab, setActiveTab, handoffContext } = useReport();
+  const { activeTab, setActiveTab, handoffContext, activeTemplateId, setActiveTemplateId, rightPanelTab, setRightPanelTab } = useReport();
   const saveToastRef = useRef(null);
   const settingsToastRef = useRef(null);
   const [leftOpen, setLeftOpen] = useState(true);
   const [rightOpen, setRightOpen] = useState(true);
   const [showBanner, setShowBanner] = useState(!!handoffContext);
+  const [templateDropdownOpen, setTemplateDropdownOpen] = useState(false);
+
+  const activeTemplate = activeTemplateId ? getTemplateById(activeTemplateId) : null;
 
   const handleToggleChange = (e) => {
     const val = e.detail;
     if (val === 'data-layer') setActiveTab(0);
     else if (val === 'report-builder') setActiveTab(1);
   };
+
+  // Close template dropdown on outside click
+  const templatePickerRef = useRef(null);
+  const handleDocClick = useCallback((e) => {
+    if (templatePickerRef.current && !templatePickerRef.current.contains(e.target)) {
+      setTemplateDropdownOpen(false);
+    }
+  }, []);
+  useEffect(() => {
+    document.addEventListener('click', handleDocClick);
+    return () => document.removeEventListener('click', handleDocClick);
+  }, [handleDocClick]);
 
   const handleSave = useCallback(() => {
     if (saveToastRef.current) {
@@ -105,6 +123,43 @@ export default function AppShell() {
           </ForgeButtonToggle>
         </ForgeButtonToggleGroup>
         <div className="mode-bar-actions">
+          <div className="designer-template-picker" ref={templatePickerRef} style={{ position: 'relative' }}>
+            <button
+              className={`designer-template-btn${activeTemplate ? ' has-template' : ''}`}
+              onClick={(e) => { e.stopPropagation(); setTemplateDropdownOpen(o => !o); }}
+              style={activeTemplate ? { borderColor: activeTemplate.theme.primary, color: activeTemplate.theme.primary } : {}}
+            >
+              <ForgeIcon name="palette" />
+              <span>{activeTemplate ? `Template: ${activeTemplate.name}` : 'Template: None'}</span>
+              <ForgeIcon name="arrow_drop_down" />
+            </button>
+            {templateDropdownOpen && (
+              <div className="designer-template-dropdown" onClick={() => setTemplateDropdownOpen(false)}>
+                <button
+                  className="designer-template-option"
+                  onClick={() => { setActiveTemplateId(null); setTemplateDropdownOpen(false); }}
+                >
+                  <span className="template-color-dot" style={{ background: '#9e9e9e' }} />
+                  <span>None</span>
+                </button>
+                <div className="designer-template-divider" />
+                {outputTemplates.map(t => (
+                  <button
+                    key={t.id}
+                    className={`designer-template-option${activeTemplateId === t.id ? ' active' : ''}`}
+                    onClick={() => { setActiveTemplateId(t.id); setTemplateDropdownOpen(false); }}
+                  >
+                    <span className="template-color-dot" style={{ background: t.theme.primary }} />
+                    <span>{t.name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <ForgeButton variant="outlined" on-click={() => window.print()}>
+            <ForgeIcon name="print" slot="leading" />
+            Print
+          </ForgeButton>
           <ForgeButton variant="raised" on-click={handleSave}>
             Publish
           </ForgeButton>
@@ -135,6 +190,7 @@ export default function AppShell() {
           )}
         </div>
         <div className="canvas-main">
+          {activeTab === 1 && <CanvasToolbar />}
           {activeTab === 0 ? <DataLayerCanvas /> : <ReportCanvas />}
         </div>
         <div className={`right-sidebar${rightOpen ? '' : ' collapsed'}`}>
@@ -143,17 +199,27 @@ export default function AppShell() {
               <ForgeIcon name={rightOpen ? 'chevron_right' : 'chevron_left'} />
             </ForgeIconButton>
             {rightOpen && (
-              <div className="sidebar-header-group" style={{ textAlign: 'right' }}>
-                <span className="sidebar-title">Properties</span>
-                <span className="sidebar-subtitle">
-                  {activeTab === 0 ? 'Node settings' : 'Widget settings'}
-                </span>
+              <div className="right-sidebar-tabs">
+                <button
+                  className={`sidebar-tab${rightPanelTab === 'properties' ? ' active' : ''}`}
+                  onClick={() => setRightPanelTab('properties')}
+                >
+                  <ForgeIcon name="tune" />
+                  <span>Properties</span>
+                </button>
+                <button
+                  className={`sidebar-tab${rightPanelTab === 'ai-chat' ? ' active' : ''}`}
+                  onClick={() => setRightPanelTab('ai-chat')}
+                >
+                  <ForgeIcon name="auto_awesome" />
+                  <span>AI Chat</span>
+                </button>
               </div>
             )}
           </div>
           {rightOpen && (
             <div className="sidebar-body">
-              <PropertiesPanel />
+              {rightPanelTab === 'properties' ? <PropertiesPanel /> : <AIChatPanel />}
             </div>
           )}
         </div>
