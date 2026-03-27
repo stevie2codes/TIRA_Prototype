@@ -36,30 +36,6 @@ export const dataSources = [
     icon: 'account_balance',
     departments: ['Finance', 'Admin & Finance', 'Community Development', 'Public Works', 'Capital Projects'],
   },
-  {
-    id: 'gis',
-    label: 'GIS & Mapping',
-    icon: 'map',
-    departments: ['Community Development', 'Planning', 'Public Works', 'Code Enforcement', 'Capital Projects'],
-  },
-  {
-    id: 'justice',
-    label: 'Justice & Public Safety',
-    icon: 'shield',
-    departments: ['Public Safety', 'Justice', 'Legal', 'Community Development'],
-  },
-  {
-    id: 'utilities',
-    label: 'Utilities & Billing',
-    icon: 'water',
-    departments: ['Utilities', 'Public Works', 'Finance'],
-  },
-  {
-    id: 'hr-payroll',
-    label: 'HR & Payroll',
-    icon: 'people',
-    departments: ['Human Resources', 'Admin & Finance'],
-  },
 ];
 
 /**
@@ -99,32 +75,6 @@ export const sourceSuggestions = {
     { label: 'Purchase orders pending', query: 'Show outstanding purchase orders over $10K' },
     { label: 'Payroll summary', query: 'Department payroll totals this month' },
   ],
-  'gis': [
-    { label: 'Parcels by zoning', query: 'Show parcel count by zoning classification' },
-    { label: 'Recent annexations', query: 'List parcels annexed in the last 12 months' },
-    { label: 'Vacant properties', query: 'How many vacant commercial properties are in each district?' },
-    { label: 'Flood zone parcels', query: 'Parcels within designated flood zones' },
-  ],
-  'justice': [
-    { label: 'Arrests summary', suggestionIndex: 3 },
-    { label: 'Case disposition report', suggestionIndex: 4 },
-    { label: 'Active caseload', query: 'Current active cases by type and status' },
-    { label: 'Juvenile aging out', query: 'Subjects turning 18 this month with case details' },
-    { label: 'Drug-related charges', query: 'Cases with drug-related charges, dismissed vs. active' },
-    { label: 'Court scheduling', query: 'Upcoming court dates this week' },
-  ],
-  'utilities': [
-    { label: 'Billing method breakdown', query: 'Accounts by billing method and service area' },
-    { label: 'Delinquent accounts', query: 'Accounts past due over 60 days' },
-    { label: 'Consumption trends', query: 'Water consumption trends by district this quarter' },
-    { label: 'Service requests', query: 'Open utility service requests by type' },
-  ],
-  'hr-payroll': [
-    { label: 'Headcount by department', query: 'Current employee headcount by department' },
-    { label: 'Open positions', query: 'Show all open positions and time-to-fill' },
-    { label: 'Overtime report', query: 'Overtime hours by department this month' },
-    { label: 'Benefits enrollment', query: 'Benefits enrollment status by plan type' },
-  ],
 };
 
 /**
@@ -150,9 +100,10 @@ export const defaultCategorySuggestions = [
 export const recentActivity = [
   {
     timestamp: '2026-03-20T14:22:00Z',
-    label: 'Building Permits by Month — Downtown Only',
-    type: 'saved_report',
+    label: 'Building Permits by Month',
+    type: 'suggestion',
     sourceId: 'permits-licensing',
+    suggestionIndex: 0,
     timeAgo: '2h ago',
   },
   {
@@ -162,12 +113,5 @@ export const recentActivity = [
     sourceId: 'code-enforcement',
     suggestionIndex: 1,
     timeAgo: 'This morning',
-  },
-  {
-    timestamp: '2026-03-19T16:40:00Z',
-    label: 'Budget vs. Actuals — FY2025',
-    type: 'saved_report',
-    sourceId: 'financial',
-    timeAgo: 'Yesterday',
   },
 ];

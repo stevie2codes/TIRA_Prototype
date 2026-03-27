@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TIRA Reporting — Flow Annotations</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --indigo: #3f51b5;
+      --indigo-light: #e8eaf6;
+      --indigo-mid: #c5cae9;
+      --surface: #fafbfd;
+      --card: #ffffff;
+      --border: #e4e7ec;
+      --text-primary: #1a1a2e;
+      --text-secondary: #5a6078;
+      --text-muted: #8b90a0;
+      --accent-green: #2e7d32;
+      --accent-amber: #f57c00;
+      --accent-red: #c62828;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--surface);
+      color: var(--text-primary);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Sidebar nav ── */
+    .layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      width: 280px;
+      flex-shrink: 0;
+      background: var(--card);
+      border-right: 1px solid var(--border);
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      overflow-y: auto;
+      padding: 32px 0;
+      z-index: 100;
+    }
+
+    .sidebar-title {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 0 24px 16px;
+    }
+
+    .sidebar a {
+      display: block;
+      padding: 6px 24px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: all 0.12s ease;
+      border-left: 3px solid transparent;
+    }
+
+    .sidebar a:hover {
+      color: var(--indigo);
+      background: var(--indigo-light);
+      border-left-color: var(--indigo);
+    }
+
+    .sidebar a.screen-link {
+      font-weight: 600;
+      color: var(--text-primary);
+      padding-top: 12px;
+      padding-bottom: 4px;
+      font-size: 13px;
+    }
+
+    .sidebar a.sub-link {
+      padding-left: 36px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .sidebar a.sub-link:hover { color: var(--indigo); }
+
+    .sidebar-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 16px 24px;
+    }
+
+    /* ── Main content ── */
+    .main {
+      flex: 1;
+      margin-left: 280px;
+      padding: 48px 64px 120px;
+      max-width: 900px;
+    }
+
+    /* ── Page header ── */
+    .page-header {
+      margin-bottom: 48px;
+      padding-bottom: 32px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .page-header h1 {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .page-header .subtitle {
+      font-size: 16px;
+      color: var(--text-secondary);
+      max-width: 560px;
+    }
+
+    .page-header .meta-row {
+      display: flex;
+      gap: 16px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    .meta-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 20px;
+      background: var(--indigo-light);
+      color: var(--indigo);
+    }
+
+    .meta-badge.green { background: #e8f5e9; color: var(--accent-green); }
+    .meta-badge.amber { background: #fff3e0; color: var(--accent-amber); }
+
+    /* ── Screen sections ── */
+    .screen-section {
+      margin-bottom: 56px;
+    }
+
+    .screen-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 8px;
+    }
+
+    .screen-number {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: var(--indigo);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .screen-header h2 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    .screen-intro {
+      font-size: 15px;
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+      padding-left: 50px;
+    }
+
+    /* ── Annotation cards ── */
+    .annotation {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 16px;
+      position: relative;
+      transition: box-shadow 0.15s ease;
+    }
+
+    .annotation:hover {
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+
+    .annotation-id {
+      position: absolute;
+      top: -1px;
+      left: 20px;
+      background: var(--indigo);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 10px;
+      border-radius: 0 0 6px 6px;
+      letter-spacing: 0.5px;
+    }
+
+    .annotation h3 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      padding-top: 8px;
+      color: var(--text-primary);
+    }
+
+    .annotation p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+      line-height: 1.7;
+    }
+
+    .annotation p:last-child { margin-bottom: 0; }
+
+    .annotation strong { color: var(--text-primary); font-weight: 600; }
+
+    .annotation em { font-style: italic; }
+
+    .annotation .quote-block {
+      background: var(--indigo-light);
+      border-left: 3px solid var(--indigo);
+      padding: 10px 16px;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--indigo);
+      margin-bottom: 12px;
+    }
+
+    /* Tags inside annotations */
+    .tag-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 12px;
+      letter-spacing: 0.3px;
+    }
+
+    .tag.interaction { background: #e3f2fd; color: #1565c0; }
+    .tag.rationale { background: #fce4ec; color: #c62828; }
+    .tag.data { background: #e8f5e9; color: #2e7d32; }
+    .tag.technical { background: #fff3e0; color: #e65100; }
+    .tag.trust { background: #f3e5f5; color: #7b1fa2; }
+
+    /* Lists inside annotations */
+    .annotation ul, .annotation ol {
+      padding-left: 20px;
+      margin-bottom: 10px;
+    }
+
+    .annotation li {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: 4px;
+    }
+
+    .annotation li strong { color: var(--text-primary); }
+
+    /* ── Sub-annotation (nested cards) ── */
+    .sub-annotation {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 18px 20px;
+      margin: 12px 0;
+    }
+
+    .sub-annotation h4 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sub-annotation h4 .sub-id {
+      background: var(--indigo-mid);
+      color: var(--indigo);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+
+    .sub-annotation p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: 8px;
+    }
+
+    .sub-annotation p:last-child { margin-bottom: 0; }
+
+    /* ── Flow diagram (simplified) ── */
+    .flow-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 12px 0;
+    }
+
+    .flow-step {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: var(--indigo-light);
+      color: var(--indigo);
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 20px;
+    }
+
+    .flow-arrow {
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    /* ── Cross-cutting patterns section ── */
+    .pattern-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .pattern-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+
+    .pattern-card h4 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .pattern-card h4 .pattern-letter {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      background: var(--indigo);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .pattern-card p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* ── Persona card ── */
+    .persona-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+    }
+
+    .persona-avatar {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      background: var(--indigo);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .persona-info h4 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .persona-info p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 2px;
+    }
+
+    .persona-sources {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    /* ── Tier comparison table ── */
+    .tier-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 13px;
+    }
+
+    .tier-table th {
+      text-align: left;
+      padding: 10px 14px;
+      background: var(--surface);
+      border-bottom: 2px solid var(--border);
+      font-weight: 600;
+      color: var(--text-primary);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .tier-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-secondary);
+      vertical-align: top;
+    }
+
+    .tier-table tr:last-child td { border-bottom: none; }
+
+    .tier-label {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      background: #f0f1f5;
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #c62828;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 1100px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; padding: 32px 24px 80px; }
+      .pattern-grid { grid-template-columns: 1fr; }
+    }
+
+    @media print {
+      .sidebar { display: none; }
+      .main { margin-left: 0; padding: 24px; }
+      .annotation { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- Sidebar navigation -->
+  <nav class="sidebar">
+    <div class="sidebar-title">Screens</div>
+    <a href="#screen-1" class="screen-link">1. Homepage — Default</a>
+    <a href="#ann-1-1" class="sub-link">1.1 Personalized Greeting</a>
+    <a href="#ann-1-2" class="sub-link">1.2 Chat Input</a>
+    <a href="#ann-1-3" class="sub-link">1.3 Source Toggle</a>
+    <a href="#ann-1-4" class="sub-link">1.4 Dropdown Open</a>
+    <a href="#ann-1-5" class="sub-link">1.5 Recent Activity</a>
+    <a href="#ann-1-6" class="sub-link">1.6 Suggested Actions</a>
+    <a href="#ann-1-7" class="sub-link">1.7 Browse Row</a>
+    <a href="#ann-1-8" class="sub-link">1.8 Disclaimer</a>
+
+    <a href="#screen-2" class="screen-link">2. Homepage — Source Selected</a>
+    <a href="#ann-2-1" class="sub-link">2.1 Toggle Updated</a>
+    <a href="#ann-2-2" class="sub-link">2.2 Filtered Recents</a>
+    <a href="#ann-2-3" class="sub-link">2.3 Source Queries</a>
+
+    <a href="#screen-3" class="screen-link">3. Chat Dialog</a>
+    <a href="#ann-3-1" class="sub-link">3.1 Header</a>
+    <a href="#ann-3-4" class="sub-link">3.4 Query Card</a>
+    <a href="#ann-3-5" class="sub-link">3.5 Chat Footer</a>
+
+    <a href="#screen-4" class="screen-link">4. Refinement Tiers</a>
+    <a href="#ann-4-1" class="sub-link">4.1 Card Tier</a>
+    <a href="#ann-4-2" class="sub-link">4.2 Text Tier</a>
+    <a href="#ann-4-3" class="sub-link">4.3 Handoff Tier</a>
+
+    <a href="#screen-5" class="screen-link">5. Split View — Report</a>
+    <a href="#ann-5-1" class="sub-link">5.1 Layout Transition</a>
+    <a href="#ann-5-3" class="sub-link">5.3 Title Bar</a>
+    <a href="#ann-5-4" class="sub-link">5.4 Action Bar</a>
+
+    <a href="#screen-6" class="screen-link">6. Report Designer</a>
+    <a href="#screen-7" class="screen-link">7. Saved Reports Library</a>
+
+    <div class="sidebar-divider"></div>
+    <a href="#patterns" class="screen-link">Cross-Cutting Patterns</a>
+    <a href="#persona" class="screen-link">Persona</a>
+  </nav>
+
+  <!-- Main content -->
+  <main class="main">
+
+    <!-- Page header -->
+    <div class="page-header">
+      <h1>TIRA Reporting — Flow Annotations</h1>
+      <p class="subtitle">Full end-to-end annotation reference for the AI-forward reporting prototype. Each callout is numbered and ready for Figma.</p>
+      <div class="meta-row">
+        <span class="meta-badge">7 Screens</span>
+        <span class="meta-badge">40+ Annotations</span>
+        <span class="meta-badge green">Prototype Complete</span>
+        <span class="meta-badge amber">March 2026</span>
+      </div>
+
+      <div class="flow-row" style="margin-top: 20px;">
+        <span class="flow-step">Homepage</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-step">Chat Dialog</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-step">Query Card</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-step">Refinement</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-step">Split View</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-step">Report Designer</span>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════ -->
+    <!-- SCREEN 1 -->
+    <!-- ════════════════════════════════════════════ -->
+    <section class="screen-section" id="screen-1">
+      <div class="screen-header">
+        <div class="screen-number">1</div>
+        <h2>Homepage — Default State ("All Sources")</h2>
+      </div>
+      <p class="screen-intro">The landing experience for a returning user. The system knows who they are and personalizes content accordingly.</p>
+
+      <div class="annotation" id="ann-1-1">
+        <div class="annotation-id">1.1</div>
+        <h3>Personalized Greeting</h3>
+        <div class="quote-block">"Good morning, Stephen"</div>
+        <p>The greeting uses the authenticated user's first name and adapts to time of day (morning / afternoon / evening). This replaces the generic "Find the report you need" heading from the logged-out state. The Tyler logo sits alongside the greeting as a brand anchor.</p>
+        <div class="tag-row">
+          <span class="tag rationale">Why: Establishes personal workspace ownership</span>
+        </div>
+      </div>
+
+      <div class="annotation" id="ann-1-2">
+        <div class="annotation-id">1.2</div>
+        <h3>Chat Input — Primary Entry Point</h3>
+        <p>The main input field: <strong>"Ask a question about your data..."</strong></p>
+        <p>This is the AI-first entry point. Users describe what they need in natural language rather than navigating a menu tree or building a report from scratch.</p>
+        <div class="tag-row">
+          <span class="tag interaction">Enter key or Send icon → opens chat dialog</span>
+        </div>
+      </div>
+
+      <div class="annotation" id="ann-1-3">
+        <div class="annotation-id">1.3</div>
+        <h3>Source Toggle Dropdown</h3>
+        <p>Button in the input toolbar showing the currently selected data source context. Defaults to <strong>"All sources."</strong></p>
+        <p>Clicking opens a dropdown <strong>(downward)</strong> listing available data sources filtered to the user's role and department permissions. Selecting a source scopes both the input context and the suggestion content below.</p>
+        <p>The dropdown header shows "Your data sources" with the user's role badge (e.g., "Senior Planner"). Sources the user's department doesn't have access to are <strong>not shown</strong>. This is permission-driven, not preference-driven.</p>
+        <div class="tag-row">
+          <span class="tag interaction">Click → dropdown opens downward</span>
+          <span class="tag trust">Permission-filtered, not preference-based</span>
+        </div>
+      </div>
+
+      <div class="annotation" id="ann-1-4">
+        <div class="annotation-id">1.4</div>
+        <h3>Data Source Dropdown — Open State</h3>
+        <p>Dropdown content when the source toggle is clicked:</p>
+        <ul>
+          <li><strong>Header row:</strong> "Your data sources" label + role badge ("Senior Planner")</li>
+          <li><strong>"All sources" option:</strong> Always first, allows cross-source queries</li>
+          <li><strong>Divider</strong></li>
+          <li><strong>Filtered source list:</strong> Each source shows an icon, name, and count of available queries. Only sources matching the user's department appear.</li>
+        </ul>
+        <p>For the prototype persona (Stephen Webb, Senior Planner, Community Development), visible sources are: <strong>Permits &amp; Licensing, Code Enforcement, Financial Management, GIS &amp; Mapping.</strong></p>
+        <div class="tag-row">
+          <span class="tag trust">Role badge reinforces why they see what they see</span>
+          <span class="tag data">4 of 7 sources visible for this role</span>
+        </div>
+      </div>
+
+      <div class="annotation" id="ann-1-5">
+        <div class="annotation-id">1.5</div>
+        <h3>"Pick up where you left off" — Recent Activity Card</h3>
+        <p>A subtle card surface sitting directly below the input. Contains the user's 3 most recent interactions. Each item shows:</p>
+        <ul>
+          <li><strong>Source icon</strong> in a small badge (indicates which data domain)</li>
+          <li><strong>Report/query name</strong> (primary label, bold)</li>
+          <li><strong>Metadata line</strong> (e.g., "Saved report · 2h ago")</li>
+          <li><strong>Arrow on hover</strong> — reveals a play icon indicating "click to resume"</li>
+        </ul>
+        <p><strong>Prototype data:</strong></p>
+        <ol>
+          <li>"Building Permits by Month — Downtown Only" — Saved report · 2h ago</li>
+          <li>"Code Violations Summary" — This morning</li>
+          <li>"Budget vs. Actuals — FY2025" — Saved report · Yesterday</li>
+        </ol>
+        <div class="tag-row">
+          <span class="tag rationale">Why top position: ~60% of sessions start from a recent item</span>
+          <span class="tag interaction">Click → reopens in chat dialog</span>
+        </div>
+      </div>
+
+      <div class="annotation" id="ann-1-6">
+        <div class="annotation-id">1.6</div>
+        <h3>"Suggested" — Task-Based Action Rows</h3>
+        <p>Three full-width interactive rows below the recent activity card. Each represents a high-value starting question:</p>
+        <ol>
+          <li><strong>"What needs my attention today?"</strong> — Flag icon, indigo accent</li>
+          <li><strong>"Show me what's overdue"</strong> — Warning icon</li>
+          <li><strong>"What changed since yesterday?"</strong> — Update icon</li>
+        </ol>
+        <p>Each row has a leading icon badge (indigo background), the question text, and a directional arrow on the right.</p>
+        <p><strong>Why these aren't chips:</strong> These are primary calls-to-action, not passive filters. The larger surface area and full-width layout communicates "click me to start working" rather than "here's a tag you might filter by."</p>
+        <div class="tag-row">
+          <span class="tag interaction">Click → opens chat dialog with this prompt</span>
+          <span class="tag rationale">Full-width rows > small chips for primary CTAs</span>
+        </div>
+      </div>
+
+      <div class="annotation" id="ann-1-7">
+        <div class="annotation-id">1.7</div>
+        <h3>Browse Row — Category Chips + Library</h3>
+        <p>A compact horizontal row of small pills at the bottom:</p>
+        <ul>
+          <li><strong>Category chips:</strong> Permits, Violations, Budget, Inspections — each with a leading icon</li>
+          <li><strong>Vertical divider</strong></li>
+          <li><strong>"Saved Reports" chip</strong> — folder icon, links to the full Report Library</li>
+        </ul>
+        <p>Clicking a category chip switches the source dropdown to that data source and refreshes the suggestions above. Clicking "Saved Reports" opens the Library dialog.</p>
+        <div class="tag-row">
+          <span class="tag rationale">Compact: navigational shortcut, not primary action</span>
+          <span class="tag interaction">Category click → selects source + updates suggestions</span>
+        </div>
+      </div>
+
+      <div class="annotation" id="ann-1-8">
+        <div class="annotation-id">1.8</div>
+        <h3>Disclaimer</h3>
+        <p><strong>"AI can make mistakes. Always verify responses."</strong></p>
+        <p>Standard AI disclaimer. Muted text, small font. Present on every screen involving AI-generated content.</p>
+        <div class="tag-row">
+          <span class="tag trust">Required for all AI-generated surfaces</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════ -->
+    <!-- SCREEN 2 -->
+    <!-- ════════════════════════════════════════════ -->
+    <section class="screen-section" id="screen-2">
+      <div class="screen-header">
+        <div class="screen-number">2</div>
+        <h2>Homepage — Source-Selected State</h2>
+      </div>
+      <p class="screen-intro">When the user selects a specific data source from the dropdown (e.g., "Permits &amp; Licensing"), the content below the input updates.</p>
+
+      <div class="annotation" id="ann-2-1">
+        <div class="annotation-id">2.1</div>
+        <h3>Source Toggle — Updated</h3>
+        <p>The toggle button now shows the selected source's icon and name (e.g., <strong>"Permits &amp; Licensing"</strong> with the description icon) instead of "All sources."</p>
+        <div class="tag-row">
+          <span class="tag interaction">Visual state change reflects active source</span>
+        </div>
+      </div>
+
+      <div class="annotation" id="ann-2-2">
+        <div class="annotation-id">2.2</div>
+        <h3>"Recent from [Source]" Card</h3>
+        <p>If the user has recent activity matching the selected source, a filtered recent card appears at the top. Same visual treatment as the default recent card, but scoped.</p>
+        <p>Example for Permits &amp; Licensing: Shows only "Building Permits by Month — Downtown Only" (the one matching item).</p>
+        <div class="tag-row">
+          <span class="tag data">Filtered to selected source only</span>
+        </div>
+      </div>
+
+      <div class="annotation" id="ann-2-3">
+        <div class="annotation-id">2.3</div>
+        <h3>"Common queries" — Source-Specific Action Rows</h3>
+        <p>Replaces the task-based suggestions. Shows queries specific to the selected data source, styled as the same full-width action rows.</p>
+        <p>Example for Permits &amp; Licensing:</p>
+        <ol>
+          <li>Building permits by month</li>
+          <li>Permit processing times</li>
+          <li>Pending permit applications</li>
+          <li>Permits by contractor</li>
+          <li>Daily inspection queue</li>
+        </ol>
+        <p>Each row uses the source's icon in the leading badge. These are the top 5 things people actually ask for from this dataset — reducing the blank-page problem.</p>
+        <div class="tag-row">
+          <span class="tag interaction">Click → opens chat dialog with that query</span>
+          <span class="tag rationale">Pre-built starting points for common workflows</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════ -->
+    <!-- SCREEN 3 -->
+    <!-- ════════════════════════════════════════════ -->
+    <section class="screen-section" id="screen-3">
+      <div class="screen-header">
+        <div class="screen-number">3</div>
+        <h2>Chat Dialog — Conversational Workspace</h2>
+      </div>
+      <p class="screen-intro">Full-screen modal dialog that opens when the user submits a query from the input, a suggestion row, or a recent item.</p>
+
+      <div class="annotation" id="ann-3-1">
+        <div class="annotation-id">3.1</div>
+        <h3>Chat Header</h3>
+        <ul>
+          <li><strong>AI icon</strong> — circular border with sparkle icon</li>
+          <li><strong>"Report Assistant"</strong> title</li>
+          <li><strong>More options</strong> icon button (kebab menu)</li>
+          <li><strong>Close</strong> icon button (X) — returns to homepage</li>
+        </ul>
+      </div>
+
+      <div class="annotation" id="ann-3-2">
+        <div class="annotation-id">3.2</div>
+        <h3>User Message</h3>
+        <p>The user's query appears as a right-aligned chat bubble using <code>&lt;forge-ai-user-message&gt;</code>.</p>
+        <p>Example: "Show me building permits issued by month, broken down by district"</p>
+      </div>
+
+      <div class="annotation" id="ann-3-3">
+        <div class="annotation-id">3.3</div>
+        <h3>Thinking Indicator</h3>
+        <p>After a 500ms delay, a <code>&lt;forge-ai-thinking-indicator&gt;</code> appears. Displayed for ~2 seconds before the response appears.</p>
+        <p>The 500ms pause prevents flicker on fast responses. The 2-second processing time is the prototype simulation.</p>
+        <div class="tag-row">
+          <span class="tag technical">500ms delay → 2s visible → response</span>
+        </div>
+      </div>
+
+      <div class="annotation" id="ann-3-4">
+        <div class="annotation-id">3.4</div>
+        <h3>Query Card — AI Response</h3>
+        <p>The centerpiece of the chat experience. Replaces a flat text response with a structured, progressive-disclosure card.</p>
+
+        <div class="sub-annotation">
+          <h4><span class="sub-id">3.4a</span> Card Header</h4>
+          <p>AI sparkle icon + <strong>Report title</strong> (bold) + <strong>Metadata row:</strong> Data source with database icon · Freshness with green dot (e.g., "Updated 2 hours ago") · Row/column count.</p>
+          <p><strong>Why metadata is inline:</strong> Users in government reporting need to know immediately where data came from and how fresh it is. This is a trust requirement — stale or wrong-source data has real compliance consequences.</p>
+        </div>
+
+        <div class="sub-annotation">
+          <h4><span class="sub-id">3.4b</span> AI Summary</h4>
+          <p>Markdown-formatted narrative summary. Highlights key findings with bold text. Example: "I found <strong>2,847 building permits</strong> issued across 5 districts over the past 12 months."</p>
+          <p>Gives executives the headline answer. Technical users scan it, then dive into the data.</p>
+        </div>
+
+        <div class="sub-annotation">
+          <h4><span class="sub-id">3.4c</span> Mini Data Preview</h4>
+          <p>Compact table: first <strong>3 rows × 4 columns</strong>. Below: "9 more rows · 3 more columns · Explore full results."</p>
+          <p>Lets users visually confirm "yes, this is the right data" before committing. The truncation creates a pull toward "Explore Results."</p>
+        </div>
+
+        <div class="sub-annotation">
+          <h4><span class="sub-id">3.4d</span> Disclosure Sections (Progressive Disclosure)</h4>
+          <p>Four collapsible sections, all start collapsed:</p>
+          <ol>
+            <li><strong>Data Source</strong> — System name, total records, last update</li>
+            <li><strong>SQL Query</strong> — Generated SQL + "Copy SQL" button</li>
+            <li><strong>Assumptions</strong> — Decisions the AI made (e.g., "issue date, not application date")</li>
+            <li><strong>Data Citations</strong> — Specific tables and joins used</li>
+          </ol>
+          <p>Most users don't need SQL. But for analysts, builders, and compliance reviewers, this is critical. Collapsing by default keeps the card scannable.</p>
+        </div>
+
+        <div class="sub-annotation">
+          <h4><span class="sub-id">3.4e</span> Refinement Chips</h4>
+          <p>Suggestion chips below the disclosures: "Filter by date range" · "Break down by permit type" · "Compare to last year" · "Add residential vs. commercial split"</p>
+          <p>Clicking triggers the three-tier refinement system (see Screen 4).</p>
+        </div>
+
+        <div class="sub-annotation">
+          <h4><span class="sub-id">3.4f</span> Action Buttons</h4>
+          <ul>
+            <li><strong>"Explore Results"</strong> (primary, indigo) — Opens the side panel report view</li>
+            <li><strong>"Copy Summary"</strong> (secondary, outlined) — Copies AI summary text to clipboard</li>
+          </ul>
+        </div>
+
+        <div class="tag-row">
+          <span class="tag trust">Every response shows source + freshness</span>
+          <span class="tag interaction">Disclosures: click header to expand, chevron rotates 180°</span>
+        </div>
+      </div>
+
+      <div class="annotation" id="ann-3-5">
+        <div class="annotation-id">3.5</div>
+        <h3>Chat Footer</h3>
+        <p>Persistent input area: text input ("Ask a question..."), Send button, attachment (+), voice input (mic). User can always type follow-up questions.</p>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════ -->
+    <!-- SCREEN 4 -->
+    <!-- ════════════════════════════════════════════ -->
+    <section class="screen-section" id="screen-4">
+      <div class="screen-header">
+        <div class="screen-number">4</div>
+        <h2>Refinement — Three-Tier Response System</h2>
+      </div>
+      <p class="screen-intro">When a user clicks a refinement chip, the system classifies the request into one of three tiers and responds accordingly.</p>
+
+      <table class="tier-table">
+        <thead>
+          <tr>
+            <th>Tier</th>
+            <th>Triggers</th>
+            <th>Response</th>
+            <th>Previous Card</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="tier-label">1. Card</span></td>
+            <td>"break down," "filter," "group by," "split," "only"</td>
+            <td>New query card with updated data, summary, SQL, and refinement chips</td>
+            <td>Collapses to one-line bar</td>
+          </tr>
+          <tr>
+            <td><span class="tier-label">2. Text</span></td>
+            <td>"compare," "chart," "trend," "export," "schedule"</td>
+            <td>Narrative text response with data source badge</td>
+            <td>Stays expanded</td>
+          </tr>
+          <tr>
+            <td><span class="tier-label">3. Handoff</span></td>
+            <td>"cross-reference," "join," "calculated field," "inspector"</td>
+            <td>Handoff card with "Open in Report Designer" action</td>
+            <td>Stays expanded</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="annotation" id="ann-4-1">
+        <div class="annotation-id">4.1</div>
+        <h3>Tier 1: "Card" — Data-Shaping Refinement</h3>
+        <div class="flow-row">
+          <span class="flow-step">Chip clicked</span>
+          <span class="flow-arrow">→</span>
+          <span class="flow-step">Previous cards collapse</span>
+          <span class="flow-arrow">→</span>
+          <span class="flow-step">User message</span>
+          <span class="flow-arrow">→</span>
+          <span class="flow-step">Thinking (1.5s)</span>
+          <span class="flow-arrow">→</span>
+          <span class="flow-step">New query card</span>
+        </div>
+        <p><strong>Collapsed card state:</strong> Previous card reduces to a single bar — AI sparkle icon, report title, condensed metadata. Click to re-expand.</p>
+        <p><strong>Example:</strong> "Break down by permit type" → Previous card collapses → New card: "Building Permits by Month — By Permit Type" with Residential Reno, Commercial New columns.</p>
+        <div class="tag-row">
+          <span class="tag rationale">Why collapse: prevents scrolling past walls of old content</span>
+          <span class="tag interaction">Click collapsed bar → re-expands to full card</span>
+        </div>
+      </div>
+
+      <div class="annotation" id="ann-4-2">
+        <div class="annotation-id">4.2</div>
+        <h3>Tier 2: "Text" — Narrative Response</h3>
+        <p>Previous card does <strong>NOT</strong> collapse. User message appears, followed by a text-only response with markdown formatting and a small data source badge.</p>
+        <p><strong>Example:</strong> "Compare to last year" → "Total permits are up 14%, driven primarily by a 22% increase in residential activity..."</p>
+        <div class="tag-row">
+          <span class="tag rationale">No new card: adds context to existing data, doesn't replace it</span>
+        </div>
+      </div>
+
+      <div class="annotation" id="ann-4-3">
+        <div class="annotation-id">4.3</div>
+        <h3>Tier 3: "Handoff" — Designer Escalation</h3>
+        <p>AI responds with an explanation of why this exceeds chat capabilities, then shows a <strong>handoff card</strong>:</p>
+        <ul>
+          <li>Header: "This needs the Report Designer"</li>
+          <li>Context: Dataset name, "Filters and query will transfer," "SQL query ready to edit"</li>
+          <li>Actions: <strong>"Open in Report Designer"</strong> (primary) + <strong>"Request from Tyler"</strong> (secondary)</li>
+        </ul>
+        <div class="tag-row">
+          <span class="tag rationale">Transparent about limits, clean escalation path</span>
+          <span class="tag technical">All context transfers — user doesn't start over</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════ -->
+    <!-- SCREEN 5 -->
+    <!-- ════════════════════════════════════════════ -->
+    <section class="screen-section" id="screen-5">
+      <div class="screen-header">
+        <div class="screen-number">5</div>
+        <h2>Split View — Report Panel</h2>
+      </div>
+      <p class="screen-intro">When the user clicks "Explore Results," the dialog transitions to a two-panel split view.</p>
+
+      <div class="annotation" id="ann-5-1">
+        <div class="annotation-id">5.1</div>
+        <h3>Layout Transition</h3>
+        <p>Full-width chat view animates into a two-panel split:</p>
+        <ul>
+          <li><strong>Left panel (450px, resizable 320–600px):</strong> Chat conversation preserved</li>
+          <li><strong>Divider:</strong> Draggable vertical handle</li>
+          <li><strong>Right panel (flex remaining):</strong> Report canvas</li>
+        </ul>
+        <p>The "Explore Results" button is replaced with a <strong>"Report open in side panel"</strong> status badge.</p>
+        <div class="tag-row">
+          <span class="tag interaction">Divider draggable with min/max constraints</span>
+        </div>
+      </div>
+
+      <div class="annotation" id="ann-5-2">
+        <div class="annotation-id">5.2</div>
+        <h3>Left Panel: Chat (Condensed)</h3>
+        <p>Chat continues in left panel: same header, all messages preserved (scrollable), input footer at bottom. User can keep chatting while viewing the report.</p>
+      </div>
+
+      <div class="annotation" id="ann-5-3">
+        <div class="annotation-id">5.3</div>
+        <h3>Report Panel: Title Bar</h3>
+        <ul>
+          <li><strong>Report title</strong> (bold)</li>
+          <li><strong>Data source badge</strong> with freshness</li>
+          <li><strong>Open in new window</strong> icon button</li>
+          <li><strong>Close</strong> icon button — collapses back to full-width chat</li>
+        </ul>
+      </div>
+
+      <div class="annotation" id="ann-5-4">
+        <div class="annotation-id">5.4</div>
+        <h3>Report Panel: Action Bar</h3>
+        <p><strong>Left — View Toggle:</strong> Table (default) · Chart · SQL</p>
+        <p><strong>Right — Report Actions dropdown:</strong></p>
+        <ul>
+          <li>Export — PDF, CSV, or Excel</li>
+          <li>Schedule — Recurring delivery</li>
+          <li>Share — Send to colleagues</li>
+          <li>Save to Library</li>
+          <li><em>Divider</em></li>
+          <li>Open in Report Designer — Advanced layout, joins, formatting</li>
+        </ul>
+        <div class="tag-row">
+          <span class="tag interaction">View toggle switches between table/chart/SQL</span>
+          <span class="tag interaction">Report Actions is a dropdown with click-to-dismiss</span>
+        </div>
+      </div>
+
+      <div class="annotation" id="ann-5-5">
+        <div class="annotation-id">5.5</div>
+        <h3>Report Panel: Filter Bar</h3>
+        <p>"Filters" label + chips: "All Districts," "All Months," "Permit Type" — each with dropdown arrows. Quick inline filtering without returning to chat.</p>
+      </div>
+
+      <div class="annotation" id="ann-5-6">
+        <div class="annotation-id">5.6</div>
+        <h3>Report Panel: Table View (Default)</h3>
+        <p>Forge <code>&lt;forge-table&gt;</code> with dense mode, fixed headers, all columns sortable, all data rows. This is the <strong>full dataset</strong>, not the 3×4 mini preview.</p>
+      </div>
+
+      <div class="annotation" id="ann-5-7">
+        <div class="annotation-id">5.7</div>
+        <h3>Report Panel: Chart View</h3>
+        <p>Horizontal bar chart. Each data row becomes a labeled bar, width proportional to max value.</p>
+        <div class="tag-row">
+          <span class="tag technical">Prototype: simplified bar chart. Production: chart type selection.</span>
+        </div>
+      </div>
+
+      <div class="annotation" id="ann-5-8">
+        <div class="annotation-id">5.8</div>
+        <h3>Report Panel: SQL View</h3>
+        <p>Generated SQL in a <code>&lt;pre&gt;&lt;code&gt;</code> block. For developers and power users to inspect, copy, or reference the exact query.</p>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════ -->
+    <!-- SCREEN 6 -->
+    <!-- ════════════════════════════════════════════ -->
+    <section class="screen-section" id="screen-6">
+      <div class="screen-header">
+        <div class="screen-number">6</div>
+        <h2>Report Designer (Handoff)</h2>
+      </div>
+      <p class="screen-intro">Launched from the handoff card or Report Actions dropdown.</p>
+
+      <div class="annotation" id="ann-6-1">
+        <div class="annotation-id">6.1</div>
+        <h3>Context Transfer</h3>
+        <p>Before mounting the designer, the system writes full context to <code>sessionStorage</code>: report title, data source, freshness, SQL, columns, data, user query, AI summary, transparency metadata, and handoff reason.</p>
+        <div class="tag-row">
+          <span class="tag technical">sessionStorage: clean same-tab transfer to React app</span>
+        </div>
+      </div>
+
+      <div class="annotation" id="ann-6-2">
+        <div class="annotation-id">6.2</div>
+        <h3>Loading State</h3>
+        <p>"Back to Chat" button (functional immediately), "Loading Report Designer..." label, thinking indicator.</p>
+        <div class="tag-row">
+          <span class="tag interaction">Back button works before load completes — user can bail</span>
+        </div>
+      </div>
+
+      <div class="annotation" id="ann-6-3">
+        <div class="annotation-id">6.3</div>
+        <h3>Designer Interface</h3>
+        <p>React Flow + dnd-kit based designer mounts inside dialog. Navigation bar with "Back to Chat" button. Full drag-and-drop canvas.</p>
+        <p><strong>"Back to Chat"</strong> unmounts React and restores the chat conversation exactly as it was. No data is lost.</p>
+      </div>
+
+      <div class="annotation" id="ann-6-4">
+        <div class="annotation-id">6.4</div>
+        <h3>Error State</h3>
+        <p>If React fails to load: error icon, "Failed to load Report Designer" message, "Reload" button.</p>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════ -->
+    <!-- SCREEN 7 -->
+    <!-- ════════════════════════════════════════════ -->
+    <section class="screen-section" id="screen-7">
+      <div class="screen-header">
+        <div class="screen-number">7</div>
+        <h2>Saved Reports Library</h2>
+      </div>
+      <p class="screen-intro">Opened from the "Saved Reports" chip on the browse row or "Open in Chat" on library cards.</p>
+
+      <div class="annotation" id="ann-7-1">
+        <div class="annotation-id">7.1</div>
+        <h3>Library Header</h3>
+        <p>Close button (X), <strong>"Saved Reports Library"</strong> title, search input with icon.</p>
+      </div>
+
+      <div class="annotation" id="ann-7-2">
+        <div class="annotation-id">7.2</div>
+        <h3>Category Filters</h3>
+        <p>Horizontal chip row: "All" (default active) + category chips derived from reports.</p>
+      </div>
+
+      <div class="annotation" id="ann-7-3">
+        <div class="annotation-id">7.3</div>
+        <h3>Library Stats</h3>
+        <p>Summary line: "[count] reports · [count] scheduled · [count] standard, [count] custom"</p>
+      </div>
+
+      <div class="annotation" id="ann-7-4">
+        <div class="annotation-id">7.4</div>
+        <h3>Report Cards Grid</h3>
+        <p>Each saved report card shows: type badge + category, title, description, metadata (schedule, owner, row count, last run), and three action buttons:</p>
+        <ul>
+          <li><strong>"Run Now"</strong> — Executes with latest data</li>
+          <li><strong>"Open in Chat"</strong> — Loads into conversational workspace</li>
+          <li><strong>"Open in Designer"</strong> — Opens in Report Designer</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════ -->
+    <!-- CROSS-CUTTING PATTERNS -->
+    <!-- ════════════════════════════════════════════ -->
+    <section class="screen-section" id="patterns">
+      <div class="screen-header">
+        <div class="screen-number" style="background: #455a64;">✦</div>
+        <h2>Cross-Cutting Patterns</h2>
+      </div>
+      <p class="screen-intro">Consistent interaction patterns used across multiple screens.</p>
+
+      <div class="pattern-grid">
+        <div class="pattern-card">
+          <h4><span class="pattern-letter">A</span> Data Source Badge</h4>
+          <p>Database icon + source name + green dot + freshness. Appears on query cards, text responses, report panel. <strong>Every AI-generated content must show its source.</strong></p>
+        </div>
+        <div class="pattern-card">
+          <h4><span class="pattern-letter">B</span> Thinking Indicator</h4>
+          <p><code>&lt;forge-ai-thinking-indicator&gt;</code> with show-text. Staged timing: 500ms delay before showing, 1.5–2s visible.</p>
+        </div>
+        <div class="pattern-card">
+          <h4><span class="pattern-letter">C</span> Copy-to-Clipboard</h4>
+          <p>Used for SQL and summaries. Icon → checkmark, label → "Copied!", reverts after 2 seconds.</p>
+        </div>
+        <div class="pattern-card">
+          <h4><span class="pattern-letter">D</span> Progressive Disclosure</h4>
+          <p>Query card disclosures + report actions dropdown. Default collapsed. Chevron rotates on expand. Smooth scroll to content.</p>
+        </div>
+        <div class="pattern-card">
+          <h4><span class="pattern-letter">E</span> Role-Based Filtering</h4>
+          <p>Content filtered by department at the service layer before rendering. Affects sources, suggestions, and recents.</p>
+        </div>
+        <div class="pattern-card">
+          <h4><span class="pattern-letter">F</span> sessionStorage Handoff</h4>
+          <p>Bridges vanilla JS chat → React Report Designer. Structured JSON payload written before mount, read and cleared on init.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════ -->
+    <!-- PERSONA -->
+    <!-- ════════════════════════════════════════════ -->
+    <section class="screen-section" id="persona">
+      <div class="screen-header">
+        <div class="screen-number" style="background: #455a64;">P</div>
+        <h2>Prototype Persona</h2>
+      </div>
+
+      <div class="persona-card">
+        <div class="persona-avatar">SW</div>
+        <div class="persona-info">
+          <h4>Stephen Webb</h4>
+          <p><strong>Role:</strong> Senior Planner</p>
+          <p><strong>Department:</strong> Community Development</p>
+          <p><strong>Typical workflows:</strong> Permit volume reports, violation summaries, budget tracking, inspection queues</p>
+          <div class="persona-sources">
+            <span class="meta-badge">Permits &amp; Licensing</span>
+            <span class="meta-badge">Code Enforcement</span>
+            <span class="meta-badge">Financial Management</span>
+            <span class="meta-badge">GIS &amp; Mapping</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+</body>
+</html>

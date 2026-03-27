@@ -1415,40 +1415,10 @@ function buildReportPanel(suggestion) {
           <forge-icon name="grid_view"></forge-icon>
           <span>Table</span>
         </button>
-        <button class="view-toggle-btn" data-view="chart" type="button" title="Chart view">
-          <forge-icon name="bar_chart"></forge-icon>
-          <span>Chart</span>
-        </button>
         <button class="view-toggle-btn" data-view="code" type="button" title="SQL view">
           <forge-icon name="code"></forge-icon>
           <span>SQL</span>
         </button>
-      </div>
-      <div class="template-picker-group">
-        <button class="template-picker-btn" type="button" id="template-picker-btn">
-          <forge-icon name="palette"></forge-icon>
-          <span>Template: None</span>
-          <forge-icon name="arrow_drop_down" class="action-dropdown-arrow"></forge-icon>
-        </button>
-        <div class="canvas-dropdown template-dropdown" id="template-dropdown">
-          <button class="canvas-dropdown-item template-dropdown-item" type="button" data-template-id="">
-            <div class="dropdown-item-row">
-              <span class="template-color-dot" style="background: #9e9e9e;"></span>
-              <span class="dropdown-item-label">None</span>
-            </div>
-            <span class="dropdown-item-desc">Remove template formatting</span>
-          </button>
-          <div class="canvas-dropdown-divider"></div>
-          ${outputTemplates.map(t => `
-            <button class="canvas-dropdown-item template-dropdown-item" type="button" data-template-id="${t.id}">
-              <div class="dropdown-item-row">
-                <span class="template-color-dot" style="background: ${t.theme.primary};"></span>
-                <span class="dropdown-item-label">${t.name}</span>
-              </div>
-              <span class="dropdown-item-desc">${t.description}</span>
-            </button>
-          `).join('')}
-        </div>
       </div>
     </div>
     <div class="report-action-bar-right">
@@ -1486,14 +1456,6 @@ function buildReportPanel(suggestion) {
               <span class="dropdown-item-label">Save to Library</span>
             </div>
             <span class="dropdown-item-desc">Add to your saved reports</span>
-          </button>
-          <div class="canvas-dropdown-divider"></div>
-          <button class="canvas-dropdown-item" type="button" data-action="designer">
-            <div class="dropdown-item-row">
-              <forge-icon name="open_in_new"></forge-icon>
-              <span class="dropdown-item-label">Open in Report Designer</span>
-            </div>
-            <span class="dropdown-item-desc">Advanced layout, joins, and formatting</span>
           </button>
         </div>
       </div>
@@ -1539,34 +1501,6 @@ function buildReportPanel(suggestion) {
   tableView.appendChild(tableContainer);
   panel.appendChild(tableView);
 
-  // === Chart view (placeholder) ===
-  const chartView = document.createElement('div');
-  chartView.className = 'report-canvas-view report-chart-view';
-  chartView.dataset.view = 'chart';
-  chartView.style.display = 'none';
-  // Build simple bar chart from data
-  const chartBars = suggestion.data.map(row => {
-    const total = row.total || row.high || row.budget || 0;
-    const maxVal = Math.max(...suggestion.data.map(r => r.total || r.high || r.budget || 0));
-    const pct = maxVal > 0 ? (total / maxVal) * 100 : 0;
-    const label = row.month || row.type || row.department || '';
-    return `
-      <div class="chart-bar-row">
-        <span class="chart-bar-label">${label}</span>
-        <div class="chart-bar-track">
-          <div class="chart-bar-fill" style="width: ${pct}%"></div>
-        </div>
-        <span class="chart-bar-value">${total.toLocaleString()}</span>
-      </div>
-    `;
-  }).join('');
-  chartView.innerHTML = `
-    <div class="chart-container">
-      <div class="chart-title">${suggestion.reportTitle}</div>
-      <div class="chart-bars">${chartBars}</div>
-    </div>
-  `;
-  panel.appendChild(chartView);
 
   // === Code/SQL view ===
   const codeView = document.createElement('div');
@@ -1585,7 +1519,7 @@ function buildReportPanel(suggestion) {
 
     // View toggle (Table / Chart / SQL)
     const toggleButtons = panel.querySelectorAll('.view-toggle-btn');
-    const views = { table: tableView, chart: chartView, code: codeView };
+    const views = { table: tableView, code: codeView };
     toggleButtons.forEach(btn => {
       btn.addEventListener('click', () => {
         toggleButtons.forEach(b => b.classList.remove('active'));
@@ -1593,30 +1527,6 @@ function buildReportPanel(suggestion) {
         Object.values(views).forEach(v => v.style.display = 'none');
         const target = views[btn.dataset.view];
         if (target) target.style.display = 'flex';
-      });
-    });
-
-    // Template picker dropdown toggle + selection
-    const templateBtn = panel.querySelector('#template-picker-btn');
-    const templateDropdown = panel.querySelector('#template-dropdown');
-    let activeTemplateId = null;
-
-    templateBtn?.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const isOpen = templateDropdown.classList.contains('open');
-      closeAllDropdowns(panel);
-      if (!isOpen) templateDropdown.classList.add('open');
-    });
-
-    panel.querySelectorAll('.template-dropdown-item').forEach(item => {
-      item.addEventListener('click', () => {
-        const templateId = item.dataset.templateId;
-        closeAllDropdowns(panel);
-        activeTemplateId = templateId || null;
-        const template = templateId ? getTemplateById(templateId) : null;
-        const label = templateBtn.querySelector('span');
-        label.textContent = template ? `Template: ${template.name}` : 'Template: None';
-        applyTemplate(panel, template, suggestion);
       });
     });
 
@@ -1638,27 +1548,6 @@ function buildReportPanel(suggestion) {
       item.addEventListener('click', () => {
         const action = item.dataset.action;
         closeAllDropdowns(panel);
-
-        // "Open in Report Designer" launches the designer
-        if (action === 'designer') {
-          const handoffContext = {
-            reportTitle: suggestion.reportTitle,
-            dataSource: suggestion.dataSource,
-            freshness: suggestion.freshness,
-            sqlCode: suggestion.sqlCode,
-            columns: suggestion.columns,
-            data: suggestion.data,
-            query: suggestion.query,
-            aiSummary: suggestion.aiSummary,
-            transparency: suggestion.transparency,
-            handoffReason: 'Opened from Report Actions menu',
-            activeTemplateId: activeTemplateId || null,
-          };
-          sessionStorage.setItem('tira-handoff-context', JSON.stringify(handoffContext));
-          const dialog = document.querySelector('#chat-dialog');
-          if (dialog) mountReportDesigner(dialog);
-          return;
-        }
 
         const actionLabel = reportActionsBtn.querySelector('span');
         const feedbackMap = {

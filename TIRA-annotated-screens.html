@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TIRA — Annotated Screens</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --pin-bg: #3f51b5;
+    --pin-text: #fff;
+    --callout-bg: #1a1a2e;
+    --callout-text: #f0f1f5;
+    --callout-border: rgba(63,81,181,0.4);
+    --surface: #f5f6fa;
+    --card-bg: #fff;
+    --border: #e0e3eb;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--surface);
+    color: #1a1a2e;
+    -webkit-font-smoothing: antialiased;
+    padding: 40px 0;
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    letter-spacing: -0.5px;
+  }
+
+  .page-subtitle {
+    text-align: center;
+    font-size: 14px;
+    color: #6b7280;
+    margin-bottom: 48px;
+  }
+
+  .instructions {
+    text-align: center;
+    font-size: 13px;
+    color: #6b7280;
+    margin-bottom: 32px;
+    background: #fff;
+    border: 1px dashed #c5cae9;
+    border-radius: 10px;
+    padding: 14px 24px;
+    max-width: 680px;
+    margin-left: auto;
+    margin-right: auto;
+    display: none;
+  }
+
+  .instructions.show { display: block; }
+
+  /* ── Screen section ── */
+  .screen {
+    max-width: 1400px;
+    margin: 0 auto 64px;
+    padding: 0 32px;
+  }
+
+  .screen-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .screen-num {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--pin-bg);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .screen-label h2 {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.2px;
+  }
+
+  .screen-label p {
+    font-size: 13px;
+    color: #6b7280;
+    margin-left: auto;
+    white-space: nowrap;
+  }
+
+  /* ── Frame container ── */
+  .frame-wrap {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+  }
+
+  .frame {
+    position: relative;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+    flex: 1;
+    min-width: 0;
+  }
+
+  .frame img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .frame .drop-zone {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 500px;
+    border: 2px dashed #c5cae9;
+    border-radius: 12px;
+    background: #fafbff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .frame .drop-zone:hover {
+    border-color: var(--pin-bg);
+    background: #f0f1fa;
+  }
+
+  .frame .drop-zone span {
+    font-size: 14px;
+    font-weight: 500;
+    color: #9ca3af;
+  }
+
+  .frame .drop-zone .drop-icon {
+    font-size: 32px;
+    color: #c5cae9;
+  }
+
+  .frame.loaded .drop-zone { display: none; }
+
+  /* ── Annotation pins ── */
+  .pin {
+    position: absolute;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--pin-bg);
+    color: var(--pin-text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(63,81,181,0.4);
+    border: 2px solid #fff;
+    transition: transform 0.15s ease;
+    transform: translate(-50%, -50%);
+  }
+
+  .pin:hover { transform: translate(-50%, -50%) scale(1.2); }
+
+  .pin.red { background: #e53935; box-shadow: 0 2px 8px rgba(229,57,53,0.4); }
+  .pin.green { background: #2e7d32; box-shadow: 0 2px 8px rgba(46,125,50,0.4); }
+  .pin.amber { background: #f57c00; box-shadow: 0 2px 8px rgba(245,124,0,0.4); }
+
+  /* Callout tooltip */
+  .pin .callout {
+    display: none;
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--callout-bg);
+    color: var(--callout-text);
+    border: 1px solid var(--callout-border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    min-width: 260px;
+    max-width: 340px;
+    font-size: 12px;
+    line-height: 1.6;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    z-index: 100;
+    pointer-events: none;
+    white-space: normal;
+  }
+
+  .pin .callout::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-bottom: 6px solid var(--callout-bg);
+  }
+
+  .pin:hover .callout { display: block; }
+
+  .pin .callout strong {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: #fff;
+  }
+
+  .pin .callout .tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-top: 8px;
+    letter-spacing: 0.3px;
+  }
+
+  .pin .callout .tag.interaction { background: #1565c0; color: #e3f2fd; }
+  .pin .callout .tag.rationale { background: #7b1fa2; color: #f3e5f5; }
+  .pin .callout .tag.trust { background: #c62828; color: #ffebee; }
+  .pin .callout .tag.technical { background: #e65100; color: #fff3e0; }
+
+  /* Right-align callouts near right edge */
+  .pin.callout-left .callout { left: auto; right: 50%; transform: translateX(50%); }
+  .pin.callout-right .callout { left: 50%; transform: translateX(-75%); }
+  .pin.callout-right .callout::before { left: 75%; }
+  .pin.callout-left .callout::before { left: 50%; }
+  .pin.callout-top .callout { top: auto; bottom: calc(100% + 10px); }
+  .pin.callout-top .callout::before { top: auto; bottom: -6px; border-bottom: none; border-top: 6px solid var(--callout-bg); }
+
+  /* ── Sidebar annotation list ── */
+  .annotations-panel {
+    width: 320px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .anno-item {
+    display: flex;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 12px;
+    line-height: 1.55;
+  }
+
+  .anno-item .anno-num {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--pin-bg);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .anno-item .anno-num.red { background: #e53935; }
+  .anno-item .anno-num.green { background: #2e7d32; }
+  .anno-item .anno-num.amber { background: #f57c00; }
+
+  .anno-item strong {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 2px;
+    color: #1a1a2e;
+  }
+
+  .anno-item p { color: #6b7280; margin: 0; }
+
+  @media print {
+    body { padding: 0; background: #fff; }
+    .screen { page-break-inside: avoid; margin-bottom: 32px; }
+    .instructions { display: none !important; }
+    .pin .callout { display: block !important; font-size: 10px; min-width: 200px; }
+  }
+</style>
+</head>
+<body>
+
+<h1>TIRA Reporting — Annotated Flow</h1>
+<p class="page-subtitle">Hover over pins to see annotations. Full end-to-end prototype flow.</p>
+
+<div class="instructions show" id="instructions">
+  Click each screen area below to load your screenshot, or drag &amp; drop the image onto the zone. Annotation pins will appear on top.
+</div>
+
+<!-- ════════════════════════════════════════════════════ -->
+<!-- SCREEN 1: Homepage Default -->
+<!-- ════════════════════════════════════════════════════ -->
+<section class="screen">
+  <div class="screen-label">
+    <div class="screen-num">1</div>
+    <h2>Homepage — Default State</h2>
+    <p>Personalized landing for returning users</p>
+  </div>
+  <div class="frame-wrap">
+    <div class="frame" id="frame-1" data-screen="1">
+      <div class="drop-zone" onclick="this.querySelector('input').click()">
+        <div class="drop-icon">📷</div>
+        <span>Drop or click to load Screenshot 1 — Homepage</span>
+        <input type="file" accept="image/*" style="display:none" onchange="loadImage(this, 'frame-1')" />
+      </div>
+      <img style="display:none" />
+
+      <!-- Pins positioned as % of image dimensions -->
+      <div class="pin" style="left:50%;top:17%" data-n="1">1
+        <div class="callout"><strong>1.1 — Personalized Greeting</strong>Adapts to time of day + user's first name from auth context. Replaces generic "Find the report you need" for logged-in users.<span class="tag rationale">Establishes personal workspace</span></div>
+      </div>
+      <div class="pin" style="left:69%;top:27.5%" data-n="2">2
+        <div class="callout"><strong>1.2 — Chat Input</strong>AI-first entry point. "Ask a question about your data..." Users describe what they need in natural language instead of navigating menus.<span class="tag interaction">Enter / Send → full-screen chat dialog</span></div>
+      </div>
+      <div class="pin" style="left:37.5%;top:34.5%" data-n="3">3
+        <div class="callout callout-top"><strong>1.3 — Source Toggle</strong>Shows currently selected data source context. Defaults to "All sources." Click opens dropdown (downward) filtered to user's department permissions.<span class="tag trust">Permission-driven, not preference-driven</span></div>
+      </div>
+      <div class="pin" style="left:50%;top:39%" data-n="4">4
+        <div class="callout"><strong>1.4 — AI Disclaimer</strong>"AI can make mistakes. Always verify responses." Standard disclaimer present on every AI-generated surface.<span class="tag trust">Required on all AI content</span></div>
+      </div>
+      <div class="pin green" style="left:32%;top:44.5%" data-n="5">5
+        <div class="callout"><strong>1.5 — Recent Activity Card</strong>"Pick up where you left off" — top position because ~60% of sessions start from a recent item. Shows source icon badge, report name, type + timestamp, and hover arrow.<span class="tag rationale">Returning users resume, not re-discover</span></div>
+      </div>
+      <div class="pin" style="left:32%;top:57.5%" data-n="6">6
+        <div class="callout"><strong>1.5a — Recent Item Anatomy</strong>Each row: source-domain icon in a square badge → primary label (bold) → metadata line ("Saved report · 2h ago"). Play arrow reveals on hover to indicate "click to resume."</div>
+      </div>
+      <div class="pin amber" style="left:32%;top:69%" data-n="7">7
+        <div class="callout"><strong>1.6 — Suggested Actions</strong>Full-width interactive rows (not chips). Leading icon badge + question text + directional arrow. These are primary CTAs — the larger surface communicates "click to start working."<span class="tag rationale">Full-width rows > chips for primary actions</span></div>
+      </div>
+      <div class="pin" style="left:43%;top:89%" data-n="8">8
+        <div class="callout callout-top"><strong>1.7 — Browse Row</strong>Compact category chips (Permits, Violations, Budget, Inspections) + vertical divider + "Saved Reports" link. Navigational shortcut — intentionally small so it doesn't compete with primary content.<span class="tag interaction">Category click → selects source + updates suggestions</span></div>
+      </div>
+    </div>
+
+    <div class="annotations-panel">
+      <div class="anno-item"><div class="anno-num">1</div><div><strong>Personalized Greeting</strong><p>Time-of-day + first name from auth. "Good morning, Stephen"</p></div></div>
+      <div class="anno-item"><div class="anno-num">2</div><div><strong>Chat Input</strong><p>AI-first entry. Natural language → structured results</p></div></div>
+      <div class="anno-item"><div class="anno-num">3</div><div><strong>Source Toggle</strong><p>Role-filtered data source dropdown. Opens downward.</p></div></div>
+      <div class="anno-item"><div class="anno-num">4</div><div><strong>AI Disclaimer</strong><p>Standard trust disclaimer on all AI surfaces</p></div></div>
+      <div class="anno-item"><div class="anno-num green">5</div><div><strong>Recent Activity</strong><p>Top position — highest value for returning users. Card surface with source icons.</p></div></div>
+      <div class="anno-item"><div class="anno-num">6</div><div><strong>Recent Item Anatomy</strong><p>Icon badge + label + metadata + hover arrow</p></div></div>
+      <div class="anno-item"><div class="anno-num amber">7</div><div><strong>Suggested Actions</strong><p>Full-width action rows with icon badges. Primary CTAs.</p></div></div>
+      <div class="anno-item"><div class="anno-num">8</div><div><strong>Browse Row</strong><p>Compact chips: categories + Saved Reports. Secondary nav.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════ -->
+<!-- SCREEN 2: Source Dropdown Open -->
+<!-- ════════════════════════════════════════════════════ -->
+<section class="screen">
+  <div class="screen-label">
+    <div class="screen-num">2</div>
+    <h2>Homepage — Source Dropdown Open</h2>
+    <p>Role-filtered data source selection</p>
+  </div>
+  <div class="frame-wrap">
+    <div class="frame" id="frame-2" data-screen="2">
+      <div class="drop-zone" onclick="this.querySelector('input').click()">
+        <div class="drop-icon">📷</div>
+        <span>Drop or click to load Screenshot 2 — Dropdown</span>
+        <input type="file" accept="image/*" style="display:none" onchange="loadImage(this, 'frame-2')" />
+      </div>
+      <img style="display:none" />
+
+      <div class="pin" style="left:37%;top:34%" data-n="1">1
+        <div class="callout"><strong>2.1 — Source Toggle (Active)</strong>Highlighted border indicates dropdown is open. The toggle button serves as both the label and the trigger.<span class="tag interaction">Click toggles dropdown visibility</span></div>
+      </div>
+      <div class="pin red" style="left:49%;top:40%" data-n="2">2
+        <div class="callout"><strong>2.2 — Role Badge</strong>"Senior Planner" — shows WHY the user sees these specific sources. Permission-driven filtering, not user preference. Reinforces trust in data access boundaries.<span class="tag trust">Role badge explains filtered content</span></div>
+      </div>
+      <div class="pin" style="left:35%;top:45%" data-n="3">3
+        <div class="callout"><strong>2.3 — "All Sources" Default</strong>Always first option. Active state (blue text) indicates current selection. Allows cross-source queries without data scope restriction.</div>
+      </div>
+      <div class="pin green" style="left:35%;top:55%" data-n="4">4
+        <div class="callout"><strong>2.4 — Filtered Source List</strong>Only sources matching user's department appear. Stephen (Community Development) sees 4 of 7 total sources. Each shows icon, name, and query count.<span class="tag trust">Missing sources = no permission, not a bug</span></div>
+      </div>
+      <div class="pin" style="left:35%;top:67%" data-n="5">5
+        <div class="callout callout-top"><strong>2.5 — Source Item Anatomy</strong>Domain icon + source name + "N queries available" subtext. Clicking selects the source, updates the toggle label, and refreshes suggestions below to source-specific content.</div>
+      </div>
+    </div>
+
+    <div class="annotations-panel">
+      <div class="anno-item"><div class="anno-num">1</div><div><strong>Active Toggle</strong><p>Highlighted state shows dropdown is open</p></div></div>
+      <div class="anno-item"><div class="anno-num red">2</div><div><strong>Role Badge</strong><p>"Senior Planner" — explains why these sources are visible</p></div></div>
+      <div class="anno-item"><div class="anno-num">3</div><div><strong>"All Sources" Default</strong><p>Cross-source queries. Active = blue text.</p></div></div>
+      <div class="anno-item"><div class="anno-num green">4</div><div><strong>Filtered Source List</strong><p>4 of 7 sources visible based on department</p></div></div>
+      <div class="anno-item"><div class="anno-num">5</div><div><strong>Source Item</strong><p>Icon + name + query count. Click → selects & updates suggestions.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════ -->
+<!-- SCREEN 3: Query Card -->
+<!-- ════════════════════════════════════════════════════ -->
+<section class="screen">
+  <div class="screen-label">
+    <div class="screen-num">3</div>
+    <h2>Chat Dialog — Query Card Response</h2>
+    <p>Structured, progressive-disclosure AI response</p>
+  </div>
+  <div class="frame-wrap">
+    <div class="frame" id="frame-3" data-screen="3">
+      <div class="drop-zone" onclick="this.querySelector('input').click()">
+        <div class="drop-icon">📷</div>
+        <span>Drop or click to load Screenshot 3 — Query Card</span>
+        <input type="file" accept="image/*" style="display:none" onchange="loadImage(this, 'frame-3')" />
+      </div>
+      <img style="display:none" />
+
+      <div class="pin" style="left:8%;top:3.5%" data-n="1">1
+        <div class="callout"><strong>3.1 — Chat Header</strong>AI sparkle icon + "Report Assistant" title + kebab menu + close (X). Close returns to homepage. Consistent across all chat states.</div>
+      </div>
+      <div class="pin" style="left:50%;top:8%" data-n="2">2
+        <div class="callout"><strong>3.4a — Card Header + Metadata</strong>"Building Permits by Month" title with AI sparkle icon. Metadata row: data source (DB icon) · freshness (green dot, "Updated 2 hours ago") · result dimensions (12 rows · 7 columns).<span class="tag trust">Source + freshness always visible — trust requirement</span></div>
+      </div>
+      <div class="pin green" style="left:28%;top:20%" data-n="3">3
+        <div class="callout"><strong>3.4b — AI Summary</strong>Narrative summary with bold highlights. "I found 2,847 building permits..." Gives execs the headline. Technical users scan, then drill into data below.<span class="tag rationale">Not everyone reads tables — summary serves all tiers</span></div>
+      </div>
+      <div class="pin" style="left:67%;top:40%" data-n="4">4
+        <div class="callout callout-left"><strong>3.4c — Mini Data Preview</strong>First 3 rows × 4 columns. "9 more rows · 3 more columns · Explore full results." Intentional truncation — lets users confirm correctness before committing.<span class="tag rationale">Preview creates pull toward "Explore Results"</span></div>
+      </div>
+      <div class="pin amber" style="left:28%;top:58%" data-n="5">5
+        <div class="callout"><strong>3.4d — Disclosure Sections</strong>Four collapsible sections: Data Source, SQL Query, Assumptions (3 made), Data Citations (2 sources). All start collapsed. Click header → expand with chevron rotation.<span class="tag interaction">Progressive disclosure — collapsed by default</span></div>
+      </div>
+      <div class="pin" style="left:44%;top:72%" data-n="6">6
+        <div class="callout callout-top"><strong>3.4e — Refinement Chips</strong>"Filter by date range" · "Break down by permit type" · "Compare to last year" · "Add residential vs. commercial split." Each triggers the three-tier response system.<span class="tag interaction">Click → Card / Text / Handoff response</span></div>
+      </div>
+      <div class="pin red" style="left:30%;top:79%" data-n="7">7
+        <div class="callout callout-top"><strong>3.4f — Action Buttons</strong>"Explore Results" (primary, indigo) → opens split-view report panel. "Copy Summary" (secondary) → clipboard with checkmark feedback.<span class="tag interaction">Explore Results → split view transition</span></div>
+      </div>
+      <div class="pin" style="left:50%;top:93%" data-n="8">8
+        <div class="callout callout-top"><strong>3.5 — Chat Footer</strong>Persistent input: text field + Send + attachment (+) + voice (mic). User can always ask follow-up questions without leaving the conversation.</div>
+      </div>
+    </div>
+
+    <div class="annotations-panel">
+      <div class="anno-item"><div class="anno-num">1</div><div><strong>Chat Header</strong><p>AI icon + title + close. Returns to homepage.</p></div></div>
+      <div class="anno-item"><div class="anno-num">2</div><div><strong>Card Header + Metadata</strong><p>Title + source + freshness + row/col count</p></div></div>
+      <div class="anno-item"><div class="anno-num green">3</div><div><strong>AI Summary</strong><p>Narrative with bold highlights. Headline for execs.</p></div></div>
+      <div class="anno-item"><div class="anno-num">4</div><div><strong>Mini Data Preview</strong><p>3×4 preview. Truncation pulls toward full results.</p></div></div>
+      <div class="anno-item"><div class="anno-num amber">5</div><div><strong>Disclosure Sections</strong><p>Data Source, SQL, Assumptions, Citations. Collapsed default.</p></div></div>
+      <div class="anno-item"><div class="anno-num">6</div><div><strong>Refinement Chips</strong><p>Follow-up actions → three-tier response system</p></div></div>
+      <div class="anno-item"><div class="anno-num red">7</div><div><strong>Action Buttons</strong><p>Explore Results (→ split view) + Copy Summary</p></div></div>
+      <div class="anno-item"><div class="anno-num">8</div><div><strong>Chat Footer</strong><p>Always-available input for follow-ups</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════ -->
+<!-- SCREEN 4: Refinement — Collapsed + New Card -->
+<!-- ════════════════════════════════════════════════════ -->
+<section class="screen">
+  <div class="screen-label">
+    <div class="screen-num">4</div>
+    <h2>Refinement — Tier 1 "Card" Response</h2>
+    <p>Previous card collapses, new card with refined data appears</p>
+  </div>
+  <div class="frame-wrap">
+    <div class="frame" id="frame-4" data-screen="4">
+      <div class="drop-zone" onclick="this.querySelector('input').click()">
+        <div class="drop-icon">📷</div>
+        <span>Drop or click to load Screenshot 4 — Refinement</span>
+        <input type="file" accept="image/*" style="display:none" onchange="loadImage(this, 'frame-4')" />
+      </div>
+      <img style="display:none" />
+
+      <div class="pin" style="left:72%;top:8%" data-n="1">1
+        <div class="callout callout-left"><strong>4.0 — Original User Message</strong>Right-aligned chat bubble showing the initial query. Preserved in the conversation history for context.</div>
+      </div>
+      <div class="pin green" style="left:30%;top:15%" data-n="2">2
+        <div class="callout"><strong>4.1a — Collapsed Previous Card</strong>One-line bar: AI sparkle icon + "Building Permits by Month" + condensed metadata. Click to re-expand to full card. Keeps conversation scannable across 3-4 refinement steps.<span class="tag rationale">Collapse prevents scrolling past walls of old content</span></div>
+      </div>
+      <div class="pin amber" style="left:72%;top:22%" data-n="3">3
+        <div class="callout callout-left"><strong>4.1b — Chip as User Message</strong>"Break down by permit type" — the clicked refinement chip becomes a user message in the conversation thread, maintaining natural chat flow.</div>
+      </div>
+      <div class="pin red" style="left:50%;top:28%" data-n="4">4
+        <div class="callout"><strong>4.1c — New Query Card</strong>"Building Permits by Month — By Permit Type" — updated title, new columns (Residential Reno, Commercial New, etc.), fresh summary, new SQL, and its own refinement chips.<span class="tag technical">Full card with independent data, not a delta</span></div>
+      </div>
+      <div class="pin" style="left:28%;top:42%" data-n="5">5
+        <div class="callout"><strong>4.1d — Updated Summary</strong>New narrative: "Residential renovations dominate at 41%..." Each refined card gets a fresh AI-generated summary reflecting the new data shape.</div>
+      </div>
+      <div class="pin" style="left:60%;top:57%" data-n="6">6
+        <div class="callout callout-left"><strong>4.1e — Updated Preview Table</strong>Columns now show Residential Reno, Commercial New, Residential New — reflecting the "by permit type" breakdown. Same 3×4 preview pattern.</div>
+      </div>
+    </div>
+
+    <div class="annotations-panel">
+      <div class="anno-item"><div class="anno-num">1</div><div><strong>Original Message</strong><p>Initial query preserved in chat history</p></div></div>
+      <div class="anno-item"><div class="anno-num green">2</div><div><strong>Collapsed Card</strong><p>Previous result → one-line bar. Click to re-expand.</p></div></div>
+      <div class="anno-item"><div class="anno-num amber">3</div><div><strong>Chip → User Message</strong><p>Clicked chip becomes a chat message</p></div></div>
+      <div class="anno-item"><div class="anno-num red">4</div><div><strong>New Query Card</strong><p>Updated title, columns, summary, SQL, refinement chips</p></div></div>
+      <div class="anno-item"><div class="anno-num">5</div><div><strong>Fresh Summary</strong><p>New narrative for the refined data shape</p></div></div>
+      <div class="anno-item"><div class="anno-num">6</div><div><strong>Updated Preview</strong><p>Columns reflect "by permit type" breakdown</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════ -->
+<!-- SCREEN 5: Split View -->
+<!-- ════════════════════════════════════════════════════ -->
+<section class="screen">
+  <div class="screen-label">
+    <div class="screen-num">5</div>
+    <h2>Split View — Report Panel</h2>
+    <p>Chat + interactive report side-by-side</p>
+  </div>
+  <div class="frame-wrap">
+    <div class="frame" id="frame-5" data-screen="5">
+      <div class="drop-zone" onclick="this.querySelector('input').click()">
+        <div class="drop-icon">📷</div>
+        <span>Drop or click to load Screenshot 5 — Split View</span>
+        <input type="file" accept="image/*" style="display:none" onchange="loadImage(this, 'frame-5')" />
+      </div>
+      <img style="display:none" />
+
+      <div class="pin" style="left:14%;top:3.5%" data-n="1">1
+        <div class="callout"><strong>5.2 — Left Panel: Chat</strong>Conversation preserved in resizable left panel (450px default, 320–600px range). Chat header, all messages, input footer. User can keep chatting while viewing report.</div>
+      </div>
+      <div class="pin amber" style="left:29%;top:50%" data-n="2">2
+        <div class="callout"><strong>5.1a — Draggable Divider</strong>Vertical handle between panels. Drag to resize. Min/max constraints prevent panels from collapsing to unusable widths.<span class="tag interaction">Drag left/right to resize (320–600px)</span></div>
+      </div>
+      <div class="pin red" style="left:63%;top:2.5%" data-n="3">3
+        <div class="callout"><strong>5.3 — Report Title Bar</strong>Report title (bold) + data source badge with freshness. "Open in new window" + "Close" buttons. Close collapses back to full-width chat.<span class="tag trust">Source + freshness badge on report panel too</span></div>
+      </div>
+      <div class="pin" style="left:38%;top:10.5%" data-n="4">4
+        <div class="callout"><strong>5.4a — View Toggle</strong>Table (default, active) · Chart · SQL. Switches the data visualization in the report panel. Active state shows highlighted blue background.<span class="tag interaction">Click → switches between table/chart/SQL views</span></div>
+      </div>
+      <div class="pin" style="left:93%;top:10.5%" data-n="5">5
+        <div class="callout callout-left"><strong>5.4b — Report Actions</strong>Dropdown: Export (PDF/CSV/Excel), Schedule, Share, Save to Library, and "Open in Report Designer" for advanced editing.<span class="tag interaction">Dropdown with click-to-dismiss</span></div>
+      </div>
+      <div class="pin green" style="left:52%;top:15.5%" data-n="6">6
+        <div class="callout"><strong>5.5 — Filter Bar</strong>"Filters" label + chips: All Districts, All Months, Permit Type. Quick inline filtering without returning to chat. Reflects dataset dimensions.<span class="tag interaction">Filter chips → dropdown selectors</span></div>
+      </div>
+      <div class="pin" style="left:65%;top:45%" data-n="7">7
+        <div class="callout"><strong>5.6 — Full Data Table</strong>Forge &lt;forge-table&gt; with dense mode, fixed headers, sortable columns, ALL data rows. This is the complete dataset — not the 3×4 mini preview from the query card.</div>
+      </div>
+    </div>
+
+    <div class="annotations-panel">
+      <div class="anno-item"><div class="anno-num">1</div><div><strong>Chat Panel (Left)</strong><p>Resizable 320–600px. Conversation preserved.</p></div></div>
+      <div class="anno-item"><div class="anno-num amber">2</div><div><strong>Draggable Divider</strong><p>Resize handle between panels</p></div></div>
+      <div class="anno-item"><div class="anno-num red">3</div><div><strong>Report Title Bar</strong><p>Title + source badge + open/close buttons</p></div></div>
+      <div class="anno-item"><div class="anno-num">4</div><div><strong>View Toggle</strong><p>Table · Chart · SQL view switching</p></div></div>
+      <div class="anno-item"><div class="anno-num">5</div><div><strong>Report Actions</strong><p>Export, Schedule, Share, Save, Open in Designer</p></div></div>
+      <div class="anno-item"><div class="anno-num green">6</div><div><strong>Filter Bar</strong><p>Inline filtering by dataset dimensions</p></div></div>
+      <div class="anno-item"><div class="anno-num">7</div><div><strong>Full Data Table</strong><p>Complete dataset with sortable columns</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════ -->
+<!-- SCREEN 6: Report Actions Dropdown -->
+<!-- ════════════════════════════════════════════════════ -->
+<section class="screen">
+  <div class="screen-label">
+    <div class="screen-num">6</div>
+    <h2>Split View — Report Actions Dropdown</h2>
+    <p>Export, schedule, share, and designer handoff</p>
+  </div>
+  <div class="frame-wrap">
+    <div class="frame" id="frame-6" data-screen="6">
+      <div class="drop-zone" onclick="this.querySelector('input').click()">
+        <div class="drop-icon">📷</div>
+        <span>Drop or click to load Screenshot 6 — Report Actions</span>
+        <input type="file" accept="image/*" style="display:none" onchange="loadImage(this, 'frame-6')" />
+      </div>
+      <img style="display:none" />
+
+      <div class="pin" style="left:92%;top:10.5%" data-n="1">1
+        <div class="callout callout-left"><strong>5.4b — Dropdown Trigger</strong>"Report Actions" button with highlighted active state (green border) when dropdown is open. Chevron rotates on open.<span class="tag interaction">Click → toggle dropdown visibility</span></div>
+      </div>
+      <div class="pin" style="left:89%;top:17%" data-n="2">2
+        <div class="callout callout-left"><strong>Export</strong>Download as PDF, CSV, or Excel. Each format serves a different persona — PDF for print delivery, CSV for analysts, Excel for formatted sharing.</div>
+      </div>
+      <div class="pin" style="left:89%;top:22%" data-n="3">3
+        <div class="callout callout-left"><strong>Schedule</strong>"Set up recurring delivery." Converts an ad-hoc report into a recurring asset. One of the most requested features in legacy reporting.</div>
+      </div>
+      <div class="pin" style="left:89%;top:27%" data-n="4">4
+        <div class="callout callout-left"><strong>Share + Save to Library</strong>Share sends to colleagues. Save to Library makes it discoverable and reusable. Ad-hoc → saved asset is a core workflow.</div>
+      </div>
+      <div class="pin red" style="left:89%;top:37%" data-n="5">5
+        <div class="callout callout-left callout-top"><strong>Open in Report Designer</strong>Separated by divider — this is an escalation, not a routine action. Transfers full context (title, SQL, data, columns) to the React-based designer via sessionStorage.<span class="tag technical">sessionStorage handoff → React app</span></div>
+      </div>
+    </div>
+
+    <div class="annotations-panel">
+      <div class="anno-item"><div class="anno-num">1</div><div><strong>Dropdown Trigger</strong><p>Active state with green border when open</p></div></div>
+      <div class="anno-item"><div class="anno-num">2</div><div><strong>Export</strong><p>PDF / CSV / Excel for different personas</p></div></div>
+      <div class="anno-item"><div class="anno-num">3</div><div><strong>Schedule</strong><p>Ad-hoc → recurring delivery</p></div></div>
+      <div class="anno-item"><div class="anno-num">4</div><div><strong>Share + Save</strong><p>Collaborate + make discoverable</p></div></div>
+      <div class="anno-item"><div class="anno-num red">5</div><div><strong>Open in Designer</strong><p>Escalation to full designer. Context transfers via sessionStorage.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<script>
+function loadImage(input, frameId) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const frame = document.getElementById(frameId);
+    const img = frame.querySelector('img');
+    img.src = e.target.result;
+    img.style.display = 'block';
+    frame.classList.add('loaded');
+    // Hide global instructions after first image loaded
+    document.getElementById('instructions').classList.remove('show');
+  };
+  reader.readAsDataURL(file);
+}
+
+// Drag & drop support
+document.querySelectorAll('.frame').forEach(frame => {
+  frame.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    frame.querySelector('.drop-zone')?.style.setProperty('border-color', '#3f51b5');
+  });
+  frame.addEventListener('dragleave', () => {
+    frame.querySelector('.drop-zone')?.style.setProperty('border-color', '#c5cae9');
+  });
+  frame.addEventListener('drop', (e) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (!file || !file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const img = frame.querySelector('img');
+      img.src = ev.target.result;
+      img.style.display = 'block';
+      frame.classList.add('loaded');
+      document.getElementById('instructions').classList.remove('show');
+    };
+    reader.readAsDataURL(file);
+  });
+});
+</script>
+
+</body>
+</html>
