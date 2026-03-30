@@ -147,6 +147,26 @@ export const defaultCategorySuggestions = [
 /**
  * Recent activity for the current user — simulated session history.
  */
+/**
+ * Filters standard reports by the current user's department visibility.
+ */
+const domainDepartments = {
+  'permits-licensing': ['Community Development', 'Planning', 'Code Enforcement', 'Public Works'],
+  'code-enforcement': ['Code Enforcement', 'Community Development', 'Planning'],
+  'financial': ['Finance', 'Admin & Finance', 'Community Development', 'Public Works', 'Capital Projects'],
+  'justice': ['Public Safety', 'Justice', 'Legal'],
+  'gis': ['Community Development', 'Planning', 'Public Works', 'Code Enforcement', 'Capital Projects'],
+  'utilities': ['Utilities', 'Public Works', 'Finance'],
+  'hr-payroll': ['Human Resources', 'Admin & Finance'],
+};
+
+export function getVisibleStandardReports(reports, user = currentUser) {
+  return reports.filter(report => {
+    const allowedDepts = domainDepartments[report.domain] || [];
+    return allowedDepts.includes(user.department);
+  });
+}
+
 export const recentActivity = [
   {
     timestamp: '2026-03-20T14:22:00Z',

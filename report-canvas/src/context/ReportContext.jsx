@@ -134,7 +134,6 @@ export function ReportProvider({ children }) {
   );
 
   // Canvas view state
-  const [viewMode, setViewMode] = useState('print'); // 'print' | 'dashboard'
   const [zoom, setZoom] = useState(100); // 50-200
   const [pageSize, setPageSize] = useState('letter'); // 'letter' | 'a4' | 'legal'
   const [orientation, setOrientation] = useState('portrait'); // 'portrait' | 'landscape'
@@ -230,7 +229,6 @@ export function ReportProvider({ children }) {
       loadingNodes,
       handoffContext,
       activeTemplateId, setActiveTemplateId,
-      viewMode, setViewMode,
       zoom, setZoom,
       pageSize, setPageSize,
       orientation, setOrientation,

@@ -2,6 +2,13 @@ import { suggestions } from './mock-data.js';
 import { outputTemplates, getTemplateById } from './output-templates.js';
 import './chat-flow.css';
 
+// Standard reports integration
+import { standardReports, getStandardReportById } from './standard-reports.js';
+import { matchStandardReports, getConfidenceTier } from './report-matcher.js';
+import { buildStandardReportCard, getDomainLabel } from './standard-report-card.js';
+import { buildStandardReportPanel, wireStandardReportPanel } from './standard-report-viewer.js';
+import { getVisibleStandardReports } from './user-context.js';
+
 /** @param {string} md */
 function markdownToHtml(md) {
   let html = md
@@ -112,6 +119,39 @@ function runConversation(container, suggestion, dialog, options = {}) {
     setTimeout(() => {
       container.removeChild(thinking);
 
+      // Check for standard report matches (typed queries, not suggestion clicks)
+      const queryText = suggestion?.query || '';
+      if (queryText && options.checkStandardReports !== false) {
+        const visibleReports = getVisibleStandardReports(standardReports);
+        const matches = matchStandardReports(queryText, visibleReports);
+
+        if (matches.length > 0) {
+          const topMatch = matches[0];
+          const tier = getConfidenceTier(topMatch.confidence);
+
+          if (tier === 'high') {
+            // Replace ad-hoc response with standard report card
+            const responseMsg = document.createElement('forge-ai-response-message');
+            responseMsg.innerHTML = buildStandardReportCard(topMatch.report, topMatch.confidence);
+            container.appendChild(responseMsg);
+            scrollToBottom(container);
+
+            // Wire "Open Report" button
+            const openBtn = responseMsg.querySelector('[data-action="open-standard-report"]');
+            if (openBtn) {
+              openBtn.addEventListener('click', () => {
+                openStandardReport(topMatch.report, dialog);
+              });
+            }
+            return; // Skip normal query card flow
+          }
+
+          if (tier === 'medium') {
+            container._pendingReportRecommendation = topMatch;
+          }
+        }
+      }
+
       const responseMsg = document.createElement('forge-ai-response-message');
       const responseContent = document.createElement('div');
       responseContent.className = 'ai-response-content';
@@ -122,6 +162,23 @@ function runConversation(container, suggestion, dialog, options = {}) {
 
       // Wire query card interactions (disclosures, copy, chips)
       wireQueryCard(responseMsg, container, suggestion, dialog);
+
+      // Append standard report recommendation if medium confidence match exists
+      if (container._pendingReportRecommendation) {
+        const match = container._pendingReportRecommendation;
+        delete container._pendingReportRecommendation;
+        const recMsg = document.createElement('forge-ai-response-message');
+        recMsg.innerHTML = buildStandardReportCard(match.report, match.confidence);
+        container.appendChild(recMsg);
+        scrollToBottom(container);
+
+        const openBtn = recMsg.querySelector('[data-action="open-standard-report"]');
+        if (openBtn) {
+          openBtn.addEventListener('click', () => {
+            openStandardReport(match.report, dialog);
+          });
+        }
+      }
 
       // Step 4: Open Report click -> split view
       const openReportBtn = responseMsg.querySelector('#open-report-btn');
@@ -1762,4 +1819,326 @@ function applyTemplate(panel, template, suggestion) {
     filterBar.insertAdjacentElement('afterend', header);
   }
   panel.appendChild(footer);
+}
+
+// ---------------------------------------------------------------------------
+// Standard Reports — Split-view experience
+// ---------------------------------------------------------------------------
+
+/**
+ * Opens a standard report in the split-view experience.
+ * Called from either the chat card "Open Report" button or "Open in Chat" from library.
+ */
+function openStandardReport(report, dialog) {
+  const content = dialog.querySelector('.chat-dialog-content');
+  if (!content) return;
+
+  // Fade out existing content
+  const existingElements = content.querySelectorAll('.chat-header, .chat-body, .chat-footer');
+  existingElements.forEach(el => {
+    el.style.transition = 'opacity 0.3s';
+    el.style.opacity = '0';
+  });
+
+  setTimeout(() => {
+    existingElements.forEach(el => el.remove());
+
+    // Also remove any existing split containers
+    const existingSplit = content.querySelector('.custom-split-container');
+    if (existingSplit) existingSplit.remove();
+
+    // Create split container
+    const splitContainer = document.createElement('div');
+    splitContainer.className = 'custom-split-container';
+    splitContainer.style.cssText = 'display: flex; height: 100%; width: 100%;';
+
+    // Left panel: Chat
+    const leftPanel = document.createElement('div');
+    leftPanel.style.cssText = 'width: 38%; border-right: 2px solid #e0e0e0; display: flex; flex-direction: column; background: #fafafa;';
+    leftPanel.innerHTML = buildStandardReportChatPanel(report);
+
+    // Divider
+    const divider = document.createElement('div');
+    divider.className = 'custom-divider';
+    divider.innerHTML = '<div class="divider-handle"></div>';
+
+    // Right panel: Report viewer
+    const rightPanel = document.createElement('div');
+    rightPanel.style.cssText = 'flex: 1; display: flex; flex-direction: column; overflow: hidden;';
+    rightPanel.innerHTML = buildStandardReportPanel(report);
+
+    splitContainer.appendChild(leftPanel);
+    splitContainer.appendChild(divider);
+    splitContainer.appendChild(rightPanel);
+    content.appendChild(splitContainer);
+
+    // Wire the report viewer
+    const viewerEl = rightPanel.querySelector('.sr-viewer');
+    const viewerControls = wireStandardReportPanel(viewerEl, report, {
+      onFilterChange: (paramId, value) => {
+        const param = report.parameters.find(p => p.id === paramId);
+        addSRChatMessage(leftPanel, 'ai', `${param ? param.label : paramId} changed to <strong>${value}</strong>. The report has been updated.`);
+      },
+      onViewChange: (view) => {
+        const label = view ? view.name : 'Default View';
+        addSRChatMessage(leftPanel, 'ai', `Switched to <strong>${label}</strong>.`);
+      },
+      onViewSaved: (view) => {
+        addSRChatMessage(leftPanel, 'ai', `View "<strong>${view.name}</strong>" saved. You can select it anytime from the view dropdown.`);
+      },
+      onClose: () => {
+        dialog.open = false;
+      },
+      onOpenDesigner: (currentParams) => {
+        // Build handoff context from standard report
+        const handoffContext = {
+          reportTitle: report.name,
+          dataSource: getDomainLabel(report.domain),
+          freshness: report.freshness,
+          columns: report.sections.find(s => s.type === 'table')?.columns || [],
+          data: report.sections.find(s => s.type === 'table')
+            ? report.data[report.sections.find(s => s.type === 'table').dataKey] || []
+            : [],
+          handoffReason: `Opened from Standard Report: ${report.name}`,
+          activeTemplateId: null,
+        };
+        sessionStorage.setItem('tira-handoff-context', JSON.stringify(handoffContext));
+        mountReportDesigner(dialog);
+      }
+    });
+
+    // Wire chat input
+    wireSRChatInput(leftPanel, report, viewerControls);
+    // Wire suggestion chips
+    wireSRSuggestionChips(leftPanel, report, viewerControls);
+
+    // Wire divider drag
+    let isDragging = false;
+    let startX = 0;
+    let startLeftWidth = 0;
+    divider.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      startX = e.clientX;
+      startLeftWidth = leftPanel.offsetWidth;
+      divider.classList.add('dragging');
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      e.preventDefault();
+    });
+    document.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      const deltaX = e.clientX - startX;
+      const newWidth = startLeftWidth + deltaX;
+      if (newWidth >= 320 && newWidth <= 600) {
+        leftPanel.style.width = `${newWidth}px`;
+        leftPanel.style.flexBasis = `${newWidth}px`;
+      }
+    });
+    document.addEventListener('mouseup', () => {
+      if (isDragging) {
+        isDragging = false;
+        divider.classList.remove('dragging');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      }
+    });
+  }, 300);
+}
+
+function buildStandardReportChatPanel(report) {
+  const suggestionsHtml = report.suggestions.map(s =>
+    `<span class="sr-chat-chip" data-suggestion="${s}">${s}</span>`
+  ).join('');
+
+  return `
+    <div style="padding: 16px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;">
+      <div style="font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 0.5px;">AI Assistant</div>
+      <div class="sr-chat-messages">
+        <div style="background: #fff; border-radius: 8px; padding: 12px; border: 1px solid #e0e0e0;">
+          <div style="font-size: 13px; font-weight: 600; margin-bottom: 6px;">${report.name}</div>
+          <div style="font-size: 12px; color: #555; line-height: 1.5;">This report shows ${report.description.toLowerCase()} Currently showing default filters. ${report.freshness}.</div>
+        </div>
+      </div>
+      <div style="font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 0.5px;">Suggestions</div>
+      <div class="sr-chat-suggestions" style="display: flex; flex-wrap: wrap; gap: 6px;">
+        ${suggestionsHtml}
+      </div>
+    </div>
+    <div class="sr-chat-input-area" style="padding: 12px 16px; border-top: 1px solid #e0e0e0; display: flex; gap: 8px;">
+      <input class="sr-chat-input" style="flex: 1; border: 1px solid #ddd; border-radius: 8px; padding: 10px 12px; font-size: 13px;" placeholder="Ask about this report..." />
+      <button class="sr-chat-send" style="background: var(--forge-theme-primary, #3f51b5); color: #fff; border: none; border-radius: 8px; padding: 8px 14px; cursor: pointer; font-size: 13px;">Send</button>
+    </div>
+    <style>
+      .sr-chat-chip {
+        background: #e8eaf6;
+        color: var(--forge-theme-primary, #3f51b5);
+        font-size: 11px;
+        padding: 6px 10px;
+        border-radius: 16px;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .sr-chat-chip:hover { background: #c5cae9; }
+      .sr-chat-msg { background: #fff; border-radius: 8px; padding: 10px 12px; border: 1px solid #e0e0e0; font-size: 12px; line-height: 1.5; }
+      .sr-chat-msg--user { background: #e8eaf6; border-color: #c5cae9; text-align: right; }
+    </style>
+  `;
+}
+
+function addSRChatMessage(leftPanel, type, html) {
+  const msgContainer = leftPanel.querySelector('.sr-chat-messages');
+  if (!msgContainer) return;
+  const msg = document.createElement('div');
+  msg.className = `sr-chat-msg ${type === 'user' ? 'sr-chat-msg--user' : ''}`;
+  msg.innerHTML = html;
+  msgContainer.appendChild(msg);
+  msgContainer.scrollTop = msgContainer.scrollHeight;
+}
+
+function wireSRChatInput(leftPanel, report, viewerControls) {
+  const input = leftPanel.querySelector('.sr-chat-input');
+  const sendBtn = leftPanel.querySelector('.sr-chat-send');
+  if (!input || !sendBtn) return;
+
+  function handleSend() {
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+    addSRChatMessage(leftPanel, 'user', text);
+    setTimeout(() => {
+      const response = processConversationalFilter(text, report, viewerControls);
+      addSRChatMessage(leftPanel, 'ai', response);
+    }, 600);
+  }
+
+  sendBtn.addEventListener('click', handleSend);
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleSend(); });
+}
+
+function wireSRSuggestionChips(leftPanel, report, viewerControls) {
+  const chips = leftPanel.querySelectorAll('.sr-chat-chip');
+  chips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      const text = chip.dataset.suggestion;
+      addSRChatMessage(leftPanel, 'user', text);
+      chip.style.display = 'none';
+      setTimeout(() => {
+        const response = processConversationalFilter(text, report, viewerControls);
+        addSRChatMessage(leftPanel, 'ai', response);
+      }, 600);
+    });
+  });
+}
+
+function processConversationalFilter(text, report, viewerControls) {
+  const lower = text.toLowerCase();
+
+  for (const param of report.parameters) {
+    for (const option of param.options) {
+      if (option === param.options[0]) continue; // skip "All" options
+      if (lower.includes(option.toLowerCase())) {
+        viewerControls.setParam(param.id, option);
+        return `Filtered <strong>${param.label}</strong> to <strong>${option}</strong>. The report has been updated.`;
+      }
+    }
+  }
+
+  if (lower.includes('my district') || lower.includes('my neighborhood')) {
+    const districtParam = report.parameters.find(p => p.id === 'district' || p.id === 'neighborhood');
+    if (districtParam) {
+      const value = districtParam.options[1];
+      viewerControls.setParam(districtParam.id, value);
+      return `Filtered to <strong>${value}</strong> (your assigned area). The report has been updated.`;
+    }
+  }
+
+  if (lower.includes('residential')) {
+    const typeParam = report.parameters.find(p => p.id === 'permitType' || p.id === 'violationType' || p.id === 'caseType');
+    if (typeParam) {
+      const match = typeParam.options.find(o => o.toLowerCase().includes('residential'));
+      if (match) {
+        viewerControls.setParam(typeParam.id, match);
+        return `Filtered to <strong>${match}</strong>. The report has been updated.`;
+      }
+    }
+  }
+
+  if (lower.includes('felony') || lower.includes('felonies')) {
+    const typeParam = report.parameters.find(p => p.id === 'caseType');
+    if (typeParam) {
+      viewerControls.setParam(typeParam.id, 'Felony');
+      return `Filtered to <strong>Felony</strong> cases only. The report has been updated.`;
+    }
+  }
+
+  // Smart fallback — list available filters
+  const filterList = report.parameters.map(p => {
+    const opts = p.options.filter(o => o !== p.options[0]).slice(0, 3).join(', ');
+    return `<strong>${p.label}</strong> (${opts}${p.options.length > 4 ? ', ...' : ''})`;
+  }).join(' · ');
+
+  return `I'm not sure how to apply that. You can filter this report by: ${filterList}. Try saying something like "<em>show me ${report.parameters[0]?.options[1] || 'a specific value'}</em>" or use the filter controls on the right.`;
+}
+
+/**
+ * Opens a standard report directly in chat from the library.
+ * Creates the dialog and immediately transitions to split-view.
+ */
+export function openStandardReportInChat(reportId) {
+  const report = getStandardReportById(reportId);
+  if (!report) return;
+
+  // Create or reuse dialog
+  let dialog = document.querySelector('#chat-dialog');
+  if (!dialog) {
+    dialog = document.createElement('forge-dialog');
+    dialog.id = 'chat-dialog';
+    dialog.className = 'chat-dialog';
+    dialog.setAttribute('fullscreen', '');
+    dialog.setAttribute('mode', 'modal');
+    dialog.setAttribute('persistent', '');
+    dialog.setAttribute('animation-type', 'fade');
+    document.body.appendChild(dialog);
+  }
+
+  dialog.innerHTML = `
+    <div class="chat-dialog-content">
+      <div class="chat-header">
+        <div class="ai-header-icon">
+          <div class="ai-icon-wrapper">
+            <forge-icon name="auto_awesome"></forge-icon>
+          </div>
+        </div>
+        <span class="chat-header-title">${report.name}</span>
+        <span style="background: var(--forge-theme-primary, #3f51b5); color: #fff; font-size: 9px; padding: 2px 6px; border-radius: 3px; text-transform: uppercase; margin-left: 8px;">Standard</span>
+        <div class="chat-header-actions">
+          <forge-icon-button aria-label="Close" id="chat-close-btn">
+            <forge-icon name="close"></forge-icon>
+          </forge-icon-button>
+        </div>
+      </div>
+      <div class="chat-body">
+        <div class="chat-container">
+          <div class="chat-messages-spacer"></div>
+          <div class="chat-messages" id="chat-messages">
+            <forge-ai-response-message>
+              <div style="font-size: 14px; color: #555;">Opened standard report: <strong>${report.name}</strong></div>
+            </forge-ai-response-message>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  dialog.open = true;
+
+  // Close handler
+  dialog.querySelector('#chat-close-btn').addEventListener('click', () => {
+    dialog.open = false;
+  });
+
+  // Immediately transition to split-view
+  setTimeout(() => {
+    openStandardReport(report, dialog);
+  }, 400);
 }

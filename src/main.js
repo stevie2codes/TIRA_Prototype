@@ -224,6 +224,13 @@ document.addEventListener('DOMContentLoaded', () => {
     openLibraryView();
   } else if (autoState === 'designer') {
     openChatFlow(0, { autoOpenReport: false });
+  } else if (autoState === 'standard-report') {
+    const reportId = params.get('reportId');
+    if (reportId) {
+      import('./chat-flow.js').then(({ openStandardReportInChat }) => {
+        openStandardReportInChat(reportId);
+      });
+    }
   }
 });
 

@@ -3,14 +3,18 @@
  * Extracted from index.html + main.js — renders the AI-prompt-forward reporting homepage.
  */
 
-import { openChatFlow, openLibraryView } from '../chat-flow.js';
+import { openChatFlow, openLibraryView, openStandardReportInChat } from '../chat-flow.js';
 import {
   currentUser,
   getVisibleSources,
+  getVisibleStandardReports,
   sourceSuggestions,
   defaultTaskSuggestions,
   recentActivity,
 } from '../user-context.js';
+import { standardReports } from '../standard-reports.js';
+import { getViewsForReport } from '../saved-views.js';
+import { getDomainLabel } from '../standard-report-card.js';
 
 // ---------------------------------------------------------------------------
 // State
@@ -68,6 +72,10 @@ export function render(container) {
         </div>
         <div class="side-menu-section">
           <div class="side-menu-section-label">LIBRARY</div>
+          <button class="side-menu-item" type="button" data-action="standard-reports">
+            <forge-icon name="assignment"></forge-icon>
+            <span>Standard Reports</span>
+          </button>
           <button class="side-menu-item" type="button" data-action="templates">
             <forge-icon name="description"></forge-icon>
             <span>Templates</span>
@@ -398,6 +406,9 @@ function wireEvents(container) {
         case 'templates':
           openLibraryView();
           break;
+        case 'standard-reports':
+          renderStandardReportsLibrary();
+          break;
         case 'data-sources':
           buildSourceDropdown();
           break;
@@ -445,4 +456,67 @@ function wireEvents(container) {
     sendBtn.addEventListener('click', clickHandler);
     cleanupFns.push(() => sendBtn.removeEventListener('click', clickHandler));
   }
+}
+
+// ---------------------------------------------------------------------------
+// Standard Reports Library
+// ---------------------------------------------------------------------------
+function renderStandardReportsLibrary() {
+  const container = document.querySelector('#suggestions-container');
+  if (!container) return;
+
+  const visibleReports = getVisibleStandardReports(standardReports);
+
+  // Group by domain
+  const grouped = {};
+  for (const report of visibleReports) {
+    const domain = getDomainLabel(report.domain);
+    if (!grouped[domain]) grouped[domain] = [];
+    grouped[domain].push(report);
+  }
+
+  container.innerHTML = `
+    <div class="standard-reports-library" style="padding: 0 4px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+        <div>
+          <h2 class="forge-typography--heading5" style="margin: 0;">Standard Reports</h2>
+          <p style="color: #666; font-size: 13px; margin: 4px 0 0;">Pre-built reports maintained by Tyler. Open in chat to explore and customize.</p>
+        </div>
+      </div>
+      ${Object.entries(grouped).map(([domain, reports]) => `
+        <div style="margin-bottom: 24px;">
+          <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #888; font-weight: 600; margin-bottom: 8px;">${domain}</div>
+          <div style="display: flex; flex-direction: column; gap: 2px;">
+            ${reports.map(report => {
+              const savedViews = getViewsForReport(report.id);
+              const viewsBadge = savedViews.length > 0
+                ? `<span style="background: #e8eaf6; color: var(--forge-theme-primary, #3f51b5); font-size: 10px; padding: 2px 6px; border-radius: 10px;">${savedViews.length} saved view${savedViews.length > 1 ? 's' : ''}</span>`
+                : '';
+              return `
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: #fff; border-radius: 8px; border: 1px solid #eee; transition: border-color 0.15s;" onmouseover="this.style.borderColor='#c5cae9'" onmouseout="this.style.borderColor='#eee'">
+                  <div style="flex: 1;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <span style="font-weight: 600; font-size: 14px;">${report.name}</span>
+                      ${viewsBadge}
+                    </div>
+                    <div style="color: #666; font-size: 12px; margin-top: 2px;">${report.description} &middot; ${report.freshness} &middot; ${report.parameters.length} parameters</div>
+                  </div>
+                  <div style="display: flex; gap: 8px; flex-shrink: 0; margin-left: 16px;">
+                    <button class="std-report-open-btn" data-report-id="${report.id}" style="background: var(--forge-theme-primary, #3f51b5); color: #fff; border: none; padding: 6px 14px; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: 500;">Open in Chat</button>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+
+  // Wire "Open in Chat" buttons
+  container.querySelectorAll('.std-report-open-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      openStandardReportInChat(btn.dataset.reportId);
+    });
+  });
 }

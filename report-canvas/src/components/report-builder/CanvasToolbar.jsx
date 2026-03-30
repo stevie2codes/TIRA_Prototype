@@ -4,38 +4,14 @@ import { PAGE_SIZES } from '../../constants/pageSettings.js';
 
 export default function CanvasToolbar() {
   const {
-    viewMode, setViewMode,
     zoom, setZoom,
     pageSize, setPageSize,
     orientation, setOrientation,
     showRulers, setShowRulers,
   } = useReport();
 
-  const isPrint = viewMode === 'print';
-
   return (
     <div className="canvas-toolbar">
-      <div className="toolbar-group">
-        <button
-          className={`toolbar-toggle-btn${viewMode === 'print' ? ' active' : ''}`}
-          onClick={() => setViewMode('print')}
-          title="Print Layout"
-        >
-          <ForgeIcon name="description" />
-          <span>Print</span>
-        </button>
-        <button
-          className={`toolbar-toggle-btn${viewMode === 'dashboard' ? ' active' : ''}`}
-          onClick={() => setViewMode('dashboard')}
-          title="Dashboard Layout"
-        >
-          <ForgeIcon name="dashboard" />
-          <span>Dashboard</span>
-        </button>
-      </div>
-
-      <div className="toolbar-divider" />
-
       <div className="toolbar-group">
         <ForgeIconButton density="small" on-click={() => setZoom(z => Math.max(50, z - 10))}>
           <ForgeIcon name="remove" />
@@ -55,10 +31,8 @@ export default function CanvasToolbar() {
         />
       </div>
 
-      {isPrint && (
-        <>
-          <div className="toolbar-divider" />
-          <div className="toolbar-group">
+      <div className="toolbar-divider" />
+      <div className="toolbar-group">
             <select
               className="toolbar-select"
               value={pageSize}
@@ -82,9 +56,7 @@ export default function CanvasToolbar() {
             >
               <ForgeIcon name="straighten" style={showRulers ? {} : { opacity: 0.4 }} />
             </ForgeIconButton>
-          </div>
-        </>
-      )}
+      </div>
     </div>
   );
 }
