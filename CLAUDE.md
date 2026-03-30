@@ -61,4 +61,19 @@ The product replaces a search-and-build reporting workflow with a describe-and-r
 - Prioritize fidelity to design intent over pixel-perfection
 - Keep prototypes self-contained and navigable
 
+## Code Style Conventions
+
+- **CSS naming**: BEM style (`.component__element--modifier`) for component styles
+- **Component files**: Paired .js/.css files for UI components (e.g., `standard-report-card.js` + `standard-report-card.css`)
+- **Wire functions**: Attach event listeners and return control objects with methods (e.g., `{ setParam(), getParams() }`)
+- **Cross-panel coordination**: Use callbacks for communication between panels (`onFilterChange`, `onViewChange`, `onClose`, etc.)
+- **Module exports**: Prefer named exports for utilities, default exports for single-purpose modules
+
+## Integration Patterns
+
+- **Split-view UI**: Left panel (chat/controls) + draggable divider + right panel (content). See `custom-split-container` in chat-flow.js
+- **Main app ↔ React designer handoff**: Use `sessionStorage.setItem('tira-handoff-context', JSON.stringify(context))` to transfer data
+- **Data simulation**: Hash-based deterministic variance for prototype data that changes with parameters (see `simulateFilteredData` in standard-report-viewer.js)
+- **React canvas isolation**: report-canvas/ is a separate React 19 app, mounted via dialog/iframe — keep concerns separated
+
 
