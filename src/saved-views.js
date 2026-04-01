@@ -21,17 +21,17 @@ function getDefaultViews() {
   return [
     {
       id: 'view-demo-1',
-      reportId: 'quarterly-permit-summary',
-      name: 'Downtown Residential Only',
+      reportId: 'daily-booking-log',
+      name: 'Felonies Only — Main Facility',
       createdBy: 'sarah.webb',
-      parameterOverrides: { district: 'Downtown', permitType: 'Residential' }
+      parameterOverrides: { facility: 'Main Detention Center', chargeLevel: 'Felony' }
     },
     {
       id: 'view-demo-2',
-      reportId: 'monthly-code-violations',
-      name: 'Open Violations - Riverside',
+      reportId: 'permit-issuance-register',
+      name: 'Downtown Building Permits',
       createdBy: 'sarah.webb',
-      parameterOverrides: { neighborhood: 'Riverside', resolution: 'Open' }
+      parameterOverrides: { district: 'Downtown', permitType: 'Building' }
     }
   ];
 }

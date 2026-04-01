@@ -1512,7 +1512,7 @@ function buildReportPanel(suggestion) {
       <div class="canvas-action-group">
         <button class="canvas-action-btn" type="button" id="report-actions-btn">
           <forge-icon name="more_vert"></forge-icon>
-          <span>Report Actions</span>
+          <span>Actions</span>
           <forge-icon name="arrow_drop_down" class="action-dropdown-arrow"></forge-icon>
         </button>
         <div class="canvas-dropdown" id="report-actions-dropdown">
@@ -1727,7 +1727,7 @@ function buildReportPanel(suggestion) {
         actionLabel.textContent = feedbackMap[action] || 'Done!';
         reportActionsBtn.classList.add('action-success');
         setTimeout(() => {
-          actionLabel.textContent = 'Report Actions';
+          actionLabel.textContent = 'Actions';
           reportActionsBtn.classList.remove('action-success');
         }, 1500);
       });
@@ -1829,7 +1829,7 @@ function applyTemplate(panel, template, suggestion) {
  * Opens a standard report in the split-view experience.
  * Called from either the chat card "Open Report" button or "Open in Chat" from library.
  */
-function openStandardReport(report, dialog) {
+function openStandardReport(report, dialog, initialParams) {
   const content = dialog.querySelector('.chat-dialog-content');
   if (!content) return;
 
@@ -1907,6 +1907,13 @@ function openStandardReport(report, dialog) {
       }
     });
 
+    // Apply initial params from config panel (if provided)
+    if (initialParams) {
+      for (const [paramId, value] of Object.entries(initialParams)) {
+        viewerControls.setParam(paramId, value);
+      }
+    }
+
     // Wire chat input
     wireSRChatInput(leftPanel, report, viewerControls);
     // Wire suggestion chips
@@ -1945,10 +1952,22 @@ function openStandardReport(report, dialog) {
   }, 300);
 }
 
+function getReportInsight(report) {
+  const insights = {
+    'daily-booking-log': 'This log is generated each shift from live booking data. Entries are ordered chronologically by intake time. Bond amounts reflect initial setting — subsequent modifications appear in the case management system.',
+    'permit-issuance-register': 'Permits are grouped by type with running subtotals for valuation and fees collected. "Corrections Required" items have holds and will not appear in issued counts until resolved. Inspector assignments are based on the current rotation schedule.',
+    'inspection-activity-log': 'Results are grouped by inspector to support supervisor review. A "Partial" result means some items passed but a return visit is needed. Failed inspections automatically generate a re-inspection task in the queue.',
+    'budget-vs-actuals': 'Variance is calculated as budget minus actuals year-to-date. Negative values indicate overspend relative to the pro-rated budget through the current period. Encumbrances are not included in actuals.',
+  };
+  return insights[report.id] || `This report contains ${report.sections.length} sections and is ${report.freshness.toLowerCase()}.`;
+}
+
 function buildStandardReportChatPanel(report) {
   const suggestionsHtml = report.suggestions.map(s =>
     `<span class="sr-chat-chip" data-suggestion="${s}">${s}</span>`
   ).join('');
+
+  const insight = getReportInsight(report);
 
   return `
     <div style="padding: 16px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;">
@@ -1958,6 +1977,10 @@ function buildStandardReportChatPanel(report) {
           <div style="font-size: 13px; font-weight: 600; margin-bottom: 6px;">${report.name}</div>
           <div style="font-size: 12px; color: #555; line-height: 1.5;">This report shows ${report.description.toLowerCase()} Currently showing default filters. ${report.freshness}.</div>
         </div>
+      </div>
+      <div class="sr-chat-insight">
+        <div class="sr-chat-insight__icon"><forge-icon name="info_outline" style="font-size: 14px; --forge-icon-font-size: 14px; color: #5c6bc0;"></forge-icon></div>
+        <div class="sr-chat-insight__text">${insight}</div>
       </div>
       <div style="font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 0.5px;">Suggestions</div>
       <div class="sr-chat-suggestions" style="display: flex; flex-wrap: wrap; gap: 6px;">
@@ -1979,6 +2002,9 @@ function buildStandardReportChatPanel(report) {
         transition: background 0.15s;
       }
       .sr-chat-chip:hover { background: #c5cae9; }
+      .sr-chat-insight { display: flex; gap: 8px; background: #f0f1fa; border-radius: 8px; padding: 10px 12px; border: 1px solid #dde0f2; }
+      .sr-chat-insight__icon { flex-shrink: 0; margin-top: 1px; }
+      .sr-chat-insight__text { font-size: 12px; color: #444; line-height: 1.5; }
       .sr-chat-msg { background: #fff; border-radius: 8px; padding: 10px 12px; border: 1px solid #e0e0e0; font-size: 12px; line-height: 1.5; }
       .sr-chat-msg--user { background: #e8eaf6; border-color: #c5cae9; text-align: right; }
     </style>
@@ -2084,7 +2110,7 @@ function processConversationalFilter(text, report, viewerControls) {
  * Opens a standard report directly in chat from the library.
  * Creates the dialog and immediately transitions to split-view.
  */
-export function openStandardReportInChat(reportId) {
+export function openStandardReportInChat(reportId, initialParams) {
   const report = getStandardReportById(reportId);
   if (!report) return;
 
@@ -2137,8 +2163,8 @@ export function openStandardReportInChat(reportId) {
     dialog.open = false;
   });
 
-  // Immediately transition to split-view
+  // Immediately transition to split-view, passing initial params
   setTimeout(() => {
-    openStandardReport(report, dialog);
+    openStandardReport(report, dialog, initialParams);
   }, 400);
 }

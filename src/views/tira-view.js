@@ -4,40 +4,31 @@
  */
 
 import { openChatFlow, openLibraryView, openStandardReportInChat } from '../chat-flow.js';
+import { showConfigPanel } from '../standard-report-viewer.js';
+import { getStandardReportById } from '../standard-reports.js';
 import {
   currentUser,
-  getVisibleSources,
-  getVisibleStandardReports,
-  sourceSuggestions,
-  defaultTaskSuggestions,
+  domains,
+  getStandardReportsForDomain,
+  getQuestionsForDomain,
   recentActivity,
 } from '../user-context.js';
 import { standardReports } from '../standard-reports.js';
 import { getViewsForReport } from '../saved-views.js';
-import { getDomainLabel } from '../standard-report-card.js';
 
 // ---------------------------------------------------------------------------
 // State
 // ---------------------------------------------------------------------------
-let selectedSourceId = null;
+let selectedDomainId = null;
+let activeTab = 'reports'; // 'reports' | 'ask' | 'recent'
 let cleanupFns = [];
-
-// Source icon map for recent items
-const sourceIconMap = {
-  'permits-licensing': 'description',
-  'code-enforcement': 'gavel',
-  'financial': 'account_balance',
-  'gis': 'map',
-  'justice': 'shield',
-  'utilities': 'water',
-  'hr-payroll': 'people',
-};
 
 // ---------------------------------------------------------------------------
 // Render
 // ---------------------------------------------------------------------------
 export function render(container) {
-  selectedSourceId = null;
+  selectedDomainId = 'epl';
+  activeTab = 'reports';
   cleanupFns = [];
 
   // Greeting
@@ -72,17 +63,9 @@ export function render(container) {
         </div>
         <div class="side-menu-section">
           <div class="side-menu-section-label">LIBRARY</div>
-          <button class="side-menu-item" type="button" data-action="standard-reports">
-            <forge-icon name="assignment"></forge-icon>
-            <span>Standard Reports</span>
-          </button>
           <button class="side-menu-item" type="button" data-action="templates">
             <forge-icon name="description"></forge-icon>
             <span>Templates</span>
-          </button>
-          <button class="side-menu-item" type="button" data-action="data-sources">
-            <forge-icon name="database_outline"></forge-icon>
-            <span>Data Sources</span>
           </button>
         </div>
       </div>
@@ -103,7 +86,6 @@ export function render(container) {
       <div class="home-content">
         <div class="title-section">
           <div class="title-row">
-            <img class="tyler-logo" src="/images/tyler-logo-icon.png" alt="Tyler Logo" />
             <span class="title-text" id="home-greeting">${greeting}</span>
           </div>
 
@@ -119,11 +101,6 @@ export function render(container) {
                 <forge-icon-button aria-label="Add attachment">
                   <forge-icon name="add"></forge-icon>
                 </forge-icon-button>
-                <button class="source-toggle" type="button" id="source-toggle">
-                  <forge-icon name="database_outline"></forge-icon>
-                  All sources
-                  <forge-icon name="arrow_drop_down"></forge-icon>
-                </button>
               </div>
             </div>
             <div class="disclaimer">AI can make mistakes. Always verify responses.</div>
@@ -135,8 +112,8 @@ export function render(container) {
     </div>
   `;
 
-  // Render suggestions
-  renderDefaultSuggestions();
+  // Render tabbed content for user's default domain
+  renderTabbedContent(selectedDomainId);
 
   // Wire events
   wireEvents(container);
@@ -148,198 +125,150 @@ export function destroy() {
 }
 
 // ---------------------------------------------------------------------------
-// Suggestions rendering
+// Tabbed content
 // ---------------------------------------------------------------------------
-function renderDefaultSuggestions() {
+function renderTabbedContent(domainId) {
   const container = document.querySelector('#suggestions-container');
   if (!container) return;
 
-  const recentItems = recentActivity.map(r => {
-    const attr = r.suggestionIndex !== undefined
-      ? `data-suggestion="${r.suggestionIndex}"`
-      : `data-query="${r.label}"`;
-    const icon = sourceIconMap[r.sourceId] || 'schedule';
-    const meta = r.type === 'saved_report' ? `Saved report · ${r.timeAgo}` : r.timeAgo;
-    return `
-      <button class="recent-item" type="button" ${attr}>
-        <div class="recent-item-icon"><forge-icon name="${icon}"></forge-icon></div>
-        <div class="recent-item-text">
-          <span class="recent-item-label">${r.label}</span>
-          <span class="recent-item-meta">${meta}</span>
-        </div>
-        <div class="recent-item-arrow"><forge-icon name="play_arrow"></forge-icon></div>
-      </button>`;
-  }).join('');
-
-  const taskActions = defaultTaskSuggestions.map(s =>
-    `<button class="suggestion-action" type="button" data-query="${s.label}">
-      <div class="suggestion-action-icon"><forge-icon name="${s.icon}"></forge-icon></div>
-      <span class="suggestion-action-label">${s.label}</span>
-      <div class="suggestion-action-arrow"><forge-icon name="play_arrow"></forge-icon></div>
-    </button>`
-  ).join('');
+  const domain = domains.find(d => d.id === domainId);
+  if (!domain) return;
 
   container.innerHTML = `
-    ${recentActivity.length ? `
-      <div class="recent-section">
-        <div class="recent-section-header"><span>Pick up where you left off</span></div>
-        <div class="recent-list">${recentItems}</div>
-      </div>
-    ` : ''}
-    <div class="suggestions-section">
-      <div class="suggestions-header">Suggested</div>
-      <div class="suggestion-actions-list">${taskActions}</div>
+    <div class="domain-tabs">
+      <button class="domain-tab ${activeTab === 'reports' ? 'domain-tab--active' : ''}" data-tab="reports">Reports</button>
+      <button class="domain-tab ${activeTab === 'ask' ? 'domain-tab--active' : ''}" data-tab="ask">Ask a Question</button>
+      <button class="domain-tab ${activeTab === 'recent' ? 'domain-tab--active' : ''}" data-tab="recent">Recent</button>
     </div>
-  `;
-}
-
-function renderSourceSuggestions(sourceId) {
-  const container = document.querySelector('#suggestions-container');
-  if (!container) return;
-
-  const visibleSources = getVisibleSources();
-  const src = visibleSources.find(s => s.id === sourceId);
-  const sourceLabel = src?.label || sourceId;
-  const sourceIcon = src?.icon || 'database_outline';
-  const sourceRecents = recentActivity.filter(r => r.sourceId === sourceId);
-
-  const recentItems = sourceRecents.map(r => {
-    const attr = r.suggestionIndex !== undefined
-      ? `data-suggestion="${r.suggestionIndex}"`
-      : `data-query="${r.label}"`;
-    const meta = r.type === 'saved_report' ? `Saved report · ${r.timeAgo}` : r.timeAgo;
-    return `
-      <button class="recent-item" type="button" ${attr}>
-        <div class="recent-item-icon"><forge-icon name="${sourceIcon}"></forge-icon></div>
-        <div class="recent-item-text">
-          <span class="recent-item-label">${r.label}</span>
-          <span class="recent-item-meta">${meta}</span>
-        </div>
-        <div class="recent-item-arrow"><forge-icon name="play_arrow"></forge-icon></div>
-      </button>`;
-  }).join('');
-
-  const items = sourceSuggestions[sourceId] || [];
-  const queryActions = items.map(s => {
-    const attr = s.suggestionIndex !== undefined
-      ? `data-suggestion="${s.suggestionIndex}"`
-      : `data-query="${s.query || s.label}"`;
-    return `
-      <button class="suggestion-action" type="button" ${attr}>
-        <div class="suggestion-action-icon"><forge-icon name="${sourceIcon}"></forge-icon></div>
-        <span class="suggestion-action-label">${s.label}</span>
-        <div class="suggestion-action-arrow"><forge-icon name="play_arrow"></forge-icon></div>
-      </button>`;
-  }).join('');
-
-  container.innerHTML = `
-    ${sourceRecents.length ? `
-      <div class="recent-section">
-        <div class="recent-section-header"><span>Recent from ${sourceLabel}</span></div>
-        <div class="recent-list">${recentItems}</div>
-      </div>
-    ` : ''}
-    <div class="suggestions-section">
-      <div class="suggestions-header">Common queries</div>
-      <div class="suggestion-actions-list">${queryActions}</div>
-    </div>
-  `;
-}
-
-// ---------------------------------------------------------------------------
-// Source dropdown
-// ---------------------------------------------------------------------------
-function selectSource(sourceId) {
-  selectedSourceId = sourceId;
-  const toggle = document.querySelector('#source-toggle');
-  if (!toggle) return;
-
-  if (!sourceId) {
-    toggle.innerHTML = `
-      <forge-icon name="database_outline"></forge-icon>
-      All sources
-      <forge-icon name="arrow_drop_down"></forge-icon>
-    `;
-    renderDefaultSuggestions();
-  } else {
-    const visibleSources = getVisibleSources();
-    const src = visibleSources.find(s => s.id === sourceId);
-    toggle.innerHTML = `
-      <forge-icon name="${src?.icon || 'database_outline'}"></forge-icon>
-      ${src?.label || sourceId}
-      <forge-icon name="arrow_drop_down"></forge-icon>
-    `;
-    renderSourceSuggestions(sourceId);
-  }
-
-  const dropdown = document.querySelector('#source-dropdown');
-  if (dropdown) dropdown.style.display = 'none';
-}
-
-function buildSourceDropdown() {
-  let dropdown = document.querySelector('#source-dropdown');
-  if (!dropdown) {
-    dropdown = document.createElement('div');
-    dropdown.id = 'source-dropdown';
-    dropdown.className = 'source-dropdown';
-    const toggleBtn = document.querySelector('#source-toggle');
-    toggleBtn.parentElement.style.position = 'relative';
-    toggleBtn.parentElement.appendChild(dropdown);
-  }
-
-  const visibleSources = getVisibleSources();
-
-  const allSourceItem = `
-    <button class="source-dropdown-item ${!selectedSourceId ? 'active' : ''}" type="button" data-source-id="">
-      <forge-icon name="database_outline"></forge-icon>
-      <div class="source-item-text">
-        <span class="source-item-label">All sources</span>
-        <span class="source-item-desc">Search across all available data</span>
-      </div>
-    </button>
+    <div class="domain-tab-content" id="domain-tab-content"></div>
   `;
 
-  const sourceItems = visibleSources.map(src => `
-    <button class="source-dropdown-item ${selectedSourceId === src.id ? 'active' : ''}" type="button" data-source-id="${src.id}">
-      <forge-icon name="${src.icon}"></forge-icon>
-      <div class="source-item-text">
-        <span class="source-item-label">${src.label}</span>
-        <span class="source-item-desc">${(sourceSuggestions[src.id] || []).length} queries available</span>
-      </div>
-    </button>
-  `).join('');
-
-  dropdown.innerHTML = `
-    <div class="source-dropdown-header">
-      <span>Your data sources</span>
-      <span class="source-dropdown-role">${currentUser.role}</span>
-    </div>
-    ${allSourceItem}
-    <div class="source-dropdown-divider"></div>
-    ${sourceItems}
-  `;
-
-  const isVisible = dropdown.style.display === 'block';
-  dropdown.style.display = isVisible ? 'none' : 'block';
-
-  if (!dropdown.dataset.wired) {
-    dropdown.addEventListener('click', (e) => {
-      const item = e.target.closest('.source-dropdown-item');
-      if (item) {
-        e.stopPropagation();
-        const id = item.dataset.sourceId;
-        selectSource(id || null);
-      }
+  // Wire tabs
+  container.querySelectorAll('.domain-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      activeTab = tab.dataset.tab;
+      container.querySelectorAll('.domain-tab').forEach(t => t.classList.remove('domain-tab--active'));
+      tab.classList.add('domain-tab--active');
+      renderTabContent(domainId, activeTab);
     });
-    dropdown.dataset.wired = 'true';
+  });
+
+  renderTabContent(domainId, activeTab);
+}
+
+function renderTabContent(domainId, tab) {
+  const contentEl = document.querySelector('#domain-tab-content');
+  if (!contentEl) return;
+
+  switch (tab) {
+    case 'reports': renderReportsTab(contentEl, domainId); break;
+    case 'ask': renderAskTab(contentEl, domainId); break;
+    case 'recent': renderRecentTab(contentEl, domainId); break;
   }
+}
+
+function renderReportsTab(contentEl, domainId) {
+  const reports = getStandardReportsForDomain(standardReports, domainId);
+
+  if (reports.length === 0) {
+    contentEl.innerHTML = `<div style="color: #999; font-size: 13px; padding: 20px 0;">No standard reports available for this domain.</div>`;
+    return;
+  }
+
+  contentEl.innerHTML = reports.map(report => {
+    const savedViews = getViewsForReport(report.id);
+    const viewsBadge = savedViews.length > 0
+      ? `<span style="background: #e8eaf6; color: var(--forge-theme-primary, #3f51b5); font-size: 10px; padding: 2px 6px; border-radius: 10px;">${savedViews.length} saved view${savedViews.length > 1 ? 's' : ''}</span>`
+      : '';
+    return `
+      <div class="report-list-item">
+        <div style="flex: 1;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-weight: 600; font-size: 14px;">${report.name}</span>
+            <span class="report-badge">STANDARD</span>
+            ${viewsBadge}
+          </div>
+          <div style="color: #666; font-size: 12px; margin-top: 2px;">${report.description} &middot; ${report.freshness} &middot; ${report.parameters.length} parameters</div>
+        </div>
+        <button class="std-report-open-btn" data-report-id="${report.id}">Open</button>
+      </div>
+    `;
+  }).join('');
+
+  // Wire open buttons → config panel
+  contentEl.querySelectorAll('.std-report-open-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const report = getStandardReportById(btn.dataset.reportId);
+      if (!report) return;
+      showConfigPanel(report, {
+        onPreview: (params) => {
+          openPreviewReport(report, params);
+        },
+        onOpenInChat: (params) => {
+          openStandardReportInChat(report.id, params);
+        },
+      });
+    });
+  });
+}
+
+function renderAskTab(contentEl, domainId) {
+  const questions = getQuestionsForDomain(domainId);
+
+  if (questions.length === 0) {
+    contentEl.innerHTML = `<div style="color: #999; font-size: 13px; padding: 20px 0;">No common questions available for this domain.</div>`;
+    return;
+  }
+
+  contentEl.innerHTML = questions.map(q => {
+    const attr = q.suggestionIndex !== undefined
+      ? `data-suggestion="${q.suggestionIndex}"`
+      : `data-query="${q.query || q.label}"`;
+    return `
+      <button class="question-list-item" type="button" ${attr}>
+        <div class="question-list-item-text">
+          <span class="question-list-item-label">${q.label}</span>
+          <span class="question-list-item-dataset">${q.datasetLabel}</span>
+        </div>
+        <div class="question-list-item-arrow"><forge-icon name="play_arrow"></forge-icon></div>
+      </button>
+    `;
+  }).join('');
+}
+
+function renderRecentTab(contentEl, domainId) {
+  const domainRecents = recentActivity.filter(r => r.domainId === domainId);
+
+  if (domainRecents.length === 0) {
+    contentEl.innerHTML = `<div style="color: #999; font-size: 13px; padding: 20px 0;">No recent activity for this domain.</div>`;
+    return;
+  }
+
+  const domain = domains.find(d => d.id === domainId);
+
+  contentEl.innerHTML = domainRecents.map(r => {
+    const attr = r.suggestionIndex !== undefined
+      ? `data-suggestion="${r.suggestionIndex}"`
+      : `data-query="${r.label}"`;
+    const meta = r.type === 'saved_report' ? `Saved report · ${r.timeAgo}` : `Query · ${r.timeAgo}`;
+    return `
+      <button class="recent-item" type="button" ${attr}>
+        <div class="recent-item-icon"><forge-icon name="${domain?.icon || 'schedule'}"></forge-icon></div>
+        <div class="recent-item-text">
+          <span class="recent-item-label">${r.label}</span>
+          <span class="recent-item-meta">${meta}</span>
+        </div>
+        <div class="recent-item-arrow"><forge-icon name="play_arrow"></forge-icon></div>
+      </button>
+    `;
+  }).join('');
 }
 
 // ---------------------------------------------------------------------------
 // Event wiring
 // ---------------------------------------------------------------------------
 function wireEvents(container) {
-  // Suggestions — event delegation
+  // Suggestions / tab content — event delegation
   const suggestionsContainer = container.querySelector('#suggestions-container');
   if (suggestionsContainer) {
     const handler = (e) => {
@@ -353,10 +282,6 @@ function wireEvents(container) {
         openChatFlow(0);
         return;
       }
-      if (btn.hasAttribute('data-source-id')) {
-        selectSource(btn.dataset.sourceId);
-        return;
-      }
     };
     suggestionsContainer.addEventListener('click', handler);
     cleanupFns.push(() => suggestionsContainer.removeEventListener('click', handler));
@@ -367,7 +292,6 @@ function wireEvents(container) {
   const overlay = container.querySelector('#side-menu-overlay');
   const menuCloseBtn = container.querySelector('#menu-close-btn');
 
-  // Expose openSideMenu for the app bar's menu button
   const openSideMenu = () => {
     sideMenu?.classList.add('open');
     overlay?.classList.add('visible');
@@ -377,7 +301,6 @@ function wireEvents(container) {
     overlay?.classList.remove('visible');
   };
 
-  // Wire menu toggle from app bar
   const menuToggleBtn = document.querySelector('#menu-toggle-btn');
   if (menuToggleBtn) {
     const menuHandler = () => openSideMenu();
@@ -406,36 +329,11 @@ function wireEvents(container) {
         case 'templates':
           openLibraryView();
           break;
-        case 'standard-reports':
-          renderStandardReportsLibrary();
-          break;
-        case 'data-sources':
-          buildSourceDropdown();
-          break;
       }
     };
     sideMenu.addEventListener('click', sideMenuHandler);
     cleanupFns.push(() => sideMenu.removeEventListener('click', sideMenuHandler));
   }
-
-  // Source toggle
-  const sourceToggle = container.querySelector('#source-toggle');
-  if (sourceToggle) {
-    const toggleHandler = (e) => {
-      e.stopPropagation();
-      buildSourceDropdown();
-    };
-    sourceToggle.addEventListener('click', toggleHandler);
-    cleanupFns.push(() => sourceToggle.removeEventListener('click', toggleHandler));
-  }
-
-  // Close dropdown on outside click
-  const outsideClickHandler = () => {
-    const dropdown = document.querySelector('#source-dropdown');
-    if (dropdown) dropdown.style.display = 'none';
-  };
-  document.addEventListener('click', outsideClickHandler);
-  cleanupFns.push(() => document.removeEventListener('click', outsideClickHandler));
 
   // Prompt input
   const promptInput = container.querySelector('.prompt-input-row input');
@@ -459,64 +357,41 @@ function wireEvents(container) {
 }
 
 // ---------------------------------------------------------------------------
-// Standard Reports Library
+// Preview Report — full-width viewer (no chat)
 // ---------------------------------------------------------------------------
-function renderStandardReportsLibrary() {
-  const container = document.querySelector('#suggestions-container');
-  if (!container) return;
-
-  const visibleReports = getVisibleStandardReports(standardReports);
-
-  // Group by domain
-  const grouped = {};
-  for (const report of visibleReports) {
-    const domain = getDomainLabel(report.domain);
-    if (!grouped[domain]) grouped[domain] = [];
-    grouped[domain].push(report);
+function openPreviewReport(report, initialParams) {
+  let dialog = document.querySelector('#report-preview-dialog');
+  if (!dialog) {
+    dialog = document.createElement('forge-dialog');
+    dialog.id = 'report-preview-dialog';
+    dialog.className = 'chat-dialog';
+    dialog.setAttribute('fullscreen', '');
+    dialog.setAttribute('mode', 'modal');
+    dialog.setAttribute('persistent', '');
+    dialog.setAttribute('animation-type', 'fade');
+    document.body.appendChild(dialog);
   }
 
-  container.innerHTML = `
-    <div class="standard-reports-library" style="padding: 0 4px;">
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
-        <div>
-          <h2 class="forge-typography--heading5" style="margin: 0;">Standard Reports</h2>
-          <p style="color: #666; font-size: 13px; margin: 4px 0 0;">Pre-built reports maintained by Tyler. Open in chat to explore and customize.</p>
-        </div>
+  // Import and use the viewer
+  import('../standard-report-viewer.js').then(({ buildStandardReportPanel, wireStandardReportPanel }) => {
+    dialog.innerHTML = `
+      <div class="report-preview__container">
+        ${buildStandardReportPanel(report)}
       </div>
-      ${Object.entries(grouped).map(([domain, reports]) => `
-        <div style="margin-bottom: 24px;">
-          <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #888; font-weight: 600; margin-bottom: 8px;">${domain}</div>
-          <div style="display: flex; flex-direction: column; gap: 2px;">
-            ${reports.map(report => {
-              const savedViews = getViewsForReport(report.id);
-              const viewsBadge = savedViews.length > 0
-                ? `<span style="background: #e8eaf6; color: var(--forge-theme-primary, #3f51b5); font-size: 10px; padding: 2px 6px; border-radius: 10px;">${savedViews.length} saved view${savedViews.length > 1 ? 's' : ''}</span>`
-                : '';
-              return `
-                <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: #fff; border-radius: 8px; border: 1px solid #eee; transition: border-color 0.15s;" onmouseover="this.style.borderColor='#c5cae9'" onmouseout="this.style.borderColor='#eee'">
-                  <div style="flex: 1;">
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                      <span style="font-weight: 600; font-size: 14px;">${report.name}</span>
-                      ${viewsBadge}
-                    </div>
-                    <div style="color: #666; font-size: 12px; margin-top: 2px;">${report.description} &middot; ${report.freshness} &middot; ${report.parameters.length} parameters</div>
-                  </div>
-                  <div style="display: flex; gap: 8px; flex-shrink: 0; margin-left: 16px;">
-                    <button class="std-report-open-btn" data-report-id="${report.id}" style="background: var(--forge-theme-primary, #3f51b5); color: #fff; border: none; padding: 6px 14px; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: 500;">Open in Chat</button>
-                  </div>
-                </div>
-              `;
-            }).join('')}
-          </div>
-        </div>
-      `).join('')}
-    </div>
-  `;
+    `;
 
-  // Wire "Open in Chat" buttons
-  container.querySelectorAll('.std-report-open-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      openStandardReportInChat(btn.dataset.reportId);
+    dialog.open = true;
+
+    const viewerEl = dialog.querySelector('.sr-viewer');
+    const controls = wireStandardReportPanel(viewerEl, report, {
+      onClose: () => { dialog.open = false; },
     });
+
+    // Apply initial params from config panel
+    if (initialParams) {
+      for (const [paramId, value] of Object.entries(initialParams)) {
+        controls.setParam(paramId, value);
+      }
+    }
   });
 }
