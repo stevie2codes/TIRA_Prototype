@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TIRA — Architecture & Design Principles</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --color-bg: #fafafa;
+      --color-surface: #ffffff;
+      --color-primary: #3f51b5;
+      --color-primary-light: #e8eaf6;
+      --color-primary-muted: #c5cae9;
+      --color-text: #1a1a2e;
+      --color-text-secondary: #555770;
+      --color-text-tertiary: #8b8da3;
+      --color-border: #e4e5ec;
+      --color-border-light: #f0f0f5;
+      --color-code-bg: #f5f6fa;
+      --color-accent-green: #2e7d32;
+      --color-accent-amber: #f57c00;
+      --color-accent-red: #c62828;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+      --shadow-md: 0 4px 16px rgba(0,0,0,0.06);
+    }
+
+    html { scroll-behavior: smooth; font-size: 16px; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--color-bg);
+      color: var(--color-text);
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Navigation ── */
+    .nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 56px;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--color-border);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      padding: 0 32px;
+    }
+
+    .nav-logo {
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 1.5px;
+      color: var(--color-primary);
+      text-transform: uppercase;
+    }
+
+    .nav-sep {
+      width: 1px;
+      height: 20px;
+      background: var(--color-border);
+      margin: 0 16px;
+    }
+
+    .nav-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--color-text-secondary);
+    }
+
+    .nav-links {
+      margin-left: auto;
+      display: flex;
+      gap: 4px;
+    }
+
+    .nav-link {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--color-text-tertiary);
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      transition: all 0.15s;
+    }
+
+    .nav-link:hover {
+      color: var(--color-primary);
+      background: var(--color-primary-light);
+    }
+
+    /* ── Hero ── */
+    .hero {
+      padding: 120px 32px 64px;
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--color-primary);
+      background: var(--color-primary-light);
+      padding: 5px 14px;
+      border-radius: 20px;
+      margin-bottom: 24px;
+    }
+
+    .hero h1 {
+      font-size: 42px;
+      font-weight: 700;
+      line-height: 1.15;
+      letter-spacing: -0.5px;
+      color: var(--color-text);
+      margin-bottom: 20px;
+    }
+
+    .hero-meta {
+      display: flex;
+      gap: 24px;
+      font-size: 13px;
+      color: var(--color-text-tertiary);
+      margin-bottom: 32px;
+    }
+
+    .hero-meta strong { color: var(--color-text-secondary); font-weight: 500; }
+
+    .hero-thesis {
+      font-size: 20px;
+      line-height: 1.6;
+      color: var(--color-text-secondary);
+      border-left: 3px solid var(--color-primary);
+      padding-left: 20px;
+      margin-top: 8px;
+    }
+
+    /* ── Main content ── */
+    .content {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 32px 96px;
+    }
+
+    /* ── Sections ── */
+    .section {
+      margin-bottom: 64px;
+    }
+
+    .section-number {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--color-primary);
+      margin-bottom: 8px;
+    }
+
+    h2 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      line-height: 1.3;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    h3 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-top: 40px;
+      margin-bottom: 16px;
+      color: var(--color-text);
+    }
+
+    p {
+      margin-bottom: 16px;
+      color: var(--color-text-secondary);
+    }
+
+    strong { color: var(--color-text); font-weight: 600; }
+
+    em { font-style: italic; }
+
+    /* ── Principle callouts ── */
+    .principle {
+      background: var(--color-primary-light);
+      border-left: 3px solid var(--color-primary);
+      border-radius: 0 var(--radius-md) var(--radius-md) 0;
+      padding: 16px 20px;
+      margin: 20px 0 28px;
+      font-size: 14px;
+      line-height: 1.65;
+      color: var(--color-text-secondary);
+    }
+
+    .principle strong {
+      color: var(--color-primary);
+      font-weight: 600;
+    }
+
+    /* ── Tables ── */
+    .table-wrap {
+      overflow-x: auto;
+      margin: 16px 0 28px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.5px;
+    }
+
+    thead th {
+      background: var(--color-code-bg);
+      font-weight: 600;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--color-text-tertiary);
+      text-align: left;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    tbody td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--color-border-light);
+      color: var(--color-text-secondary);
+      vertical-align: top;
+    }
+
+    tbody tr:last-child td { border-bottom: none; }
+
+    tbody tr:hover { background: rgba(63, 81, 181, 0.02); }
+
+    td strong { color: var(--color-text); }
+
+    td code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      background: var(--color-code-bg);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--color-primary);
+    }
+
+    /* ── Code / Diagram blocks ── */
+    .diagram {
+      background: var(--color-text);
+      color: #c9d1d9;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      padding: 24px 28px;
+      border-radius: var(--radius-md);
+      overflow-x: auto;
+      margin: 16px 0 28px;
+      white-space: pre;
+      box-shadow: var(--shadow-md);
+    }
+
+    .diagram .hl { color: #79c0ff; }
+    .diagram .comment { color: #6e7681; }
+    .diagram .accent { color: #7ee787; }
+    .diagram .warn { color: #ffa657; }
+
+    /* ── Ordered / unordered lists ── */
+    ul, ol {
+      margin: 8px 0 20px 24px;
+      color: var(--color-text-secondary);
+    }
+
+    li {
+      margin-bottom: 8px;
+      padding-left: 4px;
+    }
+
+    li strong { color: var(--color-text); }
+
+    /* ── Funnel visualization ── */
+    .funnel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      margin: 24px 0 32px;
+    }
+
+    .funnel-stage {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+      background: var(--color-primary);
+      height: 48px;
+      border-radius: var(--radius-sm);
+      transition: transform 0.15s;
+      position: relative;
+    }
+
+    .funnel-stage:hover { transform: scale(1.02); }
+
+    .funnel-stage:nth-child(1) { width: 100%; opacity: 1; }
+    .funnel-stage:nth-child(2) { width: 85%; opacity: 0.92; }
+    .funnel-stage:nth-child(3) { width: 70%; opacity: 0.84; }
+    .funnel-stage:nth-child(4) { width: 55%; opacity: 0.76; }
+    .funnel-stage:nth-child(5) { width: 40%; opacity: 0.68; }
+
+    .funnel-arrow {
+      color: var(--color-text-tertiary);
+      font-size: 18px;
+      line-height: 1;
+      padding: 4px 0;
+    }
+
+    .funnel-label {
+      font-size: 11px;
+      font-weight: 400;
+      opacity: 0.85;
+      margin-left: 8px;
+    }
+
+    /* ── Principle cards (section 7) ── */
+    .principles-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 24px 0;
+    }
+
+    .principle-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .principle-card:hover {
+      border-color: var(--color-primary-muted);
+      box-shadow: var(--shadow-md);
+    }
+
+    .principle-card-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--color-primary);
+      background: var(--color-primary-light);
+      border-radius: 50%;
+      margin-bottom: 12px;
+    }
+
+    .principle-card h4 {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--color-text);
+    }
+
+    .principle-card p {
+      font-size: 13px;
+      line-height: 1.6;
+      margin-bottom: 0;
+    }
+
+    /* ── Split-view diagram ── */
+    .split-diagram {
+      display: grid;
+      grid-template-columns: 280px 4px 1fr;
+      gap: 0;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      margin: 20px 0 28px;
+      background: var(--color-surface);
+      box-shadow: var(--shadow-sm);
+      min-height: 260px;
+    }
+
+    .split-left {
+      background: var(--color-code-bg);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .split-divider {
+      background: var(--color-border);
+      cursor: col-resize;
+      position: relative;
+    }
+
+    .split-divider::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 2px;
+      height: 32px;
+      border-radius: 1px;
+      background: var(--color-text-tertiary);
+    }
+
+    .split-right {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .split-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--color-text-tertiary);
+    }
+
+    .split-item {
+      font-size: 12px;
+      color: var(--color-text-secondary);
+      background: var(--color-surface);
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--color-border-light);
+    }
+
+    .split-left .split-item {
+      background: #fff;
+    }
+
+    .split-item.primary {
+      border-color: var(--color-primary-muted);
+      background: var(--color-primary-light);
+      color: var(--color-primary);
+      font-weight: 500;
+    }
+
+    /* ── Status badges (section 8) ── */
+    .status-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 24px 0;
+    }
+
+    .status-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 24px;
+    }
+
+    .status-card h4 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .status-dot.green { background: var(--color-accent-green); }
+    .status-dot.amber { background: var(--color-accent-amber); }
+
+    .status-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .status-list li {
+      font-size: 13px;
+      color: var(--color-text-secondary);
+      padding: 6px 0;
+      border-bottom: 1px solid var(--color-border-light);
+      margin-bottom: 0;
+      padding-left: 0;
+    }
+
+    .status-list li:last-child { border-bottom: none; }
+
+    /* ── Surfaces side-by-side ── */
+    .surfaces {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 20px 0 28px;
+    }
+
+    .surface-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 24px;
+    }
+
+    .surface-card h4 {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .surface-card .subtitle {
+      font-size: 12px;
+      color: var(--color-text-tertiary);
+      margin-bottom: 12px;
+    }
+
+    .surface-card ul {
+      margin: 0;
+      padding-left: 18px;
+    }
+
+    .surface-card li {
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    /* ── Swatch row (visual language) ── */
+    .swatch-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 12px;
+      margin: 16px 0 28px;
+    }
+
+    .swatch {
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+
+    .swatch-color {
+      height: 40px;
+    }
+
+    .swatch-info {
+      padding: 8px 12px;
+      font-size: 12px;
+    }
+
+    .swatch-name {
+      font-weight: 600;
+      color: var(--color-text);
+      display: block;
+    }
+
+    .swatch-value {
+      color: var(--color-text-tertiary);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 32px 32px 48px;
+      border-top: 1px solid var(--color-border);
+      font-size: 12px;
+      color: var(--color-text-tertiary);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 720px) {
+      .hero h1 { font-size: 30px; }
+      .principles-grid, .status-grid, .surfaces { grid-template-columns: 1fr; }
+      .nav-links { display: none; }
+      .hero-meta { flex-direction: column; gap: 4px; }
+      .split-diagram { grid-template-columns: 1fr; }
+      .split-divider { height: 4px; width: 100%; }
+      .split-divider::after { width: 32px; height: 2px; }
+    }
+
+    /* ── Print ── */
+    @media print {
+      .nav { display: none; }
+      .hero { padding-top: 32px; }
+      body { background: #fff; }
+      .principle-card, .surface-card, .status-card { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Navigation ── -->
+<nav class="nav">
+  <span class="nav-logo">TIRA</span>
+  <span class="nav-sep"></span>
+  <span class="nav-title">Architecture & Design Principles</span>
+  <div class="nav-links">
+    <a href="#vision" class="nav-link">Vision</a>
+    <a href="#architecture" class="nav-link">Architecture</a>
+    <a href="#interaction" class="nav-link">Interaction Design</a>
+    <a href="#technical" class="nav-link">Technical</a>
+    <a href="#design-system" class="nav-link">Design System</a>
+    <a href="#principles" class="nav-link">Principles</a>
+    <a href="#status" class="nav-link">Status</a>
+  </div>
+</nav>
+
+<!-- ── Hero ── -->
+<header class="hero">
+  <div class="hero-badge">Technical Product Audit</div>
+  <h1>Architecture &<br>Design Principles</h1>
+  <div class="hero-meta">
+    <span><strong>Audience:</strong> Product leadership, design, engineering</span>
+    <span><strong>Scope:</strong> Full prototype audit</span>
+  </div>
+  <p class="hero-thesis">
+    TIRA replaces the traditional <strong>search-and-build</strong> reporting workflow with a <strong>describe-and-review</strong> model. Instead of navigating menus, configuring parameters, and assembling reports manually, users describe what they need in natural language and review AI-generated outputs.
+  </p>
+</header>
+
+<main class="content">
+
+  <!-- ═══════════ 1. VISION ═══════════ -->
+  <section class="section" id="vision">
+    <div class="section-number">Section 01</div>
+    <h2>Vision Summary</h2>
+    <p>
+      The core thesis: <strong>reporting should start with a question, not a tool.</strong>
+    </p>
+    <p>
+      Manual control surfaces remain available for power users, but AI is the primary entry point. Users describe what they need in natural language and review AI-generated outputs — iterating through conversation rather than configuration.
+    </p>
+  </section>
+
+  <!-- ═══════════ 2. PRODUCT ARCHITECTURE ═══════════ -->
+  <section class="section" id="architecture">
+    <div class="section-number">Section 02</div>
+    <h2>Product Architecture</h2>
+
+    <h3>The Experience Funnel</h3>
+    <p>TIRA's UX follows a progressive disclosure funnel — each stage narrows focus while deepening control:</p>
+
+    <div class="funnel">
+      <div class="funnel-stage" style="border-radius: 10px 10px 6px 6px;">Homepage<span class="funnel-label">Orientation</span></div>
+      <div class="funnel-arrow">&#9663;</div>
+      <div class="funnel-stage">Conversational Workspace<span class="funnel-label">Exploration</span></div>
+      <div class="funnel-arrow">&#9663;</div>
+      <div class="funnel-stage">Split-View<span class="funnel-label">Analysis</span></div>
+      <div class="funnel-arrow">&#9663;</div>
+      <div class="funnel-stage">Report Designer<span class="funnel-label">Construction</span></div>
+      <div class="funnel-arrow">&#9663;</div>
+      <div class="funnel-stage" style="border-radius: 6px 6px 10px 10px;">Output & Distribution<span class="funnel-label">Delivery</span></div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Stage</th><th>Purpose</th><th>User Effort</th><th>AI Role</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Homepage</strong></td><td>Orient, recall, discover</td><td>Minimal — scan and click</td><td>Surface recents, suggest queries</td></tr>
+          <tr><td><strong>Conversational Workspace</strong></td><td>Ask questions, get answers</td><td>Natural language input</td><td>Generate data responses, match reports</td></tr>
+          <tr><td><strong>Split-View</strong></td><td>Inspect, refine, compare</td><td>Filter, toggle views, chat</td><td>Refine results via conversation</td></tr>
+          <tr><td><strong>Report Designer</strong></td><td>Build custom layouts</td><td>Drag-and-drop, configure</td><td>Pre-populate from chat context</td></tr>
+          <tr><td><strong>Output & Distribution</strong></td><td>Share, schedule, export</td><td>Select recipients and cadence</td><td>(Not yet prototyped)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="principle">
+      <strong>Design principle:</strong> Each stage should be independently useful. A user who never leaves the homepage still gets value from recents and suggestions. A user who stops at the chat still gets a data answer. The funnel rewards depth without requiring it.
+    </div>
+
+    <h3>Two Application Surfaces</h3>
+    <p>TIRA prototypes two distinct entry points that share a common AI interaction layer:</p>
+
+    <div class="surfaces">
+      <div class="surface-card">
+        <h4>TIRA</h4>
+        <div class="subtitle">Query-Driven Reporting</div>
+        <ul>
+          <li>Centered AI prompt as hero element</li>
+          <li>Tabbed content: Reports | Questions | Recent</li>
+          <li>Greeting-first, task-second layout</li>
+          <li>Side menu for report library access</li>
+        </ul>
+      </div>
+      <div class="surface-card">
+        <h4>Hub</h4>
+        <div class="subtitle">Operational Dashboard</div>
+        <ul>
+          <li>Icon rail navigation with dense data table</li>
+          <li>Floating chat as secondary interaction</li>
+          <li>Data-first, AI-second layout</li>
+          <li>Traditional CRUD surface with AI augmentation</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="principle">
+      <strong>Design principle:</strong> AI should meet users where they already work. TIRA is for users who <em>start</em> with a question. Hub is for users who <em>arrive at</em> a question while working with data. Both converge on the same conversational workspace.
+    </div>
+  </section>
+
+  <!-- ═══════════ 3. INTERACTION DESIGN ═══════════ -->
+  <section class="section" id="interaction">
+    <div class="section-number">Section 03</div>
+    <h2>Interaction Design Principles</h2>
+
+    <h3>AI as Transparent Partner, Not Black Box</h3>
+    <p>Every AI response includes a <strong>Data Transparency</strong> section with four disclosure panels:</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Disclosure</th><th>What it shows</th><th>Why it matters</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Data Source</strong></td><td>System name, record count, last updated timestamp</td><td>Users need to know <em>where</em> data comes from to trust it</td></tr>
+          <tr><td><strong>SQL Query</strong></td><td>Generated query with copy-to-clipboard</td><td>Technical users need to verify logic; all users need auditability</td></tr>
+          <tr><td><strong>Assumptions</strong></td><td>Interpretation choices the AI made</td><td>Surfaces ambiguity so users can correct misinterpretations</td></tr>
+          <tr><td><strong>Data Citations</strong></td><td>Source tables and join logic</td><td>Establishes lineage for compliance and debugging</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="principle">
+      <strong>Design principle:</strong> Trust is built through transparency, not accuracy alone. A correct answer the user can't verify is less useful than a visible answer they can inspect. Every AI output should be <em>auditable</em> — the user should be able to trace any number back to its source.
+    </div>
+
+    <h3>Progressive Refinement Over Configuration</h3>
+    <p>Rather than presenting upfront configuration screens, TIRA uses a conversational refinement model:</p>
+    <ol>
+      <li><strong>Initial response</strong> — Best-effort answer with default assumptions</li>
+      <li><strong>Refinement chips</strong> — One-click data shaping (filter, group, sort, compare)</li>
+      <li><strong>Chat follow-ups</strong> — Natural language adjustments</li>
+      <li><strong>Split-view tools</strong> — Direct manipulation (filters, view toggles, templates)</li>
+      <li><strong>Designer handoff</strong> — Full layout control when conversation isn't enough</li>
+    </ol>
+
+    <p>The refinement system categorizes user intent into three tiers:</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Tier</th><th>Trigger</th><th>Response</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Card</strong></td><td>Data-shaping request (filter, group, time range)</td><td>Collapse previous card, show new data response</td></tr>
+          <tr><td><strong>Text</strong></td><td>Clarification or explanation request</td><td>Conversational reply, no data change</td></tr>
+          <tr><td><strong>Handoff</strong></td><td>Complex layout/structural request</td><td>Nudge toward Report Designer</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="principle">
+      <strong>Design principle:</strong> Start with the answer, not the form. Let the user shape the output iteratively rather than requiring them to specify everything upfront. Each refinement should feel like a conversation turn, not a configuration step.
+    </div>
+
+    <h3>Standard Reports as AI Accelerators</h3>
+    <p>TIRA treats existing standard reports not as static artifacts but as <strong>high-confidence shortcuts</strong>. When a user's query closely matches a known report:</p>
+    <ol>
+      <li>Match the query against report metadata using keyword-based semantic matching</li>
+      <li>Classify confidence as high, medium, or low</li>
+      <li><strong>High confidence</strong> — Show the standard report card directly (skip the ad-hoc response)</li>
+      <li><strong>Medium confidence</strong> — Show the ad-hoc response <em>plus</em> a recommendation</li>
+      <li><strong>Low confidence</strong> — Ad-hoc response only</li>
+    </ol>
+
+    <div class="principle">
+      <strong>Design principle:</strong> Don't make users choose between AI and existing reports. The AI should know what already exists and route users to it when appropriate. Standard reports are a trust anchor — they're familiar, tested, and sanctioned.
+    </div>
+
+    <h3>Report-as-Living-Object</h3>
+    <p>Reports in TIRA are not static exports — they're persistent, versionable, shareable objects:</p>
+    <ul>
+      <li><strong>Saved Views</strong> — Named parameter overrides on a base report (e.g., "Felonies Only — Main Facility")</li>
+      <li><strong>Master-to-derived relationships</strong> — A saved view points back to its parent report</li>
+      <li><strong>Session persistence</strong> — Views survive navigation and can be recalled from the homepage</li>
+      <li><strong>Template system</strong> — Branded output wrappers (header/footer, color scheme) applied non-destructively</li>
+    </ul>
+
+    <div class="principle">
+      <strong>Design principle:</strong> Any ad-hoc query that proves useful should be promotable to a saved, named, shareable asset with zero friction. The boundary between "something I just asked" and "a report I run every week" should be a single click.
+    </div>
+  </section>
+
+  <!-- ═══════════ 4. TECHNICAL ARCHITECTURE ═══════════ -->
+  <section class="section" id="technical">
+    <div class="section-number">Section 04</div>
+    <h2>Technical Architecture</h2>
+
+    <h3>Application Shell</h3>
+    <div class="diagram"><span class="hl">index.html</span>
+├── <span class="accent">forge-scaffold</span> <span class="comment">(app shell)</span>
+│   ├── <span class="accent">forge-app-bar</span> <span class="comment">(header)</span>
+│   │   ├── App Switcher <span class="comment">(TIRA ↔ Hub)</span>
+│   │   ├── Menu Toggle <span class="comment">(TIRA only)</span>
+│   │   ├── Search
+│   │   ├── AI Sparkle Button <span class="comment">(Hub only)</span>
+│   │   └── User Actions <span class="comment">(help, notifications, avatar)</span>
+│   └── <span class="warn">#view-container</span> <span class="comment">(body)</span>
+│       ├── tira-view <span class="comment">(homepage)</span>
+│       └── hub-view <span class="comment">(dashboard)</span>
+└── <span class="hl">src/main.js</span> <span class="comment">(initialization)</span></div>
+
+    <p><strong>Routing:</strong> Hash-based (<code>#/view-name</code>), minimal — two views registered, swapped by destroying and re-rendering. No client-side state preserved across navigation (intentional for prototype scope).</p>
+
+    <h3>Module Dependency Map</h3>
+    <div class="diagram"><span class="hl">main.js</span> <span class="comment">(entry point)</span>
+├── router.js <span class="comment">(hash routing)</span>
+├── app-switcher.js <span class="comment">(view switching)</span>
+├── user-context.js <span class="comment">(user profile, domains, permissions)</span>
+├── <span class="accent">tira-view.js</span> <span class="comment">(homepage)</span>
+│   ├── <span class="warn">chat-flow.js</span> <span class="comment">(core interaction engine, ~2,171 lines)</span>
+│   │   ├── mock-data.js <span class="comment">(query suggestions)</span>
+│   │   ├── standard-reports.js <span class="comment">(report definitions)</span>
+│   │   ├── report-matcher.js <span class="comment">(query → report matching)</span>
+│   │   ├── standard-report-card.js <span class="comment">(recommendation UI)</span>
+│   │   ├── output-templates.js <span class="comment">(branded output wrappers)</span>
+│   │   └── <span class="hl">report-canvas/mount.jsx</span> <span class="comment">(React designer bridge)</span>
+│   ├── standard-report-viewer.js <span class="comment">(report rendering)</span>
+│   └── saved-views.js <span class="comment">(parameter persistence)</span>
+└── <span class="accent">hub-view.js</span> <span class="comment">(dashboard)</span>
+    └── hub-chat-panel.js <span class="comment">(floating chat)</span></div>
+
+    <p><strong>Key observation:</strong> <code>chat-flow.js</code> at ~2,171 lines is the gravitational center of the application. It owns the conversational workspace, split-view, query cards, refinement system, and designer handoff. In a production architecture, this would decompose into several focused modules.</p>
+
+    <h3>The Split-View Pattern</h3>
+    <p>The split-view is TIRA's most architecturally significant pattern — it's where conversation meets data:</p>
+
+    <div class="split-diagram">
+      <div class="split-left">
+        <div class="split-label">Chat Panel (320–600px)</div>
+        <div class="split-item">Messages from chat session</div>
+        <div class="split-item">Refinement chips</div>
+        <div class="split-item">Follow-up questions</div>
+        <div class="split-item primary">Prompt input</div>
+      </div>
+      <div class="split-divider"></div>
+      <div class="split-right">
+        <div class="split-label">Report Panel (flex: 1)</div>
+        <div class="split-item">Title bar + data source badge</div>
+        <div class="split-item">View toggle: Table / Chart / SQL</div>
+        <div class="split-item">Template picker</div>
+        <div class="split-item">Filter bar (collapsible)</div>
+        <div class="split-item primary">Content area</div>
+      </div>
+    </div>
+
+    <p><strong>Transition:</strong> The chat-to-split-view transition is animated — messages physically move from the full-width chat into the left panel while the report panel slides in from the right. This preserves conversational context while adding data manipulation tools.</p>
+    <p><strong>Cross-panel coordination:</strong> Callback-based (<code>onFilterChange</code>, <code>onViewChange</code>, <code>onClose</code>). No shared state store — each panel owns its state and communicates via function calls.</p>
+
+    <h3>Data Flow</h3>
+    <div class="diagram"><span class="hl">User Input</span> <span class="comment">(typed or clicked)</span>
+    ↓
+<span class="accent">openChatFlow()</span> — opens fullscreen dialog
+    ↓
+<span class="accent">runConversation()</span> — timed sequence:
+    ├── 0ms:    User message rendered
+    ├── 500ms:  Thinking indicator
+    ├── 2500ms: <span class="warn">matchStandardReports()</span> → confidence tier
+    │   ├── high:   <span class="accent">Standard Report Card</span>
+    │   ├── medium: <span class="accent">Query Card</span> + recommendation
+    │   └── low:    <span class="accent">Query Card</span> only
+    ↓
+User clicks <span class="hl">"Explore Results"</span>
+    ↓
+<span class="accent">transitionToSplitView()</span> — builds dual-panel layout
+    ├── Left:  Chat messages + prompt (preserved)
+    └── Right: <span class="accent">buildReportPanel()</span> → toolbar + filters + data views
+    ↓
+User clicks <span class="hl">refinement chip</span>
+    ↓
+<span class="warn">getRefinementTier()</span> → card | text | handoff
+    ├── card:    Collapse old card, show new data
+    ├── text:    Conversational reply
+    └── handoff: Designer nudge → <span class="accent">mountDesigner()</span>
+                    ↓
+              <span class="hl">React app</span> (report-canvas/)
+              reads sessionStorage handoff
+              provides full layout editor</div>
+
+    <h3>React Integration (Report Designer)</h3>
+    <p>The Report Designer is a separate React 19 application that mounts inside the main app's dialog via lazy loading:</p>
+
+    <div class="diagram"><span class="hl">Main App</span> <span class="comment">(Vanilla JS)</span>
+    ↓ sessionStorage handoff
+    ↓ lazy import('/report-canvas/src/mount.jsx')
+    ↓ mountDesigner(element) → createRoot().render(&lt;App /&gt;)
+    ↓
+<span class="accent">React App</span>
+├── ReportContext <span class="comment">(reads handoff, manages state)</span>
+├── AppShell <span class="comment">(layout)</span>
+│   ├── <span class="accent">DashboardCanvas</span> <span class="comment">(grid-based widget placement)</span>
+│   ├── <span class="accent">PrintCanvas</span> <span class="comment">(print preview)</span>
+│   ├── <span class="accent">DataLayerCanvas</span> <span class="comment">(XY Flow node editor)</span>
+│   └── WidgetPalette <span class="comment">(drag-and-drop library)</span>
+├── WidgetConfigPanel <span class="comment">(property inspector)</span>
+└── AIChatPanel <span class="comment">(conversational design assistance)</span></div>
+
+    <p><strong>Isolation principle:</strong> The React app is fully self-contained. Communication is one-way (main → React via sessionStorage). The back button unmounts React and restores the vanilla JS split-view.</p>
+
+    <p><strong>State persistence:</strong> <code>sessionStorage</code> only (prototype-appropriate). Two keys:</p>
+    <ul>
+      <li><code>tira-saved-views</code> — Saved report parameter overrides</li>
+      <li><code>tira-handoff-context</code> — Chat-to-designer context transfer</li>
+    </ul>
+  </section>
+
+  <!-- ═══════════ 5. DESIGN SYSTEM ═══════════ -->
+  <section class="section" id="design-system">
+    <div class="section-number">Section 05</div>
+    <h2>Design System Usage</h2>
+
+    <h3>Forge Component Inventory</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Category</th><th>Components</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Shell</strong></td><td><code>forge-scaffold</code> <code>forge-app-bar</code> <code>forge-app-bar-menu-button</code> <code>forge-app-bar-search</code></td></tr>
+          <tr><td><strong>Actions</strong></td><td><code>forge-button</code> <code>forge-icon-button</code> <code>forge-chip</code></td></tr>
+          <tr><td><strong>Display</strong></td><td><code>forge-icon</code> <code>forge-avatar</code> <code>forge-table</code></td></tr>
+          <tr><td><strong>Layout</strong></td><td><code>forge-split-view</code> <code>forge-split-view-panel</code> <code>forge-toolbar</code></td></tr>
+          <tr><td><strong>Overlay</strong></td><td><code>forge-dialog</code></td></tr>
+          <tr><td><strong>AI</strong></td><td><code>forge-ai-prompt</code> <code>forge-ai-suggestions</code> <code>forge-ai-chat-interface</code> <code>forge-ai-user-message</code> <code>forge-ai-response-message</code> <code>forge-ai-thinking-indicator</code> <code>forge-ai-floating-chat</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Custom Components (Beyond Forge)</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Component</th><th>Purpose</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Query Card</strong></td><td>Primary AI response — summary, mini table, transparency disclosures, refinement chips</td></tr>
+          <tr><td><strong>Standard Report Card</strong></td><td>Recommendation card for matched standard reports</td></tr>
+          <tr><td><strong>Standard Report Viewer</strong></td><td>Modular report renderer — KPI rows, charts, tables, grouped tables</td></tr>
+          <tr><td><strong>Custom Split-View</strong></td><td>Draggable chat + report panel (extends Forge split-view panels)</td></tr>
+          <tr><td><strong>Hub Chat Panel</strong></td><td>Floating chat content panel for Hub view</td></tr>
+          <tr><td><strong>App Switcher</strong></td><td>Grid dropdown for TIRA / Hub switching</td></tr>
+          <tr><td><strong>Side Menu</strong></td><td>Slide-out navigation drawer (TIRA view)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Visual Language</h3>
+
+    <div class="swatch-grid">
+      <div class="swatch">
+        <div class="swatch-color" style="background: #3f51b5;"></div>
+        <div class="swatch-info"><span class="swatch-name">Primary</span><span class="swatch-value">#3f51b5</span></div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background: #ffffff; border-bottom: 1px solid #eee;"></div>
+        <div class="swatch-info"><span class="swatch-name">Surface</span><span class="swatch-value">#ffffff</span></div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background: #fafafa; border-bottom: 1px solid #eee;"></div>
+        <div class="swatch-info"><span class="swatch-name">Background</span><span class="swatch-value">#fafafa</span></div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background: #f0f1fa; border-bottom: 1px solid #eee;"></div>
+        <div class="swatch-info"><span class="swatch-name">Accent Fill</span><span class="swatch-value">#f0f1fa</span></div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background: #1a1a2e;"></div>
+        <div class="swatch-info"><span class="swatch-name">Text Primary</span><span class="swatch-value">rgba(0,0,0,0.87)</span></div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background: #555770;"></div>
+        <div class="swatch-info"><span class="swatch-name">Text Secondary</span><span class="swatch-value">rgba(0,0,0,0.6)</span></div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background: #e0e0e0; border-bottom: 1px solid #ccc;"></div>
+        <div class="swatch-info"><span class="swatch-name">Border</span><span class="swatch-value">#e0e0e0</span></div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background: #c5cae9; border-bottom: 1px solid #aaa;"></div>
+        <div class="swatch-info"><span class="swatch-name">Primary Muted</span><span class="swatch-value">#c5cae9</span></div>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Token</th><th>Value</th><th>Usage</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Card Radius</strong></td><td><code>8px</code></td><td>Cards, buttons</td></tr>
+          <tr><td><strong>Modal Radius</strong></td><td><code>12px</code></td><td>Modals, dropdowns</td></tr>
+          <tr><td><strong>Card Shadow</strong></td><td><code>0 2px 8px rgba(0,0,0,0.08)</code></td><td>Resting elevation</td></tr>
+          <tr><td><strong>Modal Shadow</strong></td><td><code>0 8px 32px rgba(0,0,0,0.14)</code></td><td>Overlays</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ═══════════ 6. INFORMATION ARCHITECTURE ═══════════ -->
+  <section class="section" id="ia">
+    <div class="section-number">Section 06</div>
+    <h2>Information Architecture</h2>
+
+    <h3>User Context & Permissions Model</h3>
+    <div class="diagram"><span class="hl">User</span> (Sarah Webb, Senior Planner, Community Development)
+    ↓
+<span class="accent">Department → Domain Mapping</span>
+    ├── Community Development → <span class="warn">EPL</span> (Permits, Code Enforcement, Licensing, Inspections)
+    ↓
+<span class="accent">Filtered Content</span>
+    ├── Visible domains <span class="comment">(scoped to department)</span>
+    ├── Visible standard reports <span class="comment">(scoped to department)</span>
+    ├── Suggested questions <span class="comment">(scoped to datasets)</span>
+    └── Recent activity <span class="comment">(scoped to user)</span></div>
+
+    <div class="principle">
+      <strong>Design principle:</strong> The AI should never show a user something they can't access. Permissions filtering happens <em>before</em> display, not as an error state after interaction.
+    </div>
+
+    <h3>Content Taxonomy</h3>
+    <div class="diagram"><span class="hl">Domains</span> (product lines)
+├── <span class="accent">EPL</span> — Enterprise Permitting & Licensing
+│   ├── Datasets: Permits, Code Enforcement, Licensing, Inspections
+│   └── Reports: Permit Issuance Register, Inspection Activity Log, Code Violations Summary
+├── <span class="accent">ERP</span> — Enterprise Resource Planning
+│   ├── Datasets: Finance, HR & Payroll, Utilities, Purchasing
+│   └── Reports: Budget vs. Actuals
+└── <span class="accent">Courts & Justice</span>
+    ├── Datasets: Cases, Arrests, Warrants, Dockets
+    └── Reports: Daily Booking Log</div>
+  </section>
+
+  <!-- ═══════════ 7. DESIGN PRINCIPLES ═══════════ -->
+  <section class="section" id="principles">
+    <div class="section-number">Section 07</div>
+    <h2>Design Principles Summary</h2>
+    <p>The eight governing principles behind TIRA's UX decisions, derived from the prototype's behavior:</p>
+
+    <div class="principles-grid">
+      <div class="principle-card">
+        <div class="principle-card-number">1</div>
+        <h4>Question First, Tool Second</h4>
+        <p>The primary input is always a natural language question, not a menu selection or form. Every screen either asks the user what they need or shows what they asked for.</p>
+      </div>
+      <div class="principle-card">
+        <div class="principle-card-number">2</div>
+        <h4>Transparency Builds Trust</h4>
+        <p>Every AI-generated output exposes its data source, query logic, assumptions, and citations. Users can always answer: "Where did this number come from?"</p>
+      </div>
+      <div class="principle-card">
+        <div class="principle-card-number">3</div>
+        <h4>Progressive Depth</h4>
+        <p>Start with the simplest useful answer. Let users drill deeper through conversation, filters, view toggles, and eventually the full designer — but never require it.</p>
+      </div>
+      <div class="principle-card">
+        <div class="principle-card-number">4</div>
+        <h4>Reports Are Conversations</h4>
+        <p>A report isn't a static document — it's the current state of an ongoing dialogue between a user and their data. Saved views, refinements, and chat history are all part of the report's identity.</p>
+      </div>
+      <div class="principle-card">
+        <div class="principle-card-number">5</div>
+        <h4>AI Knows What Exists</h4>
+        <p>When a standard report already answers the user's question, AI should surface it rather than generating a redundant ad-hoc response. Existing assets are trust anchors.</p>
+      </div>
+      <div class="principle-card">
+        <div class="principle-card-number">6</div>
+        <h4>Meet Users Where They Work</h4>
+        <p>AI appears differently depending on context — hero prompt on the homepage, floating chat in the dashboard, embedded panel in split-view. The interaction model adapts; the capability doesn't change.</p>
+      </div>
+      <div class="principle-card">
+        <div class="principle-card-number">7</div>
+        <h4>Ad-Hoc to Asset in One Click</h4>
+        <p>Any query result should be saveable, nameable, and shareable without friction. The gap between "I just asked this" and "a report I share weekly" should be as small as possible.</p>
+      </div>
+      <div class="principle-card">
+        <div class="principle-card-number">8</div>
+        <h4>Coexistence Over Replacement</h4>
+        <p>TIRA must work alongside legacy tools (SSRS, stored procedures, EPL forms). It augments rather than replaces — users should be able to reference, import, and bridge to existing workflows.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 8. CURRENT STATE ═══════════ -->
+  <section class="section" id="status">
+    <div class="section-number">Section 08</div>
+    <h2>Current State & Gaps</h2>
+
+    <div class="status-grid">
+      <div class="status-card">
+        <h4><span class="status-dot green"></span> What's Working</h4>
+        <ul class="status-list">
+          <li>Conversational entry point is compelling — the homepage centers AI naturally</li>
+          <li>Data transparency disclosures (SQL, sources, assumptions) are well-structured</li>
+          <li>Standard report matching creates a useful bridge between AI and known assets</li>
+          <li>Split-view preserves conversational context during data exploration</li>
+          <li>Hub view demonstrates AI augmenting a traditional operational surface</li>
+        </ul>
+      </div>
+      <div class="status-card">
+        <h4><span class="status-dot amber"></span> Areas for Future Development</h4>
+        <ul class="status-list">
+          <li><strong>Output & distribution</strong> — Sharing, scheduling, export not yet prototyped</li>
+          <li><strong>Versioning</strong> — No version history, rollback, or master-to-derived tracking</li>
+          <li><strong>Multi-turn memory</strong> — Chat refinements don't persist across sessions</li>
+          <li><strong>Templates</strong> — Defined but lightly integrated</li>
+          <li><strong>Collaboration</strong> — No shared editing, commenting, or assignment</li>
+          <li><strong>Responsive</strong> — Layout assumes desktop viewport</li>
+          <li><strong>Accessibility</strong> — Custom components need audit</li>
+          <li><strong>Real data</strong> — All data is simulated mock data</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 9. MODULE REFERENCE ═══════════ -->
+  <section class="section" id="modules">
+    <div class="section-number">Section 09</div>
+    <h2>Module Reference</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Module</th><th>Lines</th><th>Role</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>index.html</code></td><td>887</td><td>App shell, Forge scaffold, global styles</td></tr>
+          <tr><td><code>src/main.js</code></td><td>261</td><td>Initialization, component registration, routing</td></tr>
+          <tr><td><code>src/router.js</code></td><td>60</td><td>Hash-based view routing</td></tr>
+          <tr><td><code>src/views/tira-view.js</code></td><td>398</td><td>Homepage — greeting, prompt, tabs, suggestions</td></tr>
+          <tr><td><code>src/views/hub-view.js</code></td><td>245</td><td>Hub dashboard — icon rail, data table, floating chat</td></tr>
+          <tr><td><code>src/chat-flow.js</code></td><td>2,171</td><td>Core engine — chat, query cards, split-view, designer bridge</td></tr>
+          <tr><td><code>src/hub-chat-panel.js</code></td><td>200+</td><td>Hub floating chat content</td></tr>
+          <tr><td><code>src/standard-report-viewer.js</code></td><td>150+</td><td>Report renderer (KPI, chart, table sections)</td></tr>
+          <tr><td><code>src/standard-report-card.js</code></td><td>~150</td><td>Standard report recommendation card</td></tr>
+          <tr><td><code>src/standard-reports.js</code></td><td>500+</td><td>Report definitions and metadata</td></tr>
+          <tr><td><code>src/mock-data.js</code></td><td>100+</td><td>Query suggestion mock data</td></tr>
+          <tr><td><code>src/user-context.js</code></td><td>219</td><td>User profile, domains, permissions, questions</td></tr>
+          <tr><td><code>src/saved-views.js</code></td><td>80</td><td>Parameter override persistence</td></tr>
+          <tr><td><code>src/report-matcher.js</code></td><td>~50</td><td>Query-to-report matching</td></tr>
+          <tr><td><code>src/output-templates.js</code></td><td>~50</td><td>Branded report templates</td></tr>
+          <tr><td><code>src/app-switcher.js</code></td><td>83</td><td>TIRA / Hub switching</td></tr>
+          <tr><td><code>report-canvas/</code></td><td>2,000+</td><td>React 19 report designer (separate app)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <span>TIRA Architecture Audit</span>
+  <span>Prototype — not production code</span>
+</footer>
+
+</body>
+</html>

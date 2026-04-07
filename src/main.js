@@ -179,6 +179,7 @@ import '@tylertech/forge-ai/ai-user-message';
 import '@tylertech/forge-ai/ai-response-message';
 import '@tylertech/forge-ai/ai-thinking-indicator';
 import '@tylertech/forge-ai/ai-chatbot';
+import '@tylertech/forge-ai/ai-chatbot-launcher';
 
 // Router
 import { registerView, startRouter } from './router.js';
@@ -204,6 +205,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const autoState = params.get('state');
   if (autoState === 'chat' || autoState === 'report') {
     openChatFlow(0, { autoOpenReport: autoState === 'report' });
+  } else if (autoState === 'standard-report') {
+    const reportId = params.get('reportId');
+    if (reportId) {
+      import('./chat-flow.js').then(({ openStandardReportInChat }) => {
+        openStandardReportInChat(reportId);
+      });
+    }
   }
 });
 

@@ -1,16 +1,18 @@
 /**
  * TIRA Landing Page View
- * Extracted from index.html + main.js — renders the AI-prompt-forward reporting homepage.
+ * Uses forge-ai-chatbot-launcher for the AI-prompt-forward reporting homepage.
  */
 
-import { openChatFlow } from '../chat-flow.js';
-import { currentUser } from '../user-context.js';
+import { openChatFlow, openStandardReportInChat } from '../chat-flow.js';
+import { currentUser, getVisibleStandardReports } from '../user-context.js';
+import { standardReports } from '../standard-reports.js';
+import { getViewsForReport } from '../saved-views.js';
+import { getDomainLabel } from '../standard-report-card.js';
 
 // ---------------------------------------------------------------------------
 // State
 // ---------------------------------------------------------------------------
 let cleanupFns = [];
-
 
 // ---------------------------------------------------------------------------
 // Render
@@ -38,6 +40,10 @@ export function render(container) {
             <forge-icon name="home"></forge-icon>
             <span>Home</span>
           </button>
+          <button class="side-menu-item" type="button" data-action="standard-reports">
+            <forge-icon name="assignment"></forge-icon>
+            <span>Standard Reports</span>
+          </button>
           <button class="side-menu-item" type="button" data-action="my-reports">
             <forge-icon name="folder"></forge-icon>
             <span>My Reports</span>
@@ -59,36 +65,27 @@ export function render(container) {
 
     <div class="home-body">
       <div class="home-content">
-        <div class="title-section">
-          <div class="title-row">
-            <span class="title-text" id="home-greeting">${greeting}</span>
-          </div>
-
-          <div class="prompt-area">
-            <div class="prompt-input-row">
-              <input type="text" placeholder="Ask a question about your data..." />
-              <forge-icon-button aria-label="Send" id="tira-send-btn">
-                <forge-icon name="send"></forge-icon>
-              </forge-icon-button>
-            </div>
-            <div class="prompt-button-row">
-              <div class="prompt-actions">
-                <forge-icon-button aria-label="Add attachment">
-                  <forge-icon name="add"></forge-icon>
-                </forge-icon-button>
-              </div>
-            </div>
-            <div class="disclaimer">AI can make mistakes. Always verify responses.</div>
-          </div>
-        </div>
-
-        <div class="suggestions-row" id="suggestions-container"></div>
+        <forge-ai-chatbot-launcher
+          id="tira-launcher"
+          title-text="${greeting}"
+          description-text="I’m your reporting assistant. What can I help you with today?"
+          disclaimer-text="AI can make mistakes. Always verify responses."
+          file-upload="off"
+          placeholder="Ask a question about your data..."
+        ></forge-ai-chatbot-launcher>
       </div>
     </div>
   `;
 
-  // Render suggestions
-  renderDefaultSuggestions();
+  // Set suggestions on the launcher
+  const launcher = container.querySelector('#tira-launcher');
+  if (launcher) {
+    launcher.suggestions = [
+      { text: 'Show me building permits issued by month, broken down by district', value: '0' },
+      { text: 'Summarize code violations by type and priority for this year', value: '1' },
+      { text: 'Compare department budgets against actual spending for FY2025', value: '2' },
+    ];
+  }
 
   // Wire events
   wireEvents(container);
@@ -100,41 +97,32 @@ export function destroy() {
 }
 
 // ---------------------------------------------------------------------------
-// Suggestions rendering
-// ---------------------------------------------------------------------------
-function renderDefaultSuggestions() {
-  const container = document.querySelector('#suggestions-container');
-  if (!container) return;
-
-  const suggestions = [
-    { text: 'Show me building permits issued by month, broken down by district', value: '0' },
-    { text: 'Summarize code violations by type and priority for this year', value: '1' },
-    { text: 'Compare department budgets against actual spending for FY2025', value: '2' },
-  ];
-
-  container.innerHTML = `
-    <div class="suggestions-section">
-      <div class="suggestions-header">Suggested reports</div>
-      <forge-ai-suggestions variant="block"></forge-ai-suggestions>
-    </div>
-  `;
-
-  const suggestionsEl = container.querySelector('forge-ai-suggestions');
-  suggestionsEl.suggestions = suggestions;
-}
-
-// ---------------------------------------------------------------------------
 // Event wiring
 // ---------------------------------------------------------------------------
 function wireEvents(container) {
-  // Suggestions — forge-ai-suggestions select event
-  const suggestionsEl = container.querySelector('forge-ai-suggestions');
-  if (suggestionsEl) {
-    const handler = (e) => {
+  const launcher = container.querySelector('#tira-launcher');
+
+  if (launcher) {
+    // Prevent the launcher from leaving welcome mode — our chat lives in a separate dialog
+    const conversationStartHandler = (e) => {
+      e.preventDefault();
+    };
+    launcher.addEventListener('forge-ai-chatbot-launcher-conversation-start', conversationStartHandler);
+    cleanupFns.push(() => launcher.removeEventListener('forge-ai-chatbot-launcher-conversation-start', conversationStartHandler));
+
+    // Handle suggestion selection
+    const suggestHandler = (e) => {
       openChatFlow(Number(e.detail.value));
     };
-    suggestionsEl.addEventListener('forge-ai-suggestions-select', handler);
-    cleanupFns.push(() => suggestionsEl.removeEventListener('forge-ai-suggestions-select', handler));
+    launcher.addEventListener('forge-ai-suggestions-select', suggestHandler);
+    cleanupFns.push(() => launcher.removeEventListener('forge-ai-suggestions-select', suggestHandler));
+
+    // Handle prompt send
+    const sendHandler = (e) => {
+      openChatFlow(0);
+    };
+    launcher.addEventListener('forge-ai-prompt-send', sendHandler);
+    cleanupFns.push(() => launcher.removeEventListener('forge-ai-prompt-send', sendHandler));
   }
 
   // Side menu
@@ -142,7 +130,6 @@ function wireEvents(container) {
   const overlay = container.querySelector('#side-menu-overlay');
   const menuCloseBtn = container.querySelector('#menu-close-btn');
 
-  // Expose openSideMenu for the app bar's menu button
   const openSideMenu = () => {
     sideMenu?.classList.add('open');
     overlay?.classList.add('visible');
@@ -152,7 +139,6 @@ function wireEvents(container) {
     overlay?.classList.remove('visible');
   };
 
-  // Wire menu toggle from app bar
   const menuToggleBtn = document.querySelector('#menu-toggle-btn');
   if (menuToggleBtn) {
     const menuHandler = () => openSideMenu();
@@ -167,34 +153,78 @@ function wireEvents(container) {
     overlay.addEventListener('click', closeSideMenu);
   }
 
-  // Side menu navigation
   if (sideMenu) {
     const sideMenuHandler = (e) => {
       const item = e.target.closest('.side-menu-item[data-action]');
       if (!item) return;
+      const action = item.dataset.action;
       closeSideMenu();
+      if (action === 'standard-reports') {
+        renderStandardReportsLibrary(container);
+      }
     };
     sideMenu.addEventListener('click', sideMenuHandler);
     cleanupFns.push(() => sideMenu.removeEventListener('click', sideMenuHandler));
   }
+}
 
-  // Prompt input
-  const promptInput = container.querySelector('.prompt-input-row input');
-  const sendBtn = container.querySelector('#tira-send-btn');
-  if (promptInput) {
-    const keyHandler = (e) => {
-      if (e.key === 'Enter' && promptInput.value.trim()) {
-        openChatFlow(0);
-      }
-    };
-    promptInput.addEventListener('keydown', keyHandler);
-    cleanupFns.push(() => promptInput.removeEventListener('keydown', keyHandler));
+// ---------------------------------------------------------------------------
+// Standard Reports Library
+// ---------------------------------------------------------------------------
+function renderStandardReportsLibrary(container) {
+  const homeBody = container.querySelector('.home-body');
+  if (!homeBody) return;
+
+  const visibleReports = getVisibleStandardReports(standardReports);
+  const grouped = {};
+  for (const report of visibleReports) {
+    const domain = getDomainLabel(report.domain);
+    if (!grouped[domain]) grouped[domain] = [];
+    grouped[domain].push(report);
   }
-  if (sendBtn) {
-    const clickHandler = () => {
-      if (promptInput && promptInput.value.trim()) openChatFlow(0);
-    };
-    sendBtn.addEventListener('click', clickHandler);
-    cleanupFns.push(() => sendBtn.removeEventListener('click', clickHandler));
-  }
+
+  homeBody.innerHTML = `
+    <div class="home-content" style="padding: 24px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+        <button id="sr-back-btn" style="background:none;border:1px solid #ddd;border-radius:6px;padding:6px 12px;cursor:pointer;display:flex;align-items:center;gap:4px;font-size:13px;">
+          <forge-icon name="arrow_back"></forge-icon> Back
+        </button>
+        <div>
+          <h2 class="forge-typography--heading5" style="margin:0;">Standard Reports</h2>
+          <p style="color:#666;font-size:13px;margin:4px 0 0;">Pre-built reports maintained by Tyler. Open in chat to explore and customize.</p>
+        </div>
+      </div>
+      ${Object.entries(grouped).map(([domain, reports]) => `
+        <div style="margin-bottom:24px;">
+          <div style="font-size:12px;text-transform:uppercase;letter-spacing:0.5px;color:#888;font-weight:600;margin-bottom:8px;">${domain}</div>
+          <div style="display:flex;flex-direction:column;gap:2px;">
+            ${reports.map(report => {
+              const savedViews = getViewsForReport(report.id);
+              const viewsBadge = savedViews.length > 0
+                ? `<span style="background:#e8eaf6;color:var(--forge-theme-primary,#3f51b5);font-size:10px;padding:2px 6px;border-radius:10px;">${savedViews.length} saved view${savedViews.length > 1 ? 's' : ''}</span>`
+                : '';
+              return `
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:#fff;border-radius:8px;border:1px solid #eee;transition:border-color 0.15s;" onmouseover="this.style.borderColor='#c5cae9'" onmouseout="this.style.borderColor='#eee'">
+                  <div style="flex:1;">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                      <span style="font-weight:600;font-size:14px;">${report.name}</span>
+                      ${viewsBadge}
+                    </div>
+                    <div style="color:#666;font-size:12px;margin-top:2px;">${report.description} &middot; ${report.freshness} &middot; ${report.parameters.length} parameters</div>
+                  </div>
+                  <button class="std-report-open-btn" data-report-id="${report.id}" style="background:var(--forge-theme-primary,#3f51b5);color:#fff;border:none;padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-weight:500;margin-left:16px;">Open in Chat</button>
+                </div>`;
+            }).join('')}
+          </div>
+        </div>
+      `).join('')}
+    </div>`;
+
+  // Wire back button
+  homeBody.querySelector('#sr-back-btn')?.addEventListener('click', () => { render(container); });
+
+  // Wire "Open in Chat" buttons
+  homeBody.querySelectorAll('.std-report-open-btn').forEach(btn => {
+    btn.addEventListener('click', () => { openStandardReportInChat(btn.dataset.reportId); });
+  });
 }

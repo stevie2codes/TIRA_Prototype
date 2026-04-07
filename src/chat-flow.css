@@ -1062,51 +1062,8 @@ forge-ai-response-message::part(content) {
 /* ===== Refinement Suggestion Chips (§3.3) ===== */
 
 .refinement-chips-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
   margin-top: 16px;
   margin-bottom: 4px;
-}
-
-.refinement-chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 6px 14px;
-  background: #f7f8ff;
-  border: 1px solid #d0d4f7;
-  border-radius: 16px;
-  cursor: pointer;
-  font-family: 'Roboto', sans-serif;
-  font-size: 13px;
-  font-weight: 500;
-  color: #3f51b5;
-  letter-spacing: 0.25px;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-}
-
-.refinement-chip:hover {
-  background: #eeeffe;
-  border-color: #3f51b5;
-  box-shadow: 0 1px 3px rgba(63, 81, 181, 0.15);
-}
-
-.refinement-chip:active {
-  background: #d0d4f7;
-}
-
-.refinement-chip.chip-used {
-  opacity: 0.5;
-  cursor: default;
-  pointer-events: none;
-}
-
-.refinement-chip.chip-active {
-  background: #3f51b5;
-  color: #fff;
-  border-color: #3f51b5;
-  opacity: 1;
 }
 
 /* ===== Transparency Panel (§4.1) ===== */
