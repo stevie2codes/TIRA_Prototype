@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 
 export default defineConfig({
-  base: '/TIRA_Prototype/',
+  base: process.env.NETLIFY ? '/' : '/TIRA_Prototype/',
   plugins: [react()],
   server: {
     open: true,
