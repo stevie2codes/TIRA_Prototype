@@ -21,6 +21,84 @@ function markdownToHtml(md) {
 }
 
 /**
+ * Shows a progressive reasoning sequence using forge-ai-reasoning.
+ * While running: header shows "Reasoning..." with each step appearing below.
+ * On complete: collapses to "Reasoned about [topic] for Xs", expandable to show steps.
+ *
+ * @param {HTMLElement} container - Chat message container to append to
+ * @param {Array<{ label: string, duration: number }>} steps - Processing steps
+ * @param {() => void} onComplete - Called after all steps finish
+ * @param {string} [topic] - Topic label for the collapsed header
+ */
+function showToolCallSequence(container, steps, onComplete, topic = 'your request') {
+  const reasoning = document.createElement('forge-ai-reasoning');
+  reasoning.expanded = true;
+
+  const header = document.createElement('forge-ai-reasoning-header');
+  header.slot = 'header';
+  header.reasoning = true;
+  header.expanded = true;
+
+  const reasoningTitle = document.createElement('span');
+  reasoningTitle.slot = 'reasoning-title';
+  reasoningTitle.textContent = 'Reasoning...';
+  header.appendChild(reasoningTitle);
+
+  const completedTitle = document.createElement('span');
+  completedTitle.slot = 'title';
+  header.appendChild(completedTitle);
+
+  reasoning.appendChild(header);
+
+  const stepsContainer = document.createElement('div');
+  stepsContainer.className = 'tool-call-sequence';
+  reasoning.appendChild(stepsContainer);
+
+  container.appendChild(reasoning);
+  scrollToBottom(container);
+
+  const totalStart = Date.now();
+  let i = 0;
+
+  function runStep() {
+    if (i >= steps.length) {
+      const totalSec = ((Date.now() - totalStart) / 1000).toFixed(1);
+      completedTitle.textContent = `Reasoned about ${topic} for ${totalSec}s`;
+      header.reasoning = false;
+      header.expanded = false;
+      reasoning.expanded = false;
+      onComplete();
+      return;
+    }
+
+    const step = steps[i];
+    const stepEl = document.createElement('div');
+    stepEl.className = 'tool-call-step tool-call-step--active';
+    stepEl.innerHTML = `
+      <forge-ai-spinner size="small"></forge-ai-spinner>
+      <span class="tool-call-step-label">${step.label}</span>
+    `;
+    stepsContainer.appendChild(stepEl);
+    scrollToBottom(container);
+
+    setTimeout(() => {
+      stepEl.classList.remove('tool-call-step--active');
+      stepEl.classList.add('tool-call-step--complete');
+      const elapsed = step.duration < 1000 ? `${step.duration}ms` : `${(step.duration / 1000).toFixed(1)}s`;
+      stepEl.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="tool-call-check"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+        <span class="tool-call-step-label">${step.label}</span>
+        <span class="tool-call-step-elapsed">${elapsed}</span>
+      `;
+      i++;
+      setTimeout(runStep, 200);
+    }, step.duration);
+  }
+
+  runStep();
+}
+
+/**
  * Opens the chat flow modal for a given suggestion index.
  * @param {number} index
  */
@@ -108,16 +186,14 @@ function runConversation(container, suggestion, dialog, options = {}) {
   userMsg.textContent = suggestion.query;
   container.appendChild(userMsg);
 
-  // Step 2: Thinking indicator (after 500ms)
+  // Step 2: Progressive tool call sequence inside reasoning block
   setTimeout(() => {
-    const thinking = document.createElement('forge-ai-thinking-indicator');
-    thinking.setAttribute('show-text', '');
-    container.appendChild(thinking);
-    scrollToBottom(container);
-
-    // Step 3: Replace thinking with query card response
-    setTimeout(() => {
-      container.removeChild(thinking);
+    showToolCallSequence(container, [
+      { label: 'Analyzing data sources', duration: 800 },
+      { label: 'Building query', duration: 600 },
+      { label: 'Running against dataset', duration: 900 },
+    ], () => {
+      // Step 3: Show query card response
 
       // Check for standard report matches
       const queryText = suggestion?.query || '';
@@ -195,7 +271,7 @@ function runConversation(container, suggestion, dialog, options = {}) {
           showReportOpenState();
         }, 500);
       }
-    }, 2000);
+    });
   }, 500);
 }
 
@@ -830,16 +906,16 @@ function simulateRefinement(container, chipLabel, suggestion, dialog) {
     });
   }
 
-  // Thinking
+  // Tool call sequence for refinements
+  const refinementSteps = tier === 'card'
+    ? [
+        { label: 'Refining query parameters', duration: 600 },
+        { label: 'Running updated query', duration: 700 },
+      ]
+    : [{ label: 'Analyzing request', duration: 800 }];
+
   setTimeout(() => {
-    const thinking = document.createElement('forge-ai-thinking-indicator');
-    thinking.setAttribute('show-text', '');
-    container.appendChild(thinking);
-    scrollToBottom(container);
-
-    setTimeout(() => {
-      container.removeChild(thinking);
-
+    showToolCallSequence(container, refinementSteps, () => {
       if (tier === 'card') {
         // --- New query card ---
         const refinedSuggestion = buildRefinedSuggestion(chipLabel, suggestion);
@@ -884,7 +960,7 @@ function simulateRefinement(container, chipLabel, suggestion, dialog) {
         // --- Handoff nudge ---
         showHandoffNudge(container, suggestion);
       }
-    }, 1500);
+    });
   }, 400);
 }
 
@@ -902,14 +978,10 @@ function showHandoffNudge(container, suggestion) {
   scrollToBottom(container);
 
   setTimeout(() => {
-    const thinking = document.createElement('forge-ai-thinking-indicator');
-    thinking.setAttribute('show-text', '');
-    container.appendChild(thinking);
-    scrollToBottom(container);
-
-    setTimeout(() => {
-      container.removeChild(thinking);
-
+    showToolCallSequence(container, [
+      { label: 'Evaluating capabilities', duration: 700 },
+      { label: 'Checking designer availability', duration: 500 },
+    ], () => {
       const responseMsg = document.createElement('forge-ai-response-message');
       const responseContent = document.createElement('div');
       responseContent.className = 'ai-response-content';
@@ -971,7 +1043,7 @@ function showHandoffNudge(container, suggestion) {
         const dialog = document.querySelector('#chat-dialog');
         if (dialog) mountReportDesigner(dialog);
       });
-    }, 1500);
+    });
   }, 400);
 }
 

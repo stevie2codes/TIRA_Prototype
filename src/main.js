@@ -180,6 +180,9 @@ import '@tylertech/forge-ai/ai-response-message';
 import '@tylertech/forge-ai/ai-thinking-indicator';
 import '@tylertech/forge-ai/ai-chatbot';
 import '@tylertech/forge-ai/ai-chatbot-launcher';
+import '@tylertech/forge-ai/ai-reasoning';
+import '@tylertech/forge-ai/ai-reasoning-header';
+import '@tylertech/forge-ai/ai-spinner';
 
 // Router
 import { registerView, startRouter } from './router.js';
