@@ -152,6 +152,7 @@
 }
 
 /* Query card inherits styles from chat-flow.css */
+.hcp-ai-response forge-card.query-card,
 .hcp-ai-response .query-card {
   font-size: 13px;
 }

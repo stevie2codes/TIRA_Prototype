@@ -2097,12 +2097,12 @@ forge-ai-response-message::part(content) {
 
 /* ===== Query Card (progressive disclosure response) ===== */
 
-.query-card {
-  background: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
+forge-card.query-card {
+  --forge-card-padding: 0;
+  --forge-card-shape: 12px;
+  --forge-card-raised-elevation: 0 1px 6px rgba(0, 0, 0, 0.06);
+  --forge-card-overflow: hidden;
+  display: block;
   animation: qcSlideIn 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   max-width: 720px;
 }
@@ -2307,9 +2307,61 @@ forge-ai-response-message::part(content) {
   border-top: 1px solid #f0f0f0;
 }
 
-/* Disclosure sections */
+/* Collapsible Data Transparency wrapper */
+.qc-transparency-wrapper {
+  border-top: 1px solid #f0f0f0;
+}
+
+.qc-transparency-trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 20px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.7);
+  text-align: left;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  transition: background 0.15s ease;
+}
+
+.qc-transparency-trigger:hover {
+  background: #f5f6fa;
+}
+
+.qc-transparency-trigger > forge-icon:first-child {
+  --forge-icon-font-size: 18px;
+  color: #3f51b5;
+}
+
+.qc-transparency-label {
+  font-size: 12px;
+}
+
+.qc-transparency-badge {
+  --forge-badge-background: #e8eaf6;
+  --forge-badge-color: #3f51b5;
+  --forge-badge-shape: 10px;
+  --forge-badge-padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.qc-transparency-trigger forge-open-icon {
+  --forge-open-icon-size: 20px;
+  --forge-open-icon-color: rgba(0, 0, 0, 0.4);
+  margin-left: auto;
+}
+
+/* Disclosure sections inside the transparency panel */
 .qc-disclosures {
-  margin: 0 20px 0;
+  margin: 0 20px 16px;
   border: 1px solid #e8e8e8;
   border-radius: 8px;
   overflow: hidden;
@@ -2344,19 +2396,10 @@ forge-ai-response-message::part(content) {
   background: #f8f9ff;
 }
 
-.qc-disclosure.open .qc-disclosure-toggle {
-  background: #f5f6fa;
-  color: #3f51b5;
-}
-
 .qc-disclosure-toggle forge-icon {
   --forge-icon-font-size: 16px;
   color: rgba(0, 0, 0, 0.4);
   flex-shrink: 0;
-}
-
-.qc-disclosure.open .qc-disclosure-toggle forge-icon {
-  color: #3f51b5;
 }
 
 .qc-disclosure-detail {
@@ -2371,18 +2414,8 @@ forge-ai-response-message::part(content) {
 }
 
 .qc-disclosure-arrow {
-  --forge-icon-font-size: 18px !important;
-  transition: transform 0.2s ease;
-  margin-left: -2px;
-}
-
-.qc-disclosure-body {
-  animation: qcDisclosureOpen 0.2s ease;
-}
-
-@keyframes qcDisclosureOpen {
-  from { opacity: 0; max-height: 0; }
-  to { opacity: 1; max-height: 500px; }
+  --forge-open-icon-size: 18px;
+  --forge-open-icon-color: rgba(0, 0, 0, 0.35);
 }
 
 .qc-disclosure-content {
@@ -2416,6 +2449,7 @@ forge-ai-response-message::part(content) {
 /* Card actions */
 .qc-actions {
   padding: 12px 20px 16px;
+  border-top: 1px solid #f0f0f0;
 }
 
 .qc-actions .refinement-chips-row {
@@ -2429,69 +2463,19 @@ forge-ai-response-message::part(content) {
   gap: 10px;
 }
 
-.qc-open-report-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 22px;
-  background: #3f51b5;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-family: 'Roboto', sans-serif;
-  font-size: 13px;
-  font-weight: 500;
-  letter-spacing: 0.25px;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 4px rgba(63, 81, 181, 0.25);
+forge-button.qc-open-report-btn {
+  --forge-button-primary-color: #3f51b5;
+  --forge-button-raised-shadow: 0 1px 4px rgba(63, 81, 181, 0.25);
+  --forge-button-raised-hover-shadow: 0 2px 8px rgba(63, 81, 181, 0.3);
 }
 
-.qc-open-report-btn:hover {
-  background: #354499;
-  box-shadow: 0 2px 8px rgba(63, 81, 181, 0.3);
-  transform: translateY(-1px);
-}
-
-.qc-open-report-btn:active {
-  background: #2c3a7f;
-  transform: translateY(0);
-}
-
-.qc-open-report-btn forge-icon {
-  --forge-icon-font-size: 18px;
-  color: #fff;
-}
-
-.qc-secondary-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 9px 16px;
-  background: transparent;
-  color: rgba(0, 0, 0, 0.6);
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  cursor: pointer;
-  font-family: 'Roboto', sans-serif;
-  font-size: 13px;
-  font-weight: 500;
-  letter-spacing: 0.25px;
-  transition: all 0.15s ease;
-}
-
-.qc-secondary-btn:hover {
-  background: #f5f5f5;
-  border-color: #bdbdbd;
-}
-
-.qc-secondary-btn forge-icon {
-  --forge-icon-font-size: 16px;
-  color: rgba(0, 0, 0, 0.45);
+forge-button.qc-secondary-btn {
+  --forge-button-primary-color: rgba(0, 0, 0, 0.6);
+  --forge-button-outlined-border-color: #e0e0e0;
 }
 
 /* Query card in split view — narrower */
-.split-chat-messages .query-card {
+.split-chat-messages forge-card.query-card {
   max-width: 100%;
 }
 
@@ -2507,24 +2491,22 @@ forge-ai-response-message::part(content) {
 
 /* ===== Collapsed Query Card ===== */
 
-.query-card.qc-collapsed {
+forge-card.query-card.qc-collapsed {
   max-height: 44px;
   overflow: hidden;
   transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   opacity: 0.7;
-  border-color: #e8e8e8;
-  box-shadow: none;
+  --forge-card-raised-elevation: none;
 }
 
-.query-card.qc-collapsed:hover {
+forge-card.query-card.qc-collapsed:hover {
   opacity: 0.9;
-  border-color: #d0d0d0;
 }
 
-.query-card.qc-collapsed .qc-header,
-.query-card.qc-collapsed .qc-data-preview,
-.query-card.qc-collapsed .qc-disclosures,
-.query-card.qc-collapsed .qc-actions {
+forge-card.query-card.qc-collapsed .qc-header,
+forge-card.query-card.qc-collapsed .qc-data-preview,
+forge-card.query-card.qc-collapsed .qc-transparency-wrapper,
+forge-card.query-card.qc-collapsed .qc-actions {
   display: none;
 }
 

@@ -106,49 +106,35 @@ function renderDefaultSuggestions() {
   const container = document.querySelector('#suggestions-container');
   if (!container) return;
 
-  const items = [
-    { label: 'Show me building permits issued by month, broken down by district', icon: 'description', suggestionIndex: 0 },
-    { label: 'Summarize code violations by type and priority for this year', icon: 'gavel', suggestionIndex: 1 },
-    { label: 'Compare department budgets against actual spending for FY2025', icon: 'account_balance', suggestionIndex: 2 },
+  const suggestions = [
+    { text: 'Show me building permits issued by month, broken down by district', value: '0' },
+    { text: 'Summarize code violations by type and priority for this year', value: '1' },
+    { text: 'Compare department budgets against actual spending for FY2025', value: '2' },
   ];
-
-  const actionButtons = items.map(s => `
-    <button class="suggestion-action" type="button" data-suggestion="${s.suggestionIndex}">
-      <div class="suggestion-action-icon"><forge-icon name="${s.icon}"></forge-icon></div>
-      <span class="suggestion-action-label">${s.label}</span>
-      <div class="suggestion-action-arrow"><forge-icon name="play_arrow"></forge-icon></div>
-    </button>`
-  ).join('');
 
   container.innerHTML = `
     <div class="suggestions-section">
       <div class="suggestions-header">Suggested reports</div>
-      <div class="suggestion-actions-list">${actionButtons}</div>
+      <forge-ai-suggestions variant="block"></forge-ai-suggestions>
     </div>
   `;
+
+  const suggestionsEl = container.querySelector('forge-ai-suggestions');
+  suggestionsEl.suggestions = suggestions;
 }
 
 // ---------------------------------------------------------------------------
 // Event wiring
 // ---------------------------------------------------------------------------
 function wireEvents(container) {
-  // Suggestions — event delegation
-  const suggestionsContainer = container.querySelector('#suggestions-container');
-  if (suggestionsContainer) {
+  // Suggestions — forge-ai-suggestions select event
+  const suggestionsEl = container.querySelector('forge-ai-suggestions');
+  if (suggestionsEl) {
     const handler = (e) => {
-      const btn = e.target.closest('button');
-      if (!btn) return;
-      if (btn.hasAttribute('data-suggestion')) {
-        openChatFlow(Number(btn.dataset.suggestion));
-        return;
-      }
-      if (btn.hasAttribute('data-query')) {
-        openChatFlow(0);
-        return;
-      }
+      openChatFlow(Number(e.detail.value));
     };
-    suggestionsContainer.addEventListener('click', handler);
-    cleanupFns.push(() => suggestionsContainer.removeEventListener('click', handler));
+    suggestionsEl.addEventListener('forge-ai-suggestions-select', handler);
+    cleanupFns.push(() => suggestionsEl.removeEventListener('forge-ai-suggestions-select', handler));
   }
 
   // Side menu

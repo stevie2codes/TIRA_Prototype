@@ -21,6 +21,10 @@ import {
   defineTableComponent,
   defineToolbarComponent,
   defineChipComponent,
+  defineExpansionPanelComponent,
+  defineOpenIconComponent,
+  defineBadgeComponent,
+  defineTooltipComponent,
 } from '@tylertech/forge';
 
 // Tyler Icons
@@ -102,6 +106,10 @@ defineSplitViewPanelComponent();
 defineTableComponent();
 defineToolbarComponent();
 defineChipComponent();
+defineExpansionPanelComponent();
+defineOpenIconComponent();
+defineBadgeComponent();
+defineTooltipComponent();
 
 // Register icons
 IconRegistry.define([

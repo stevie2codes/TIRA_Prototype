@@ -160,19 +160,31 @@ function runConversation(container, suggestion, dialog, options = {}) {
 }
 
 /**
- * Builds the Query Card HTML — a compact, progressive-disclosure response card.
- * Replaces the old flat response + separate transparency panel.
+ * Unique ID counter for query card elements (expansion panels need unique IDs).
+ */
+let qcIdCounter = 0;
+
+/**
+ * Builds the Query Card HTML — a compact, progressive-disclosure response card
+ * using Forge components (forge-card, forge-expansion-panel, forge-open-icon, forge-button).
  */
 function buildQueryCard(suggestion) {
+  const uid = ++qcIdCounter;
   const t = suggestion.transparency;
   const totalRows = suggestion.data ? suggestion.data.length : 0;
   const totalCols = suggestion.columns ? suggestion.columns.length : 0;
+
+  // Count transparency items for the badge
+  let transparencyCount = 0;
+  if (t) {
+    transparencyCount = 1 + 1 + (t.assumptions.length > 0 ? 1 : 0) + (t.citations.length > 0 ? 1 : 0);
+  }
 
   // Mini data preview — first 3 rows as a compact table
   let miniTableHtml = '';
   if (suggestion.columns && suggestion.data && suggestion.data.length > 0) {
     const previewRows = suggestion.data.slice(0, 3);
-    const previewCols = suggestion.columns.slice(0, 4); // max 4 cols in preview
+    const previewCols = suggestion.columns.slice(0, 4);
     const headerCells = previewCols.map(c => `<th>${c.header}</th>`).join('');
     const bodyRows = previewRows.map(row => {
       const cells = previewCols.map(c => `<td>${row[c.property] ?? ''}</td>`).join('');
@@ -207,7 +219,7 @@ function buildQueryCard(suggestion) {
       ${markdownToHtml(suggestion.aiSummary)}
     </div>
 
-    <div class="query-card">
+    <forge-card class="query-card" raised>
       <div class="qc-header">
         <div class="qc-header-left">
           <div class="qc-icon">
@@ -234,119 +246,125 @@ function buildQueryCard(suggestion) {
 
       ${miniTableHtml}
 
-      <div class="qc-section-header">Data Transparency</div>
-      <div class="qc-disclosures">
-        <div class="qc-disclosure" data-section="source">
-          <button class="qc-disclosure-toggle" type="button">
-            <forge-icon name="database_outline"></forge-icon>
-            <span>Data Source</span>
-            <span class="qc-disclosure-detail">${t ? t.dataSourceDetail : suggestion.dataSource}</span>
-            <forge-icon name="expand_more" class="qc-disclosure-arrow"></forge-icon>
-          </button>
-          <div class="qc-disclosure-body" style="display:none;">
-            ${t ? `
-              <div class="qc-disclosure-content">
-                <div class="qc-info-row"><span class="qc-info-label">System</span><span class="qc-info-value">${t.system}</span></div>
-                <div class="qc-info-row"><span class="qc-info-label">Total Records</span><span class="qc-info-value">${t.totalRecords}</span></div>
-                <div class="qc-info-row"><span class="qc-info-label">Last Updated</span><span class="qc-info-value">${t.lastUpdated}</span></div>
-              </div>
+      <!-- Collapsible Data Transparency section -->
+      <div class="qc-transparency-wrapper">
+        <button type="button" class="qc-transparency-trigger" id="qc-tp-trigger-${uid}">
+          <forge-icon name="info_outline"></forge-icon>
+          <span class="qc-transparency-label">Data Transparency</span>
+          <forge-badge class="qc-transparency-badge">${transparencyCount} sections</forge-badge>
+          <forge-open-icon id="qc-tp-icon-${uid}">
+            <forge-icon name="expand_more"></forge-icon>
+          </forge-open-icon>
+        </button>
+        <forge-expansion-panel id="qc-tp-panel-${uid}" trigger="qc-tp-trigger-${uid}" open-icon="qc-tp-icon-${uid}">
+          <div class="qc-disclosures">
+
+            <!-- Data Source -->
+            <div class="qc-disclosure" data-section="source">
+              <button type="button" class="qc-disclosure-toggle" id="qc-src-trigger-${uid}">
+                <forge-icon name="database_outline"></forge-icon>
+                <span>Data Source</span>
+                <span class="qc-disclosure-detail">${t ? t.dataSourceDetail : suggestion.dataSource}</span>
+                <forge-open-icon id="qc-src-icon-${uid}" class="qc-disclosure-arrow">
+                  <forge-icon name="expand_more"></forge-icon>
+                </forge-open-icon>
+              </button>
+              <forge-expansion-panel trigger="qc-src-trigger-${uid}" open-icon="qc-src-icon-${uid}">
+                ${t ? `
+                  <div class="qc-disclosure-content">
+                    <div class="qc-info-row"><span class="qc-info-label">System</span><span class="qc-info-value">${t.system}</span></div>
+                    <div class="qc-info-row"><span class="qc-info-label">Total Records</span><span class="qc-info-value">${t.totalRecords}</span></div>
+                    <div class="qc-info-row"><span class="qc-info-label">Last Updated</span><span class="qc-info-value">${t.lastUpdated}</span></div>
+                  </div>
+                ` : ''}
+              </forge-expansion-panel>
+            </div>
+
+            <!-- SQL Query -->
+            <div class="qc-disclosure" data-section="sql">
+              <button type="button" class="qc-disclosure-toggle" id="qc-sql-trigger-${uid}">
+                <forge-icon name="code"></forge-icon>
+                <span>SQL Query</span>
+                <span class="qc-disclosure-detail">View generated query</span>
+                <forge-open-icon id="qc-sql-icon-${uid}" class="qc-disclosure-arrow">
+                  <forge-icon name="expand_more"></forge-icon>
+                </forge-open-icon>
+              </button>
+              <forge-expansion-panel trigger="qc-sql-trigger-${uid}" open-icon="qc-sql-icon-${uid}">
+                <div class="qc-disclosure-content">
+                  <pre class="transparency-sql"><code>${suggestion.sqlCode}</code></pre>
+                  <div class="transparency-sql-actions">
+                    <forge-button variant="outlined" dense class="copy-sql-btn" type="button">
+                      <forge-icon slot="start" name="content_copy"></forge-icon>
+                      Copy SQL
+                    </forge-button>
+                  </div>
+                </div>
+              </forge-expansion-panel>
+            </div>
+
+            <!-- Assumptions -->
+            <div class="qc-disclosure" data-section="assumptions">
+              <button type="button" class="qc-disclosure-toggle" id="qc-asm-trigger-${uid}">
+                <forge-icon name="info_outline"></forge-icon>
+                <span>Assumptions</span>
+                <span class="qc-disclosure-detail">${t ? t.assumptions.length + ' made' : ''}</span>
+                <forge-open-icon id="qc-asm-icon-${uid}" class="qc-disclosure-arrow">
+                  <forge-icon name="expand_more"></forge-icon>
+                </forge-open-icon>
+              </button>
+              <forge-expansion-panel trigger="qc-asm-trigger-${uid}" open-icon="qc-asm-icon-${uid}">
+                <div class="qc-disclosure-content">
+                  <ul class="transparency-assumptions">${assumptionsList}</ul>
+                </div>
+              </forge-expansion-panel>
+            </div>
+
+            ${citationsList ? `
+            <!-- Data Citations -->
+            <div class="qc-disclosure" data-section="citations">
+              <button type="button" class="qc-disclosure-toggle" id="qc-cite-trigger-${uid}">
+                <forge-icon name="link"></forge-icon>
+                <span>Data Citations</span>
+                <span class="qc-disclosure-detail">${t ? t.citations.length + ' sources' : ''}</span>
+                <forge-open-icon id="qc-cite-icon-${uid}" class="qc-disclosure-arrow">
+                  <forge-icon name="expand_more"></forge-icon>
+                </forge-open-icon>
+              </button>
+              <forge-expansion-panel trigger="qc-cite-trigger-${uid}" open-icon="qc-cite-icon-${uid}">
+                <div class="qc-disclosure-content">
+                  ${citationsList}
+                </div>
+              </forge-expansion-panel>
+            </div>
             ` : ''}
-          </div>
-        </div>
 
-        <div class="qc-disclosure" data-section="sql">
-          <button class="qc-disclosure-toggle" type="button">
-            <forge-icon name="code"></forge-icon>
-            <span>SQL Query</span>
-            <span class="qc-disclosure-detail">View generated query</span>
-            <forge-icon name="expand_more" class="qc-disclosure-arrow"></forge-icon>
-          </button>
-          <div class="qc-disclosure-body" style="display:none;">
-            <div class="qc-disclosure-content">
-              <pre class="transparency-sql"><code>${suggestion.sqlCode}</code></pre>
-              <div class="transparency-sql-actions">
-                <button class="transparency-action-btn copy-sql-btn" type="button">
-                  <forge-icon name="content_copy"></forge-icon>
-                  Copy SQL
-                </button>
-              </div>
-            </div>
           </div>
-        </div>
-
-        <div class="qc-disclosure" data-section="assumptions">
-          <button class="qc-disclosure-toggle" type="button">
-            <forge-icon name="info_outline"></forge-icon>
-            <span>Assumptions</span>
-            <span class="qc-disclosure-detail">${t ? t.assumptions.length + ' made' : ''}</span>
-            <forge-icon name="expand_more" class="qc-disclosure-arrow"></forge-icon>
-          </button>
-          <div class="qc-disclosure-body" style="display:none;">
-            <div class="qc-disclosure-content">
-              <ul class="transparency-assumptions">${assumptionsList}</ul>
-            </div>
-          </div>
-        </div>
-
-        ${citationsList ? `
-        <div class="qc-disclosure" data-section="citations">
-          <button class="qc-disclosure-toggle" type="button">
-            <forge-icon name="link"></forge-icon>
-            <span>Data Citations</span>
-            <span class="qc-disclosure-detail">${t ? t.citations.length + ' sources' : ''}</span>
-            <forge-icon name="expand_more" class="qc-disclosure-arrow"></forge-icon>
-          </button>
-          <div class="qc-disclosure-body" style="display:none;">
-            <div class="qc-disclosure-content">
-              ${citationsList}
-            </div>
-          </div>
-        </div>
-        ` : ''}
+        </forge-expansion-panel>
       </div>
 
       <div class="qc-actions">
         ${buildRefinementChips(suggestion)}
         <div class="qc-actions-row">
-          <button class="qc-open-report-btn" id="open-report-btn" type="button">
-            <forge-icon name="insert_chart"></forge-icon>
+          <forge-button variant="raised" class="qc-open-report-btn" id="open-report-btn" type="button">
+            <forge-icon slot="start" name="insert_chart"></forge-icon>
             Explore Results
-          </button>
-          <button class="qc-secondary-btn" type="button">
-            <forge-icon name="content_copy"></forge-icon>
+          </forge-button>
+          <forge-button variant="outlined" class="qc-secondary-btn" type="button">
+            <forge-icon slot="start" name="content_copy"></forge-icon>
             Copy Summary
-          </button>
+          </forge-button>
         </div>
       </div>
-    </div>
+    </forge-card>
   `;
 }
 
 /**
- * Wires all query card interactions: disclosure toggles, copy SQL, copy summary
+ * Wires query card interactions. Forge expansion panels handle their own
+ * toggle/animation logic — we only need to wire copy buttons and refinement chips.
  */
 function wireQueryCard(responseMsg, container, suggestion, dialog) {
-  // Wire disclosure toggles
-  const disclosures = responseMsg.querySelectorAll('.qc-disclosure');
-  disclosures.forEach(disc => {
-    const toggle = disc.querySelector('.qc-disclosure-toggle');
-    const body = disc.querySelector('.qc-disclosure-body');
-    const arrow = disc.querySelector('.qc-disclosure-arrow');
-    if (!toggle || !body) return;
-
-    toggle.addEventListener('click', () => {
-      const isOpen = body.style.display !== 'none';
-      body.style.display = isOpen ? 'none' : 'block';
-      disc.classList.toggle('open', !isOpen);
-      if (arrow) arrow.style.transform = isOpen ? '' : 'rotate(180deg)';
-      if (!isOpen) {
-        requestAnimationFrame(() => {
-          body.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        });
-      }
-    });
-  });
-
   // Wire Copy SQL
   const copyBtn = responseMsg.querySelector('.copy-sql-btn');
   if (copyBtn) {
@@ -355,9 +373,9 @@ function wireQueryCard(responseMsg, container, suggestion, dialog) {
       const sql = responseMsg.querySelector('.transparency-sql code')?.textContent;
       if (sql) {
         navigator.clipboard.writeText(sql).then(() => {
-          copyBtn.innerHTML = '<forge-icon name="check"></forge-icon> Copied!';
+          copyBtn.innerHTML = '<forge-icon slot="start" name="check"></forge-icon> Copied!';
           setTimeout(() => {
-            copyBtn.innerHTML = '<forge-icon name="content_copy"></forge-icon> Copy SQL';
+            copyBtn.innerHTML = '<forge-icon slot="start" name="content_copy"></forge-icon> Copy SQL';
           }, 2000);
         });
       }
@@ -371,9 +389,9 @@ function wireQueryCard(responseMsg, container, suggestion, dialog) {
       const summaryText = responseMsg.querySelector('.qc-summary')?.textContent?.trim();
       if (summaryText) {
         navigator.clipboard.writeText(summaryText).then(() => {
-          copySummaryBtn.innerHTML = '<forge-icon name="check"></forge-icon> Copied!';
+          copySummaryBtn.innerHTML = '<forge-icon slot="start" name="check"></forge-icon> Copied!';
           setTimeout(() => {
-            copySummaryBtn.innerHTML = '<forge-icon name="content_copy"></forge-icon> Copy Summary';
+            copySummaryBtn.innerHTML = '<forge-icon slot="start" name="content_copy"></forge-icon> Copy Summary';
           }, 2000);
         });
       }
@@ -545,10 +563,10 @@ function collapseQueryCard(card) {
   if (!card || card.classList.contains('qc-collapsed')) return;
   card.classList.add('qc-collapsed');
 
-  // Close any open disclosures
-  card.querySelectorAll('.qc-disclosure-body').forEach(b => b.style.display = 'none');
-  card.querySelectorAll('.qc-disclosure').forEach(d => d.classList.remove('open'));
-  card.querySelectorAll('.qc-disclosure-arrow').forEach(a => a.style.transform = '');
+  // Close any open Forge expansion panels
+  card.querySelectorAll('forge-expansion-panel[open]').forEach(panel => {
+    panel.open = false;
+  });
 
   // Store original title for the collapsed header
   const title = card.querySelector('.qc-title')?.textContent || 'Previous result';
