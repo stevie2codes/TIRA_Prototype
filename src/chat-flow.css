@@ -88,38 +88,22 @@ forge-dialog.chat-dialog::part(dialog) {
   flex-shrink: 0;
 }
 
-/* Chat body with gradient */
-.chat-body {
+/* Chat interface (forge-ai-chat-interface) */
+.chat-interface {
   flex: 1;
-  display: flex;
-  width: 100%;
-  overflow: hidden;
-  border-bottom: 1px solid #e0e0e0;
-  position: relative;
-  z-index: 1;
+  min-height: 0;
 }
 
-/* Chat container (before split view) */
-.chat-container {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  overflow-x: hidden;
-  overflow-y: auto;
-  padding: 32px 24px 32px;
-  background: linear-gradient(180deg, #fff 9.615%, #f7f8ff 100%);
+.chat-interface forge-ai-prompt {
+  max-width: 800px;
+  margin: 0 auto;
   width: 100%;
-}
-
-/* Spacer pushes messages to bottom when content is short */
-.chat-messages-spacer {
-  flex: 1;
 }
 
 .chat-messages {
   width: 100%;
   max-width: 800px;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -174,78 +158,6 @@ forge-ai-response-message::part(content) {
   color: rgba(0, 0, 0, 0.87);
 }
 
-/* Chat footer with prompt area */
-.chat-footer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  background: #fff;
-  flex-shrink: 0;
-  width: 100%;
-  margin-top: auto;
-  min-width: 0;
-}
-
-/* Responsive padding for smaller screens */
-@media (max-width: 768px) {
-  .chat-footer {
-    padding: 16px;
-  }
-}
-
-.prompt-area {
-  width: 100%;
-  max-width: 800px;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  border-radius: 8px;
-  min-width: 0;
-}
-
-.prompt-input-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  background: #fff;
-  border: 1px solid #e0e0e0;
-  border-bottom: none;
-  border-radius: 8px 8px 0 0;
-  min-width: 0;
-}
-
-.prompt-input-row input {
-  flex: 1;
-  border: none;
-  outline: none;
-  font-family: 'Roboto', sans-serif;
-  font-size: 15px;
-  line-height: 20px;
-  letter-spacing: 0.25px;
-  color: rgba(0, 0, 0, 0.87);
-  padding: 4px 0;
-  background: transparent;
-  min-height: 20px;
-  min-width: 0;
-}
-
-.prompt-input-row input::placeholder {
-  color: rgba(0, 0, 0, 0.6);
-}
-
-.prompt-actions-row {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  padding: 6px 6px 6px 10px;
-  background: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 0 0 8px 8px;
-  min-width: 0;
-}
 
 /* AI response content styling */
 .ai-response-content {
@@ -497,82 +409,31 @@ forge-ai-response-message::part(content) {
   flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   justify-content: flex-start;
   overflow-x: hidden;
   overflow-y: auto;
   padding: 24px 16px;
   background: linear-gradient(180deg, #fff 9.615%, #f7f8ff 100%);
-  width: auto;
   min-height: 0;
+  min-width: 0;
 }
 
 .split-chat-messages #chat-messages {
   width: 100%;
   max-width: 100%;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 0;
+  overflow: hidden;
 }
 
-/* Footer in split view */
-.split-chat-footer {
+/* Prompt in split view */
+.split-chat-prompt {
   flex-shrink: 0;
-  width: auto;
-  margin-top: 0;
-  border-top: 1px solid #e0e0e0;
   padding: 12px;
-  background: #fff;
   min-width: 0;
-}
-
-.split-chat-footer .prompt-area {
-  max-width: 100%;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-}
-
-.split-chat-footer .prompt-input-row {
-  padding: 8px 10px;
-  gap: 6px;
-}
-
-.split-chat-footer .prompt-input-row input {
-  font-size: 14px;
-  line-height: 18px;
-}
-
-.split-chat-footer .prompt-actions-row {
-  padding: 4px 4px 4px 8px;
-  gap: 0;
-}
-
-/* Ensure icon buttons are appropriately sized */
-.prompt-input-row forge-icon-button,
-.prompt-actions-row forge-icon-button {
-  flex-shrink: 0;
-}
-
-/* Make prompt area more compact in narrow split views */
-.split-chat-footer .prompt-area {
-  width: 100%;
-  min-width: 0;
-}
-
-/* Responsive adjustments for very narrow panels */
-@media (max-width: 400px) {
-  .split-chat-footer {
-    padding: 8px;
-  }
-
-  .split-chat-footer .prompt-input-row {
-    gap: 4px;
-    padding: 6px 8px;
-  }
-
-  .split-chat-footer .prompt-actions-row {
-    gap: 0;
-    padding: 4px;
-  }
 }
 
 /* Right report panel */
@@ -2175,20 +2036,116 @@ forge-button.qc-open-report-btn {
 .qc-summary li { margin-bottom: 4px; }
 .qc-summary strong { color: rgba(0, 0, 0, 0.87); }
 
-/* ===== Refinement Row ===== */
+/* ===== Report Match (between summary and card) ===== */
+
+.qc-report-match {
+  margin-bottom: 12px;
+}
+
+/* ===== Refinement Row (appended after query card in thread) ===== */
 
 .qc-refinement-row {
-  margin-bottom: 12px;
+  margin: 12px 0;
+  max-width: 800px;
 }
 
 /* ===== Split View Overrides ===== */
 
-.split-chat-messages forge-ai-artifact.query-card {
+/* All content must respect parent width */
+.split-chat-messages .ai-response-content,
+.split-chat-messages .qc-summary,
+.split-chat-messages forge-ai-response-message {
   max-width: 100%;
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
 }
 
+/* Artifact card must not exceed the panel */
+.split-chat-messages forge-ai-artifact.query-card {
+  max-width: 100%;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* Truncate the artifact title in the toolbar */
+.split-chat-messages forge-ai-artifact.query-card .qc-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+}
+
+/* Meta row wraps and scales down */
 .split-chat-messages .qc-meta-row {
   flex-wrap: wrap;
+  font-size: 11px;
+  gap: 4px;
+}
+
+.split-chat-messages .qc-meta-dot {
+  display: none;
+}
+
+/* Tabs: allow scrolling if needed, smaller text */
+.split-chat-messages .qc-tab-bar {
+  --forge-tab-bar-clustered-justify-content: flex-start;
+  overflow-x: auto;
+}
+
+.split-chat-messages .qc-tab-bar forge-tab {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* Tab panels must clip */
+.split-chat-messages .qc-tab-panels {
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* Data table scrolls horizontally */
+.split-chat-messages .qc-data-table {
+  overflow-x: auto;
+  min-width: 0;
+}
+
+/* SQL code block wraps */
+.split-chat-messages .qc-sql-code {
+  overflow-x: auto;
+  word-break: break-all;
+}
+
+/* Actions row wraps */
+.split-chat-messages .qc-actions {
+  flex-wrap: wrap;
+}
+
+.split-chat-messages .qc-actions .qc-open-report-btn {
+  font-size: 13px;
+}
+
+/* Refinement chips scroll if needed */
+.split-chat-messages .qc-refinement-row {
+  overflow-x: auto;
+  min-width: 0;
+}
+
+/* Transparency section wraps properly */
+.split-chat-messages .qc-transparency-section {
+  overflow: hidden;
+  word-wrap: break-word;
+}
+
+.split-chat-messages .qc-info-row {
+  flex-wrap: wrap;
+}
+
+/* Report opened badge wraps */
+.split-chat-messages .report-opened-badge {
+  font-size: 12px;
 }
 
 /* ===== Collapsed Query Card ===== */

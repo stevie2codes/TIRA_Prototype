@@ -1,13 +1,116 @@
-.standard-report-card { background: #fff; border: 2px solid var(--forge-theme-primary, #3f51b5); border-radius: 8px; padding: 16px; margin-top: 8px; }
-.standard-report-card__badge-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-.standard-report-card__badge { background: var(--forge-theme-primary, #3f51b5); color: #fff; font-size: 10px; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; }
-.standard-report-card__domain { color: #666; font-size: 12px; }
-.standard-report-card__name { font-weight: 600; font-size: 16px; margin-bottom: 4px; color: #1a1a1a; }
-.standard-report-card__description { color: #666; font-size: 13px; margin-bottom: 12px; line-height: 1.4; }
-.standard-report-card__meta { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
-.standard-report-card__chip { font-size: 11px; padding: 3px 8px; border-radius: 12px; font-weight: 500; }
-.standard-report-card__chip--info { background: #e8eaf6; color: var(--forge-theme-primary, #3f51b5); }
-.standard-report-card__chip--fresh { background: #e8f5e9; color: #2e7d32; }
-.standard-report-card__open-btn { background: var(--forge-theme-primary, #3f51b5); color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-size: 14px; cursor: pointer; width: 100%; font-weight: 500; transition: background 0.15s; }
-.standard-report-card__open-btn:hover { background: #303f9f; }
-.standard-report-card__recommendation { font-size: 13px; color: #555; margin-bottom: 8px; padding: 8px 12px; background: #f5f5f5; border-radius: 6px; border-left: 3px solid var(--forge-theme-primary, #3f51b5); }
+/* Standard Report — Progressive Disclosure */
+
+.sr-disclosure {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+
+/* Toggle bar */
+.sr-disclosure__toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.7);
+  text-align: left;
+  transition: background 0.15s;
+}
+
+.sr-disclosure__toggle:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.sr-disclosure__icon {
+  --forge-icon-font-size: 18px;
+  color: var(--forge-theme-primary, #3f51b5);
+  flex-shrink: 0;
+}
+
+.sr-disclosure__label {
+  flex: 1;
+  font-weight: 500;
+  min-width: 0;
+}
+
+.sr-disclosure__badge {
+  background: rgba(63, 81, 181, 0.1);
+  color: var(--forge-theme-primary, #3f51b5);
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.sr-disclosure__arrow {
+  --forge-icon-font-size: 20px;
+  color: rgba(0, 0, 0, 0.4);
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+/* Expanded body — hidden by default */
+.sr-disclosure__body {
+  display: none;
+  padding: 0 12px 12px;
+}
+
+.sr-disclosure--open .sr-disclosure__arrow {
+  transform: rotate(180deg);
+}
+
+.sr-disclosure--open .sr-disclosure__body {
+  display: block;
+}
+
+/* Body content */
+.sr-disclosure__name {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 4px;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.sr-disclosure__description {
+  color: rgba(0, 0, 0, 0.6);
+  font-size: 12px;
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+
+.sr-disclosure__meta {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.sr-disclosure__chip {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 500;
+  background: rgba(0, 0, 0, 0.05);
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.sr-disclosure__chip--fresh {
+  background: rgba(76, 175, 80, 0.08);
+  color: #2e7d32;
+}
+
+.sr-disclosure__actions {
+  display: flex;
+  justify-content: flex-end;
+}

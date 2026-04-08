@@ -196,7 +196,6 @@ export function createHubChatPanel({ onExpand, onClose }) {
           <div class="query-card">
             <div class="qc-header">
               <div class="qc-header-left">
-                <div class="qc-icon"><forge-icon name="auto_awesome"></forge-icon></div>
                 <div class="qc-header-text">
                   <span class="qc-title">${suggestion.reportTitle}</span>
                   <div class="qc-meta-row">
@@ -204,12 +203,12 @@ export function createHubChatPanel({ onExpand, onClose }) {
                       <forge-icon name="database_outline"></forge-icon>
                       ${suggestion.dataSource}
                     </span>
-                    <span class="qc-meta-dot"></span>
+                    <span class="qc-meta-pipe">|</span>
                     <span class="qc-meta-item qc-freshness">
                       <span class="qc-freshness-dot"></span>
                       ${suggestion.freshness}
                     </span>
-                    <span class="qc-meta-dot"></span>
+                    <span class="qc-meta-pipe">|</span>
                     <span class="qc-meta-item">${totalRows} rows · ${totalCols} columns</span>
                   </div>
                 </div>
@@ -218,7 +217,6 @@ export function createHubChatPanel({ onExpand, onClose }) {
 
             ${miniTableHtml}
 
-            <div class="qc-section-header">Data Transparency</div>
             <div class="qc-disclosures">
               <div class="qc-disclosure" data-section="source">
                 <button class="qc-disclosure-toggle" type="button">

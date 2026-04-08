@@ -5,7 +5,7 @@ import './chat-flow.css';
 // Standard reports integration
 import { standardReports, getStandardReportById } from './standard-reports.js';
 import { matchStandardReports, getConfidenceTier } from './report-matcher.js';
-import { buildStandardReportCard, getDomainLabel } from './standard-report-card.js';
+import { buildStandardReportCard, getDomainLabel, wireSRDisclosure } from './standard-report-card.js';
 import { buildStandardReportPanel, wireStandardReportPanel } from './standard-report-viewer.js';
 import { getVisibleStandardReports } from './user-context.js';
 
@@ -138,30 +138,10 @@ export function openChatFlow(index, options = {}) {
           </forge-icon-button>
         </div>
       </div>
-      <div class="chat-body">
-        <div class="chat-container">
-          <div class="chat-messages-spacer"></div>
-          <div class="chat-messages" id="chat-messages"></div>
-        </div>
-      </div>
-      <div class="chat-footer">
-        <div class="prompt-area">
-          <div class="prompt-input-row">
-            <input type="text" placeholder="Ask a question..." />
-            <forge-icon-button aria-label="Send">
-              <forge-icon name="send"></forge-icon>
-            </forge-icon-button>
-          </div>
-          <div class="prompt-actions-row">
-            <forge-icon-button aria-label="Add attachment">
-              <forge-icon name="add"></forge-icon>
-            </forge-icon-button>
-            <forge-icon-button aria-label="Voice input">
-              <forge-icon name="mic"></forge-icon>
-            </forge-icon-button>
-          </div>
-        </div>
-      </div>
+      <forge-ai-chat-interface class="chat-interface">
+        <div class="chat-messages" id="chat-messages"></div>
+        <forge-ai-prompt slot="prompt" placeholder="Ask a question..."></forge-ai-prompt>
+      </forge-ai-chat-interface>
     </div>
   `;
 
@@ -196,6 +176,7 @@ function runConversation(container, suggestion, dialog, options = {}) {
       // Step 3: Show query card response
 
       // Check for standard report matches
+      let reportMatch = null;
       const queryText = suggestion?.query || '';
       if (queryText) {
         const visibleReports = getVisibleStandardReports(standardReports);
@@ -203,41 +184,42 @@ function runConversation(container, suggestion, dialog, options = {}) {
         if (matches.length > 0) {
           const topMatch = matches[0];
           const tier = getConfidenceTier(topMatch.confidence);
-          if (tier === 'high') {
-            const responseMsg = document.createElement('forge-ai-response-message');
-            responseMsg.innerHTML = buildStandardReportCard(topMatch.report, topMatch.confidence);
-            container.appendChild(responseMsg);
-            scrollToBottom(container);
-            const openBtn = responseMsg.querySelector('[data-action="open-standard-report"]');
-            if (openBtn) { openBtn.addEventListener('click', () => { openStandardReport(topMatch.report, dialog); }); }
-            return;
+          if (tier === 'high' || tier === 'medium') {
+            reportMatch = topMatch;
           }
-          if (tier === 'medium') { container._pendingReportRecommendation = topMatch; }
         }
       }
 
+      // Build response: summary + query card
       const responseMsg = document.createElement('forge-ai-response-message');
       const responseContent = document.createElement('div');
       responseContent.className = 'ai-response-content';
       responseContent.innerHTML = buildQueryCard(suggestion);
       responseMsg.appendChild(responseContent);
+
+      // Insert standard report match between summary and query card
+      if (reportMatch) {
+        const summaryEl = responseContent.querySelector('.qc-summary');
+        const artifactEl = responseContent.querySelector('forge-ai-artifact');
+        if (summaryEl && artifactEl) {
+          const reportMatchEl = document.createElement('div');
+          reportMatchEl.className = 'qc-report-match';
+          reportMatchEl.innerHTML = buildStandardReportCard(reportMatch.report, reportMatch.confidence);
+          summaryEl.insertAdjacentElement('afterend', reportMatchEl);
+          wireSRDisclosure(reportMatchEl);
+          const openBtn = reportMatchEl.querySelector('[data-action="open-standard-report"]');
+          if (openBtn) { openBtn.addEventListener('click', () => { openStandardReport(reportMatch.report, dialog); }); }
+        }
+      }
+
       container.appendChild(responseMsg);
       scrollToBottom(container);
 
-      // Wire query card interactions (disclosures, copy, chips)
+      // Wire query card interactions
       wireQueryCard(responseMsg, container, suggestion, dialog);
 
-      // Append standard report recommendation if medium confidence
-      if (container._pendingReportRecommendation) {
-        const match = container._pendingReportRecommendation;
-        delete container._pendingReportRecommendation;
-        const recMsg = document.createElement('forge-ai-response-message');
-        recMsg.innerHTML = buildStandardReportCard(match.report, match.confidence);
-        container.appendChild(recMsg);
-        scrollToBottom(container);
-        const openBtn = recMsg.querySelector('[data-action="open-standard-report"]');
-        if (openBtn) { openBtn.addEventListener('click', () => { openStandardReport(match.report, dialog); }); }
-      }
+      // Append suggestions as the last element in the thread
+      appendRefinementSuggestions(container, suggestion, dialog);
 
       // Step 4: Open Report click -> split view
       const openReportBtn = responseMsg.querySelector('#open-report-btn');
@@ -344,8 +326,6 @@ function buildQueryCard(suggestion) {
       ${markdownToHtml(suggestion.aiSummary)}
     </div>
 
-    ${buildRefinementChips(suggestion)}
-
     <forge-ai-artifact class="query-card" id="qc-artifact-${uid}">
       <span slot="start" class="qc-title">${suggestion.reportTitle}</span>
       <div slot="actions" class="qc-header-actions">
@@ -406,7 +386,7 @@ function buildQueryCard(suggestion) {
       <div class="qc-actions">
         <forge-button variant="raised" class="qc-open-report-btn" id="open-report-btn" type="button">
           <forge-icon slot="start" name="insert_chart"></forge-icon>
-          Explore Results In-Depth
+          Explore results
         </forge-button>
       </div>
     </forge-ai-artifact>
@@ -480,28 +460,25 @@ function wireQueryCard(responseMsg, container, suggestion, dialog) {
     });
   }
 
-  // --- Wire refinement chips ---
-  wireRefinementChips(responseMsg, container, suggestion, dialog);
 }
 
 
 /**
- * Builds refinement suggestion chips (§3.3)
+ * Appends refinement suggestion chips to the container (above the prompt input).
+ * Removes any previous suggestions first so only the latest set is visible.
  */
-function buildRefinementChips(suggestion) {
-  if (!suggestion.refinementChips || !suggestion.refinementChips.length) return '';
-  return `<div class="qc-refinement-row"><forge-ai-suggestions variant="inline" class="refinement-suggestions"></forge-ai-suggestions></div>`;
-}
+function appendRefinementSuggestions(container, suggestion, dialog) {
+  if (!suggestion.refinementChips || !suggestion.refinementChips.length) return;
 
+  // Remove any existing suggestions row
+  container.querySelector('.qc-refinement-row')?.remove();
 
-/**
- * Wires refinement chip click behavior
- */
-function wireRefinementChips(responseMsg, container, suggestion, dialog) {
-  const suggestionsEl = responseMsg.querySelector('.refinement-suggestions');
-  if (!suggestionsEl || !suggestion.refinementChips?.length) return;
+  const row = document.createElement('div');
+  row.className = 'qc-refinement-row';
+  row.innerHTML = '<forge-ai-suggestions variant="inline" class="refinement-suggestions"></forge-ai-suggestions>';
+  container.appendChild(row);
 
-  // Set suggestions data
+  const suggestionsEl = row.querySelector('.refinement-suggestions');
   suggestionsEl.suggestions = suggestion.refinementChips.map((label, i) => ({
     text: label,
     value: String(i),
@@ -509,13 +486,11 @@ function wireRefinementChips(responseMsg, container, suggestion, dialog) {
 
   suggestionsEl.addEventListener('forge-ai-suggestions-select', (e) => {
     const label = e.detail.text;
-
-    // Hide suggestions after selection
-    suggestionsEl.style.display = 'none';
-
-    // Simulate a refinement interaction
+    row.remove();
     simulateRefinement(container, label, suggestion, dialog);
   });
+
+  scrollToBottom(container);
 }
 
 /**
@@ -776,6 +751,9 @@ function simulateRefinement(container, chipLabel, suggestion, dialog) {
             transitionToSplitView(dialog, container, refinedSuggestion);
           });
         }
+
+        // Append suggestions after the card
+        appendRefinementSuggestions(container, refinedSuggestion, dialog);
 
       } else if (tier === 'text') {
         // --- Conversational text response ---
@@ -1113,7 +1091,13 @@ export function openLibraryView() {
 
 
 function scrollToBottom(el) {
-  const scrollParent = el.closest('.chat-container') || el.closest('.split-chat-panel') || el.closest('.split-chat-messages');
+  // forge-ai-chat-interface has its own scrollToBottom() method
+  const chatInterface = el.closest('forge-ai-chat-interface');
+  if (chatInterface) {
+    requestAnimationFrame(() => chatInterface.scrollToBottom());
+    return;
+  }
+  const scrollParent = el.closest('.split-chat-panel') || el.closest('.split-chat-messages');
   if (scrollParent) {
     requestAnimationFrame(() => {
       scrollParent.scrollTop = scrollParent.scrollHeight;
@@ -1124,14 +1108,13 @@ function scrollToBottom(el) {
 /**
  * Collapses the split view back to full-width chat.
  */
-function collapseToFullChat(dialog, splitChatContainer, splitFooter) {
+function collapseToFullChat(dialog, splitChatContainer) {
   const content = dialog.querySelector('.chat-dialog-content');
   const customSplit = content.querySelector('.custom-split-container');
   if (!customSplit) return;
 
-  // Grab existing messages and footer from split panel
+  // Grab existing messages from split panel
   const existingMessages = splitChatContainer.querySelector('#chat-messages');
-  const existingFooter = splitFooter;
 
   // Remove the split container
   customSplit.remove();
@@ -1157,29 +1140,20 @@ function collapseToFullChat(dialog, splitChatContainer, splitFooter) {
   `;
   content.appendChild(chatHeader);
 
-  // Rebuild chat body with spacer + messages
-  const chatBody = document.createElement('div');
-  chatBody.className = 'chat-body';
-
-  const chatContainer = document.createElement('div');
-  chatContainer.className = 'chat-container';
-
-  const spacer = document.createElement('div');
-  spacer.className = 'chat-messages-spacer';
-  chatContainer.appendChild(spacer);
+  // Rebuild using forge-ai-chat-interface
+  const chatInterface = document.createElement('forge-ai-chat-interface');
+  chatInterface.className = 'chat-interface';
 
   if (existingMessages) {
-    chatContainer.appendChild(existingMessages);
+    chatInterface.appendChild(existingMessages);
   }
 
-  chatBody.appendChild(chatContainer);
-  content.appendChild(chatBody);
+  const prompt = document.createElement('forge-ai-prompt');
+  prompt.slot = 'prompt';
+  prompt.placeholder = 'Ask a question...';
+  chatInterface.appendChild(prompt);
 
-  // Re-add footer
-  if (existingFooter) {
-    existingFooter.classList.remove('split-chat-footer');
-    content.appendChild(existingFooter);
-  }
+  content.appendChild(chatInterface);
 
   // Wire close button
   const closeBtn = chatHeader.querySelector('.close-chat-btn');
@@ -1194,7 +1168,7 @@ function collapseToFullChat(dialog, splitChatContainer, splitFooter) {
 
   // Scroll to bottom
   requestAnimationFrame(() => {
-    chatContainer.scrollTop = chatContainer.scrollHeight;
+    chatInterface.scrollToBottom();
   });
 }
 
@@ -1204,19 +1178,18 @@ function collapseToFullChat(dialog, splitChatContainer, splitFooter) {
 function transitionToSplitView(dialog, chatMessages, suggestion) {
   const content = dialog.querySelector('.chat-dialog-content');
   const chatHeader = content.querySelector('.chat-header');
-  const chatBody = content.querySelector('.chat-body');
-  const chatFooter = content.querySelector('.chat-footer');
+  const chatInterface = content.querySelector('forge-ai-chat-interface');
 
   // Get references to messages BEFORE removing anything
-  const existingMessages = chatBody.querySelector('#chat-messages');
+  const existingMessages = content.querySelector('#chat-messages');
 
-  // Fade out chat body before removing
-  chatBody.classList.add('fade-out');
+  // Fade out chat interface before removing
+  if (chatInterface) chatInterface.classList.add('fade-out');
 
   // Wait for fade out animation, then build split view
   setTimeout(() => {
     chatHeader.remove();
-    chatBody.remove();
+    if (chatInterface) chatInterface.remove();
     buildSplitView();
   }, 200);
 
@@ -1265,11 +1238,11 @@ function transitionToSplitView(dialog, chatMessages, suggestion) {
   }
   splitChatContainer.appendChild(chatMessagesContainer);
 
-  // Move footer (prompt input) into left panel
-  if (chatFooter) {
-    chatFooter.classList.add('split-chat-footer');
-    splitChatContainer.appendChild(chatFooter);
-  }
+  // Add prompt to left panel
+  const splitPrompt = document.createElement('forge-ai-prompt');
+  splitPrompt.placeholder = 'Ask a question...';
+  splitPrompt.className = 'split-chat-prompt';
+  splitChatContainer.appendChild(splitPrompt);
 
   leftPanel.appendChild(splitChatContainer);
 
@@ -1298,7 +1271,7 @@ function transitionToSplitView(dialog, chatMessages, suggestion) {
   const closeCanvasBtn = reportPanel.querySelector('.close-canvas-btn');
   if (closeCanvasBtn) {
     closeCanvasBtn.addEventListener('click', () => {
-      collapseToFullChat(dialog, splitChatContainer, chatFooter);
+      collapseToFullChat(dialog, splitChatContainer);
     });
   }
 
@@ -1628,7 +1601,7 @@ function applyTemplate(panel, template, suggestion) {
 function openStandardReport(report, dialog) {
   const content = dialog.querySelector('.chat-dialog-content');
   if (!content) return;
-  const existingElements = content.querySelectorAll('.chat-header, .chat-body, .chat-footer');
+  const existingElements = content.querySelectorAll('.chat-header, .chat-body, .chat-footer, forge-ai-chat-interface');
   existingElements.forEach(el => { el.style.transition = 'opacity 0.3s'; el.style.opacity = '0'; });
 
   setTimeout(() => {
@@ -1804,14 +1777,11 @@ export function openStandardReportInChat(reportId) {
           <forge-icon-button aria-label="Close" id="chat-close-btn"><forge-icon name="close"></forge-icon></forge-icon-button>
         </div>
       </div>
-      <div class="chat-body">
-        <div class="chat-container">
-          <div class="chat-messages-spacer"></div>
-          <div class="chat-messages" id="chat-messages">
-            <forge-ai-response-message><div style="font-size:14px;color:#555;">Opened standard report: <strong>${report.name}</strong></div></forge-ai-response-message>
-          </div>
+      <forge-ai-chat-interface class="chat-interface">
+        <div class="chat-messages" id="chat-messages">
+          <forge-ai-response-message><div style="font-size:14px;color:#555;">Opened standard report: <strong>${report.name}</strong></div></forge-ai-response-message>
         </div>
-      </div>
+      </forge-ai-chat-interface>
     </div>`;
   dialog.open = true;
   dialog.querySelector('#chat-close-btn').addEventListener('click', () => { dialog.open = false; });
