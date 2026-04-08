@@ -129,11 +129,11 @@ export function openChatFlow(index, options = {}) {
         </div>
         <span class="chat-header-title">Report Assistant</span>
         <div class="chat-header-actions">
-          <forge-icon-button aria-label="More options">
-            <forge-icon name="more_vert"></forge-icon>
+          <forge-icon-button aria-label="Minimize" id="chat-minimize-btn">
+            <forge-icon name="remove"></forge-icon>
           </forge-icon-button>
-          <forge-icon-button aria-label="Close" id="chat-close-btn">
-            <forge-icon name="close"></forge-icon>
+          <forge-icon-button aria-label="Expand" id="chat-expand-btn">
+            <forge-icon name="fullscreen"></forge-icon>
           </forge-icon-button>
         </div>
       </div>
@@ -146,9 +146,24 @@ export function openChatFlow(index, options = {}) {
 
   dialog.open = true;
 
-  // Close handler
-  dialog.querySelector('#chat-close-btn').addEventListener('click', () => {
+  // Minimize — close dialog back to homepage
+  dialog.querySelector('#chat-minimize-btn').addEventListener('click', () => {
     dialog.open = false;
+  });
+
+  // Expand/Collapse — toggle fullscreen
+  const expandBtn = dialog.querySelector('#chat-expand-btn');
+  expandBtn.addEventListener('click', () => {
+    const isFullscreen = dialog.hasAttribute('fullscreen');
+    if (isFullscreen) {
+      dialog.removeAttribute('fullscreen');
+      expandBtn.querySelector('forge-icon').name = 'fullscreen';
+      expandBtn.setAttribute('aria-label', 'Expand');
+    } else {
+      dialog.setAttribute('fullscreen', '');
+      expandBtn.querySelector('forge-icon').name = 'fullscreen_exit';
+      expandBtn.setAttribute('aria-label', 'Collapse');
+    }
   });
 
   // Start conversation sequence
