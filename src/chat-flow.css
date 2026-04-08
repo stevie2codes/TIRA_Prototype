@@ -2089,16 +2089,12 @@ forge-ai-response-message::part(content) {
   background: #354499;
 }
 
-/* ===== Query Card (progressive disclosure response) ===== */
+/* ===== Query Card — Artifact Shell ===== */
 
-forge-card.query-card {
-  --forge-card-padding: 0;
-  --forge-card-shape: 12px;
-  --forge-card-raised-elevation: 0 1px 6px rgba(0, 0, 0, 0.06);
-  --forge-card-overflow: hidden;
-  display: block;
-  animation: qcSlideIn 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+forge-ai-artifact.query-card {
   max-width: 720px;
+  margin-top: 8px;
+  animation: qcSlideIn 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @keyframes qcSlideIn {
@@ -2106,59 +2102,42 @@ forge-card.query-card {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Card header */
-.qc-header {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 16px 20px 12px;
-  background: linear-gradient(135deg, #f8f9ff 0%, #f0f1fa 100%);
-  border-bottom: 1px solid #ecedf5;
+/* Suppress nested artifact border inside data-table */
+forge-ai-artifact.query-card .qc-data-table {
+  border: none;
+  box-shadow: none;
 }
 
-.qc-header-left {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  flex: 1;
+/* Title in artifact toolbar */
+forge-ai-artifact.query-card .qc-title {
+  font-weight: 600;
+  font-size: 16px;
+  color: rgba(0, 0, 0, 0.87);
 }
 
-.qc-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #3f51b5, #5c6bc0);
+/* Header actions (copy button) */
+forge-ai-artifact.query-card .qc-header-actions {
   display: flex;
   align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  margin-top: 1px;
 }
 
-.qc-icon forge-icon {
-  --forge-icon-font-size: 18px;
-  color: #fff;
+forge-ai-artifact.query-card .qc-header-actions forge-icon-button {
+  --forge-icon-button-color: rgba(0, 0, 0, 0.4);
 }
 
-.qc-header-text {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
+forge-ai-artifact.query-card .qc-header-actions forge-icon-button:hover {
+  --forge-icon-button-color: rgba(0, 0, 0, 0.7);
 }
 
-.qc-title {
-  font-family: 'Roboto', sans-serif;
-  font-weight: 600;
-  font-size: 15px;
-  color: rgba(0, 0, 0, 0.87);
-  line-height: 1.3;
-}
+/* ===== Metadata Row ===== */
 
 .qc-meta-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  padding: 0 0 12px 0;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.54);
   flex-wrap: wrap;
 }
 
@@ -2166,21 +2145,18 @@ forge-card.query-card {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-family: 'Roboto', sans-serif;
-  font-size: 12px;
-  color: rgba(0, 0, 0, 0.5);
 }
 
 .qc-meta-item forge-icon {
   --forge-icon-font-size: 14px;
-  color: rgba(0, 0, 0, 0.35);
+  color: rgba(0, 0, 0, 0.4);
 }
 
 .qc-meta-dot {
   width: 3px;
   height: 3px;
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.3);
   flex-shrink: 0;
 }
 
@@ -2198,336 +2174,219 @@ forge-card.query-card {
   flex-shrink: 0;
 }
 
-/* Summary text - positioned above card */
-.qc-summary {
-  padding: 0 0 16px 0;
-  font-family: 'Roboto', sans-serif;
-  font-size: 14px;
-  line-height: 1.6;
-  color: rgba(0, 0, 0, 0.8);
-  max-width: 800px;
-}
+/* ===== Tab Bar ===== */
 
-/* Section headers within card */
-.qc-section-header {
-  font-family: 'Roboto', sans-serif;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  color: rgba(0, 0, 0, 0.5);
-  padding: 16px 20px 8px;
-  border-top: 1px solid #f0f0f0;
-}
-
-/* First section header (Results Preview) - no top border */
-.qc-header + .qc-section-header {
-  border-top: none;
-  padding-top: 12px;
-}
-
-.qc-summary p {
-  margin: 0 0 10px 0;
-}
-
-.qc-summary p:last-child {
+.qc-tab-bar {
+  --forge-tab-bar-divider-color: rgba(0, 0, 0, 0.08);
   margin-bottom: 0;
 }
 
-.qc-summary ul {
-  margin: 6px 0 10px 0;
-  padding-left: 20px;
+/* ===== Tab Panels ===== */
+
+.qc-tab-panels {
+  min-height: 80px;
 }
 
-.qc-summary li {
-  margin-bottom: 4px;
+.qc-tab-panel {
+  display: none;
 }
 
-.qc-summary strong {
-  font-weight: 500;
-  color: rgba(0, 0, 0, 0.87);
+.qc-tab-panel--active {
+  display: block;
 }
 
-/* Mini data preview table */
-.qc-data-preview {
-  margin: 0 20px 4px;
-  border: 1px solid #e8e8e8;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.qc-mini-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-family: 'Roboto', sans-serif;
-  font-size: 12px;
-}
-
-.qc-mini-table thead {
-  background: #f5f6fa;
-}
-
-.qc-mini-table th {
-  padding: 8px 12px;
-  text-align: left;
-  font-weight: 600;
-  font-size: 11px;
-  letter-spacing: 0.3px;
-  color: rgba(0, 0, 0, 0.54);
-  text-transform: uppercase;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.qc-mini-table td {
-  padding: 7px 12px;
-  color: rgba(0, 0, 0, 0.75);
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.qc-mini-table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.qc-mini-table tbody tr:hover {
-  background: #fafbff;
-}
+/* ===== Data Preview Tab ===== */
 
 .qc-preview-more {
-  padding: 8px 12px;
-  font-family: 'Roboto', sans-serif;
-  font-size: 12px;
-  color: rgba(0, 0, 0, 0.4);
-  background: #fafafa;
-  border-top: 1px solid #f0f0f0;
-}
-
-/* Collapsible Data Transparency wrapper */
-.qc-transparency-wrapper {
-  border-top: 1px solid #f0f0f0;
-}
-
-.qc-transparency-trigger {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  padding: 12px 20px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  font-family: 'Roboto', sans-serif;
+  padding: 10px 16px;
   font-size: 13px;
-  font-weight: 600;
-  color: rgba(0, 0, 0, 0.7);
-  text-align: left;
-  letter-spacing: 0.3px;
-  text-transform: uppercase;
-  transition: background 0.15s ease;
-}
-
-.qc-transparency-trigger:hover {
-  background: #f5f6fa;
-}
-
-.qc-transparency-trigger > forge-icon:first-child {
-  --forge-icon-font-size: 18px;
-  color: #3f51b5;
-}
-
-.qc-transparency-label {
-  font-size: 12px;
-}
-
-.qc-transparency-badge {
-  --forge-badge-background: #e8eaf6;
-  --forge-badge-color: #3f51b5;
-  --forge-badge-shape: 10px;
-  --forge-badge-padding: 2px 8px;
-  font-size: 11px;
+  color: var(--forge-theme-primary, #3f51b5);
+  cursor: pointer;
   font-weight: 500;
 }
 
-.qc-transparency-trigger forge-open-icon {
-  --forge-open-icon-size: 20px;
-  --forge-open-icon-color: rgba(0, 0, 0, 0.4);
-  margin-left: auto;
+.qc-preview-more:hover {
+  text-decoration: underline;
 }
 
-/* Disclosure sections inside the transparency panel */
-.qc-disclosures {
-  margin: 0 20px 16px;
-  border: 1px solid #e8e8e8;
-  border-radius: 8px;
-  overflow: hidden;
+/* ===== SQL Query Tab ===== */
+
+.qc-sql-panel {
+  padding: 12px 0;
 }
 
-.qc-disclosure {
-  border-bottom: 1px solid #f0f0f0;
+.qc-sql-code {
+  background: #f5f5f5;
+  border-radius: 6px;
+  padding: 12px 16px;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-x: auto;
+  margin: 0 0 12px 0;
+  border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
-.qc-disclosure:last-child {
-  border-bottom: none;
+.qc-sql-code code {
+  font-family: 'Roboto Mono', monospace;
+  white-space: pre;
 }
 
-.qc-disclosure-toggle {
+.qc-sql-actions {
   display: flex;
-  align-items: center;
   gap: 8px;
-  width: 100%;
-  padding: 10px 14px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  font-family: 'Roboto', sans-serif;
-  font-size: 13px;
-  font-weight: 500;
-  color: rgba(0, 0, 0, 0.7);
-  text-align: left;
-  transition: background 0.15s ease;
 }
 
-.qc-disclosure-toggle:hover {
-  background: #f8f9ff;
+/* ===== Transparency Tab (Consolidated) ===== */
+
+.qc-transparency-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 12px 0;
 }
 
-.qc-disclosure-toggle forge-icon {
-  --forge-icon-font-size: 16px;
+.qc-transparency-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.qc-transparency-group-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: rgba(0, 0, 0, 0.5);
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.qc-transparency-group-title forge-icon {
+  --forge-icon-font-size: 14px;
   color: rgba(0, 0, 0, 0.4);
-  flex-shrink: 0;
 }
 
-.qc-disclosure-detail {
-  flex: 1;
-  text-align: right;
-  font-weight: 400;
-  font-size: 12px;
-  color: rgba(0, 0, 0, 0.38);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.qc-disclosure-arrow {
-  --forge-open-icon-size: 18px;
-  --forge-open-icon-color: rgba(0, 0, 0, 0.35);
-}
-
-.qc-disclosure-content {
-  padding: 10px 14px 14px;
-  border-top: 1px solid #f0f0f0;
-}
-
-/* Info rows inside disclosures */
 .qc-info-row {
   display: flex;
-  align-items: baseline;
-  gap: 12px;
+  justify-content: space-between;
   padding: 4px 0;
+  font-size: 13px;
 }
 
 .qc-info-label {
-  font-family: 'Roboto', sans-serif;
-  font-size: 12px;
-  font-weight: 500;
   color: rgba(0, 0, 0, 0.5);
-  min-width: 100px;
-  flex-shrink: 0;
+  font-weight: 500;
 }
 
 .qc-info-value {
-  font-family: 'Roboto', sans-serif;
+  color: rgba(0, 0, 0, 0.87);
+  text-align: right;
+}
+
+.qc-assumptions-list {
+  margin: 0;
+  padding-left: 20px;
   font-size: 13px;
-  color: rgba(0, 0, 0, 0.8);
+  color: rgba(0, 0, 0, 0.7);
+  line-height: 1.6;
 }
 
-/* Card actions */
-.qc-actions {
-  padding: 12px 20px 16px;
-  border-top: 1px solid #f0f0f0;
-}
-
-.qc-actions .refinement-chips-row {
-  margin-top: 4px;
-  margin-bottom: 12px;
-}
-
-.qc-actions-row {
+.qc-citation-item {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: 13px;
+}
+
+.qc-citation-label {
+  color: rgba(0, 0, 0, 0.87);
+  font-weight: 500;
+}
+
+.qc-citation-detail {
+  color: rgba(0, 0, 0, 0.5);
+  text-align: right;
+}
+
+/* ===== Actions Row ===== */
+
+.qc-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 12px;
 }
 
 forge-button.qc-open-report-btn {
-  --forge-button-primary-color: #3f51b5;
-  --forge-button-raised-shadow: 0 1px 4px rgba(63, 81, 181, 0.25);
-  --forge-button-raised-hover-shadow: 0 2px 8px rgba(63, 81, 181, 0.3);
+  --forge-button-primary-color: var(--forge-theme-primary, #3f51b5);
 }
 
-forge-button.qc-secondary-btn {
-  --forge-button-primary-color: rgba(0, 0, 0, 0.6);
-  --forge-button-outlined-border-color: #e0e0e0;
+/* ===== Summary (above card) ===== */
+
+.qc-summary {
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(0, 0, 0, 0.8);
+  margin-bottom: 12px;
 }
 
-/* Query card in split view — narrower */
-.split-chat-messages forge-card.query-card {
+.qc-summary p { margin: 0 0 8px; }
+.qc-summary p:last-child { margin-bottom: 0; }
+.qc-summary ul { margin: 8px 0; padding-left: 20px; }
+.qc-summary li { margin-bottom: 4px; }
+.qc-summary strong { color: rgba(0, 0, 0, 0.87); }
+
+/* ===== Refinement Row ===== */
+
+.qc-refinement-row {
+  margin-bottom: 12px;
+}
+
+/* ===== Split View Overrides ===== */
+
+.split-chat-messages forge-ai-artifact.query-card {
   max-width: 100%;
 }
 
 .split-chat-messages .qc-meta-row {
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-}
-
-.split-chat-messages .qc-meta-dot {
-  display: none;
+  flex-wrap: wrap;
 }
 
 /* ===== Collapsed Query Card ===== */
 
-forge-card.query-card.qc-collapsed {
-  max-height: 44px;
+forge-ai-artifact.query-card.qc-collapsed {
+  max-height: 48px;
   overflow: hidden;
-  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
   opacity: 0.7;
-  --forge-card-raised-elevation: none;
+  transition: opacity 0.2s;
 }
 
-forge-card.query-card.qc-collapsed:hover {
-  opacity: 0.9;
-}
-
-forge-card.query-card.qc-collapsed .qc-header,
-forge-card.query-card.qc-collapsed .qc-data-preview,
-forge-card.query-card.qc-collapsed .qc-transparency-wrapper,
-forge-card.query-card.qc-collapsed .qc-actions {
-  display: none;
+forge-ai-artifact.query-card.qc-collapsed:hover {
+  opacity: 1;
 }
 
 .qc-collapsed-bar {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 16px;
+  gap: 8px;
+  padding: 12px 16px;
   cursor: pointer;
-  transition: background 0.15s ease;
-  border-radius: 12px;
 }
 
-.qc-collapsed-bar:hover {
-  background: #f5f6fa;
-}
-
-.qc-collapsed-bar forge-icon:first-child {
-  --forge-icon-font-size: 16px;
-  color: #3f51b5;
+.qc-collapsed-accent {
+  width: 3px;
+  height: 20px;
+  border-radius: 2px;
+  background: var(--forge-theme-primary, #3f51b5);
   flex-shrink: 0;
 }
 
 .qc-collapsed-title {
-  font-family: 'Roboto', sans-serif;
+  font-weight: 600;
   font-size: 13px;
-  font-weight: 500;
   color: rgba(0, 0, 0, 0.7);
   white-space: nowrap;
   overflow: hidden;
@@ -2535,25 +2394,22 @@ forge-card.query-card.qc-collapsed .qc-actions {
 }
 
 .qc-collapsed-meta {
-  flex: 1;
-  font-family: 'Roboto', sans-serif;
-  font-size: 12px;
-  color: rgba(0, 0, 0, 0.35);
+  font-size: 11px;
+  color: rgba(0, 0, 0, 0.4);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-align: right;
+  margin-left: auto;
 }
 
 .qc-collapsed-expand {
-  --forge-icon-font-size: 18px !important;
+  --forge-icon-font-size: 18px;
   color: rgba(0, 0, 0, 0.3);
   flex-shrink: 0;
-  transition: transform 0.2s ease;
 }
 
 .qc-collapsed-bar:hover .qc-collapsed-expand {
-  color: #3f51b5;
+  color: var(--forge-theme-primary, #3f51b5);
 }
 
 /* ===== Output Template Picker ===== */
