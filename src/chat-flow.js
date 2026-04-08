@@ -112,7 +112,6 @@ export function openChatFlow(index, options = {}) {
     dialog = document.createElement('forge-dialog');
     dialog.id = 'chat-dialog';
     dialog.className = 'chat-dialog';
-    dialog.setAttribute('fullscreen', '');
     dialog.setAttribute('mode', 'modal');
     dialog.setAttribute('persistent', '');
     dialog.setAttribute('animation-type', 'fade');
@@ -385,7 +384,7 @@ function buildQueryCard(suggestion) {
 
       <div class="qc-actions">
         <forge-button variant="raised" class="qc-open-report-btn" id="open-report-btn" type="button">
-          <forge-icon slot="start" name="insert_chart"></forge-icon>
+          <forge-icon slot="start" name="open_in_new"></forge-icon>
           Explore results
         </forge-button>
       </div>
@@ -973,7 +972,6 @@ export function openLibraryView() {
       dialog = document.createElement('forge-dialog');
       dialog.id = 'chat-dialog';
       dialog.className = 'chat-dialog';
-      dialog.setAttribute('fullscreen', '');
       dialog.setAttribute('mode', 'modal');
       dialog.setAttribute('persistent', '');
       dialog.setAttribute('animation-type', 'fade');
@@ -1761,7 +1759,6 @@ export function openStandardReportInChat(reportId) {
     dialog = document.createElement('forge-dialog');
     dialog.id = 'chat-dialog';
     dialog.className = 'chat-dialog';
-    dialog.setAttribute('fullscreen', '');
     dialog.setAttribute('mode', 'modal');
     dialog.setAttribute('persistent', '');
     dialog.setAttribute('animation-type', 'fade');
