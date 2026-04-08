@@ -1253,11 +1253,32 @@ function transitionToSplitView(dialog, chatMessages, suggestion) {
     </div>
     <span class="chat-header-title">Report Assistant</span>
     <div class="chat-header-actions">
-      <forge-icon-button aria-label="More options">
-        <forge-icon name="more_vert"></forge-icon>
+      <forge-icon-button aria-label="Minimize" id="chat-minimize-btn">
+        <forge-icon name="remove"></forge-icon>
+      </forge-icon-button>
+      <forge-icon-button aria-label="Collapse" id="chat-expand-btn">
+        <forge-icon name="fullscreen_exit"></forge-icon>
       </forge-icon-button>
     </div>
   `;
+
+  // Wire split-view header buttons
+  leftHeader.querySelector('#chat-minimize-btn').addEventListener('click', () => {
+    dialog.open = false;
+  });
+  leftHeader.querySelector('#chat-expand-btn').addEventListener('click', () => {
+    const isFullscreen = dialog.hasAttribute('fullscreen');
+    if (isFullscreen) {
+      dialog.removeAttribute('fullscreen');
+      leftHeader.querySelector('#chat-expand-btn forge-icon').name = 'fullscreen';
+      leftHeader.querySelector('#chat-expand-btn').setAttribute('aria-label', 'Expand');
+    } else {
+      dialog.setAttribute('fullscreen', '');
+      leftHeader.querySelector('#chat-expand-btn forge-icon').name = 'fullscreen_exit';
+      leftHeader.querySelector('#chat-expand-btn').setAttribute('aria-label', 'Collapse');
+    }
+  });
+
   splitChatContainer.appendChild(leftHeader);
 
   // Move existing chat messages into left panel
