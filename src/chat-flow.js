@@ -645,17 +645,10 @@ function collapseQueryCard(card) {
   if (!card || card.classList.contains('qc-collapsed')) return;
   card.classList.add('qc-collapsed');
 
-  // Close any open Forge expansion panels
-  card.querySelectorAll('forge-expansion-panel[open]').forEach(panel => {
-    panel.open = false;
-  });
-
-  // Store original title for the collapsed header
   const title = card.querySelector('.qc-title')?.textContent || 'Previous result';
   const meta = card.querySelector('.qc-meta-row');
   const metaText = meta ? meta.textContent.trim().replace(/\s+/g, ' ') : '';
 
-  // Build collapsed overlay — clicking expands it back
   const collapsed = document.createElement('div');
   collapsed.className = 'qc-collapsed-bar';
   collapsed.innerHTML = `
@@ -867,7 +860,7 @@ function simulateRefinement(container, chipLabel, suggestion, dialog) {
 
   // Collapse previous query card(s)
   if (tier === 'card') {
-    container.querySelectorAll('.query-card:not(.qc-collapsed)').forEach(card => {
+    container.querySelectorAll('forge-ai-artifact.query-card:not(.qc-collapsed)').forEach(card => {
       collapseQueryCard(card);
     });
   }
