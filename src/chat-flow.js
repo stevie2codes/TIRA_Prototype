@@ -281,8 +281,8 @@ function runConversation(container, suggestion, dialog, options = {}) {
 let qcIdCounter = 0;
 
 /**
- * Builds the Query Card HTML — a compact, progressive-disclosure response card
- * using Forge components (forge-card, forge-expansion-panel, forge-open-icon, forge-button).
+ * Builds the Query Card HTML — an artifact-based response card
+ * using forge-ai-artifact + forge-tab-bar for tabbed content display.
  */
 function buildQueryCard(suggestion) {
   const uid = ++qcIdCounter;
@@ -290,189 +290,126 @@ function buildQueryCard(suggestion) {
   const totalRows = suggestion.data ? suggestion.data.length : 0;
   const totalCols = suggestion.columns ? suggestion.columns.length : 0;
 
-  // Count transparency items for the badge
-  let transparencyCount = 0;
+  // Build transparency content (consolidated: Data Source + Assumptions + Citations)
+  let transparencyHtml = '';
   if (t) {
-    transparencyCount = 1 + 1 + (t.assumptions.length > 0 ? 1 : 0) + (t.citations.length > 0 ? 1 : 0);
-  }
+    const assumptionsList = t.assumptions.map(a => `<li>${a}</li>`).join('');
+    const citationsList = t.citations.map(c =>
+      `<div class="qc-citation-item">
+        <span class="qc-citation-label">${c.label}</span>
+        <span class="qc-citation-detail">${c.detail}</span>
+      </div>`
+    ).join('');
 
-  // Mini data preview — first 3 rows as a compact table
-  let miniTableHtml = '';
-  if (suggestion.columns && suggestion.data && suggestion.data.length > 0) {
-    const previewRows = suggestion.data.slice(0, 3);
-    const previewCols = suggestion.columns.slice(0, 4);
-    const headerCells = previewCols.map(c => `<th>${c.header}</th>`).join('');
-    const bodyRows = previewRows.map(row => {
-      const cells = previewCols.map(c => `<td>${row[c.property] ?? ''}</td>`).join('');
-      return `<tr>${cells}</tr>`;
-    }).join('');
-    const moreNote = suggestion.data.length > 3
-      ? `<div class="qc-preview-more">${suggestion.data.length - 3} more rows · ${suggestion.columns.length > 4 ? (suggestion.columns.length - 4) + ' more columns · ' : ''}Explore full results</div>`
-      : '';
-    miniTableHtml = `
-      <div class="qc-section-header">Results Preview</div>
-      <div class="qc-data-preview">
-        <table class="qc-mini-table">
-          <thead><tr>${headerCells}</tr></thead>
-          <tbody>${bodyRows}</tbody>
-        </table>
-        ${moreNote}
+    transparencyHtml = `
+      <div class="qc-transparency-section">
+        <div class="qc-transparency-group">
+          <div class="qc-transparency-group-title">
+            <forge-icon name="database_outline"></forge-icon>
+            Data Source
+          </div>
+          <div class="qc-info-row"><span class="qc-info-label">Source</span><span class="qc-info-value">${t.dataSourceDetail}</span></div>
+          <div class="qc-info-row"><span class="qc-info-label">System</span><span class="qc-info-value">${t.system}</span></div>
+          <div class="qc-info-row"><span class="qc-info-label">Total Records</span><span class="qc-info-value">${t.totalRecords}</span></div>
+          <div class="qc-info-row"><span class="qc-info-label">Last Updated</span><span class="qc-info-value">${t.lastUpdated}</span></div>
+        </div>
+        ${t.assumptions.length ? `
+        <div class="qc-transparency-group">
+          <div class="qc-transparency-group-title">
+            <forge-icon name="info_outline"></forge-icon>
+            Assumptions (${t.assumptions.length})
+          </div>
+          <ul class="qc-assumptions-list">${assumptionsList}</ul>
+        </div>` : ''}
+        ${t.citations.length ? `
+        <div class="qc-transparency-group">
+          <div class="qc-transparency-group-title">
+            <forge-icon name="link"></forge-icon>
+            Data Citations (${t.citations.length})
+          </div>
+          ${citationsList}
+        </div>` : ''}
       </div>
     `;
   }
 
-  // Disclosure sections
-  const assumptionsList = t ? t.assumptions.map(a => `<li>${a}</li>`).join('') : '';
-  const citationsList = t ? t.citations.map(c =>
-    `<div class="citation-item">
-      <span class="citation-label">${c.label}</span>
-      <span class="citation-detail">${c.detail}</span>
-    </div>`
-  ).join('') : '';
+  // Preview columns/rows for the "more" link
+  const previewCols = 4;
+  const previewRows = 3;
+  const moreCols = totalCols > previewCols ? totalCols - previewCols : 0;
+  const moreRows = totalRows > previewRows ? totalRows - previewRows : 0;
 
   return `
     <div class="qc-summary">
       ${markdownToHtml(suggestion.aiSummary)}
     </div>
 
-    <forge-card class="query-card" raised>
-      <div class="qc-header">
-        <div class="qc-header-left">
-          <div class="qc-icon">
-            <forge-icon name="auto_awesome"></forge-icon>
-          </div>
-          <div class="qc-header-text">
-            <span class="qc-title">${suggestion.reportTitle}</span>
-            <div class="qc-meta-row">
-              <span class="qc-meta-item">
-                <forge-icon name="database_outline"></forge-icon>
-                ${suggestion.dataSource}
-              </span>
-              <span class="qc-meta-dot"></span>
-              <span class="qc-meta-item qc-freshness">
-                <span class="qc-freshness-dot"></span>
-                ${suggestion.freshness}
-              </span>
-              <span class="qc-meta-dot"></span>
-              <span class="qc-meta-item">${totalRows} rows · ${totalCols} columns</span>
+    ${buildRefinementChips(suggestion)}
+
+    <forge-ai-artifact class="query-card" id="qc-artifact-${uid}">
+      <span slot="start" class="qc-title">${suggestion.reportTitle}</span>
+      <div slot="actions" class="qc-header-actions">
+        <forge-icon-button density="small" class="copy-summary-btn" type="button" aria-label="Copy summary">
+          <forge-icon name="content_copy"></forge-icon>
+        </forge-icon-button>
+      </div>
+
+      <div class="qc-meta-row">
+        <span class="qc-meta-item">
+          <forge-icon name="database_outline"></forge-icon>
+          ${suggestion.dataSource}
+        </span>
+        <span class="qc-meta-dot"></span>
+        <span class="qc-meta-item qc-freshness">
+          <span class="qc-freshness-dot"></span>
+          ${suggestion.freshness}
+        </span>
+        <span class="qc-meta-dot"></span>
+        <span class="qc-meta-item">${totalRows} rows · ${totalCols} columns</span>
+      </div>
+
+      <forge-tab-bar class="qc-tab-bar" active-tab="0" clustered>
+        <forge-tab>Data Preview</forge-tab>
+        <forge-tab>SQL Query</forge-tab>
+        <forge-tab>Transparency details</forge-tab>
+      </forge-tab-bar>
+
+      <div class="qc-tab-panels">
+        <!-- Data Preview tab -->
+        <div class="qc-tab-panel qc-tab-panel--active" data-tab="0">
+          <forge-ai-tool-data-table class="qc-data-table"></forge-ai-tool-data-table>
+          ${moreRows > 0 || moreCols > 0 ? `
+          <div class="qc-preview-more">
+            ${moreRows > 0 ? `${moreRows} more rows` : ''}${moreRows > 0 && moreCols > 0 ? ' · ' : ''}${moreCols > 0 ? `${moreCols} more columns` : ''}
+          </div>` : ''}
+        </div>
+
+        <!-- SQL Query tab -->
+        <div class="qc-tab-panel" data-tab="1">
+          <div class="qc-sql-panel">
+            <pre class="qc-sql-code"><code>${suggestion.sqlCode}</code></pre>
+            <div class="qc-sql-actions">
+              <forge-button variant="outlined" dense class="copy-sql-btn" type="button">
+                <forge-icon slot="start" name="content_copy"></forge-icon>
+                Copy SQL
+              </forge-button>
             </div>
           </div>
         </div>
-      </div>
 
-      ${miniTableHtml}
-
-      <!-- Collapsible Data Transparency section -->
-      <div class="qc-transparency-wrapper">
-        <button type="button" class="qc-transparency-trigger" id="qc-tp-trigger-${uid}">
-          <forge-icon name="info_outline"></forge-icon>
-          <span class="qc-transparency-label">Data Transparency</span>
-          <forge-badge class="qc-transparency-badge">${transparencyCount} sections</forge-badge>
-          <forge-open-icon id="qc-tp-icon-${uid}">
-            <forge-icon name="expand_more"></forge-icon>
-          </forge-open-icon>
-        </button>
-        <forge-expansion-panel id="qc-tp-panel-${uid}" trigger="qc-tp-trigger-${uid}" open-icon="qc-tp-icon-${uid}">
-          <div class="qc-disclosures">
-
-            <!-- Data Source -->
-            <div class="qc-disclosure" data-section="source">
-              <button type="button" class="qc-disclosure-toggle" id="qc-src-trigger-${uid}">
-                <forge-icon name="database_outline"></forge-icon>
-                <span>Data Source</span>
-                <span class="qc-disclosure-detail">${t ? t.dataSourceDetail : suggestion.dataSource}</span>
-                <forge-open-icon id="qc-src-icon-${uid}" class="qc-disclosure-arrow">
-                  <forge-icon name="expand_more"></forge-icon>
-                </forge-open-icon>
-              </button>
-              <forge-expansion-panel trigger="qc-src-trigger-${uid}" open-icon="qc-src-icon-${uid}">
-                ${t ? `
-                  <div class="qc-disclosure-content">
-                    <div class="qc-info-row"><span class="qc-info-label">System</span><span class="qc-info-value">${t.system}</span></div>
-                    <div class="qc-info-row"><span class="qc-info-label">Total Records</span><span class="qc-info-value">${t.totalRecords}</span></div>
-                    <div class="qc-info-row"><span class="qc-info-label">Last Updated</span><span class="qc-info-value">${t.lastUpdated}</span></div>
-                  </div>
-                ` : ''}
-              </forge-expansion-panel>
-            </div>
-
-            <!-- SQL Query -->
-            <div class="qc-disclosure" data-section="sql">
-              <button type="button" class="qc-disclosure-toggle" id="qc-sql-trigger-${uid}">
-                <forge-icon name="code"></forge-icon>
-                <span>SQL Query</span>
-                <span class="qc-disclosure-detail">View generated query</span>
-                <forge-open-icon id="qc-sql-icon-${uid}" class="qc-disclosure-arrow">
-                  <forge-icon name="expand_more"></forge-icon>
-                </forge-open-icon>
-              </button>
-              <forge-expansion-panel trigger="qc-sql-trigger-${uid}" open-icon="qc-sql-icon-${uid}">
-                <div class="qc-disclosure-content">
-                  <pre class="transparency-sql"><code>${suggestion.sqlCode}</code></pre>
-                  <div class="transparency-sql-actions">
-                    <forge-button variant="outlined" dense class="copy-sql-btn" type="button">
-                      <forge-icon slot="start" name="content_copy"></forge-icon>
-                      Copy SQL
-                    </forge-button>
-                  </div>
-                </div>
-              </forge-expansion-panel>
-            </div>
-
-            <!-- Assumptions -->
-            <div class="qc-disclosure" data-section="assumptions">
-              <button type="button" class="qc-disclosure-toggle" id="qc-asm-trigger-${uid}">
-                <forge-icon name="info_outline"></forge-icon>
-                <span>Assumptions</span>
-                <span class="qc-disclosure-detail">${t ? t.assumptions.length + ' made' : ''}</span>
-                <forge-open-icon id="qc-asm-icon-${uid}" class="qc-disclosure-arrow">
-                  <forge-icon name="expand_more"></forge-icon>
-                </forge-open-icon>
-              </button>
-              <forge-expansion-panel trigger="qc-asm-trigger-${uid}" open-icon="qc-asm-icon-${uid}">
-                <div class="qc-disclosure-content">
-                  <ul class="transparency-assumptions">${assumptionsList}</ul>
-                </div>
-              </forge-expansion-panel>
-            </div>
-
-            ${citationsList ? `
-            <!-- Data Citations -->
-            <div class="qc-disclosure" data-section="citations">
-              <button type="button" class="qc-disclosure-toggle" id="qc-cite-trigger-${uid}">
-                <forge-icon name="link"></forge-icon>
-                <span>Data Citations</span>
-                <span class="qc-disclosure-detail">${t ? t.citations.length + ' sources' : ''}</span>
-                <forge-open-icon id="qc-cite-icon-${uid}" class="qc-disclosure-arrow">
-                  <forge-icon name="expand_more"></forge-icon>
-                </forge-open-icon>
-              </button>
-              <forge-expansion-panel trigger="qc-cite-trigger-${uid}" open-icon="qc-cite-icon-${uid}">
-                <div class="qc-disclosure-content">
-                  ${citationsList}
-                </div>
-              </forge-expansion-panel>
-            </div>
-            ` : ''}
-
-          </div>
-        </forge-expansion-panel>
+        <!-- Transparency details tab -->
+        <div class="qc-tab-panel" data-tab="2">
+          ${transparencyHtml}
+        </div>
       </div>
 
       <div class="qc-actions">
-        ${buildRefinementChips(suggestion)}
-        <div class="qc-actions-row">
-          <forge-button variant="raised" class="qc-open-report-btn" id="open-report-btn" type="button">
-            <forge-icon slot="start" name="insert_chart"></forge-icon>
-            Explore Results
-          </forge-button>
-          <forge-button variant="outlined" class="qc-secondary-btn" type="button">
-            <forge-icon slot="start" name="content_copy"></forge-icon>
-            Copy Summary
-          </forge-button>
-        </div>
+        <forge-button variant="raised" class="qc-open-report-btn" id="open-report-btn" type="button">
+          <forge-icon slot="start" name="insert_chart"></forge-icon>
+          Explore Results In-Depth
+        </forge-button>
       </div>
-    </forge-card>
+    </forge-ai-artifact>
   `;
 }
 
@@ -498,17 +435,18 @@ function wireQueryCard(responseMsg, container, suggestion, dialog) {
     });
   }
 
-  // Wire Copy Summary
-  const copySummaryBtn = responseMsg.querySelector('.qc-secondary-btn');
+  // Wire Copy Summary (icon button in header)
+  const copySummaryBtn = responseMsg.querySelector('.copy-summary-btn');
   if (copySummaryBtn) {
     copySummaryBtn.addEventListener('click', () => {
       const summaryText = responseMsg.querySelector('.qc-summary')?.textContent?.trim();
       if (summaryText) {
         navigator.clipboard.writeText(summaryText).then(() => {
-          copySummaryBtn.innerHTML = '<forge-icon slot="start" name="check"></forge-icon> Copied!';
-          setTimeout(() => {
-            copySummaryBtn.innerHTML = '<forge-icon slot="start" name="content_copy"></forge-icon> Copy Summary';
-          }, 2000);
+          const icon = copySummaryBtn.querySelector('forge-icon');
+          if (icon) {
+            icon.name = 'check';
+            setTimeout(() => { icon.name = 'content_copy'; }, 2000);
+          }
         });
       }
     });
@@ -603,7 +541,7 @@ function buildTransparencyPanel(suggestion) {
  */
 function buildRefinementChips(suggestion) {
   if (!suggestion.refinementChips || !suggestion.refinementChips.length) return '';
-  return `<div class="refinement-chips-row"><forge-ai-suggestions variant="inline" class="refinement-suggestions"></forge-ai-suggestions></div>`;
+  return `<div class="qc-refinement-row"><forge-ai-suggestions variant="inline" class="refinement-suggestions"></forge-ai-suggestions></div>`;
 }
 
 /**
@@ -693,7 +631,7 @@ function collapseQueryCard(card) {
   const collapsed = document.createElement('div');
   collapsed.className = 'qc-collapsed-bar';
   collapsed.innerHTML = `
-    <forge-icon name="auto_awesome"></forge-icon>
+    <span class="qc-collapsed-accent"></span>
     <span class="qc-collapsed-title">${title}</span>
     <span class="qc-collapsed-meta">${metaText}</span>
     <forge-icon name="expand_more" class="qc-collapsed-expand"></forge-icon>
