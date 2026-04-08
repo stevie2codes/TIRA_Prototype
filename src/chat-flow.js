@@ -418,12 +418,40 @@ function buildQueryCard(suggestion) {
  * toggle/animation logic — we only need to wire copy buttons and refinement chips.
  */
 function wireQueryCard(responseMsg, container, suggestion, dialog) {
-  // Wire Copy SQL
+  // --- Wire forge-ai-tool-data-table ---
+  const dataTable = responseMsg.querySelector('.qc-data-table');
+  if (dataTable && suggestion.columns && suggestion.data) {
+    const previewCols = suggestion.columns.slice(0, 4);
+    const previewRows = suggestion.data.slice(0, 3);
+    dataTable.toolCall = {
+      id: 'query-card-table',
+      name: 'data_table',
+      args: {
+        headers: previewCols.map(c => c.header),
+        rows: previewRows.map(row => previewCols.map(c => row[c.property] ?? '')),
+        maxNumberOfRows: 10,
+      },
+    };
+  }
+
+  // --- Wire tab switching ---
+  const tabBar = responseMsg.querySelector('.qc-tab-bar');
+  const panels = responseMsg.querySelectorAll('.qc-tab-panel');
+  if (tabBar && panels.length) {
+    tabBar.addEventListener('forge-tab-bar-change', (e) => {
+      const idx = e.detail.index;
+      panels.forEach(p => p.classList.remove('qc-tab-panel--active'));
+      const target = responseMsg.querySelector(`.qc-tab-panel[data-tab="${idx}"]`);
+      if (target) target.classList.add('qc-tab-panel--active');
+    });
+  }
+
+  // --- Wire Copy SQL ---
   const copyBtn = responseMsg.querySelector('.copy-sql-btn');
   if (copyBtn) {
     copyBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      const sql = responseMsg.querySelector('.transparency-sql code')?.textContent;
+      const sql = responseMsg.querySelector('.qc-sql-code code')?.textContent;
       if (sql) {
         navigator.clipboard.writeText(sql).then(() => {
           copyBtn.innerHTML = '<forge-icon slot="start" name="check"></forge-icon> Copied!';
@@ -435,7 +463,7 @@ function wireQueryCard(responseMsg, container, suggestion, dialog) {
     });
   }
 
-  // Wire Copy Summary (icon button in header)
+  // --- Wire Copy Summary ---
   const copySummaryBtn = responseMsg.querySelector('.copy-summary-btn');
   if (copySummaryBtn) {
     copySummaryBtn.addEventListener('click', () => {
@@ -452,7 +480,7 @@ function wireQueryCard(responseMsg, container, suggestion, dialog) {
     });
   }
 
-  // Wire refinement chips
+  // --- Wire refinement chips ---
   wireRefinementChips(responseMsg, container, suggestion, dialog);
 }
 
