@@ -21,6 +21,21 @@ function markdownToHtml(md) {
 }
 
 /**
+ * Ensures the chat dialog is in fullscreen mode.
+ * Updates the expand/collapse button icon if present.
+ */
+function ensureFullscreen(dialog) {
+  if (!dialog.hasAttribute('fullscreen')) {
+    dialog.setAttribute('fullscreen', '');
+    const expandBtn = dialog.querySelector('#chat-expand-btn');
+    if (expandBtn) {
+      expandBtn.querySelector('forge-icon').name = 'fullscreen_exit';
+      expandBtn.setAttribute('aria-label', 'Collapse');
+    }
+  }
+}
+
+/**
  * Shows a progressive reasoning sequence using forge-ai-reasoning.
  * While running: header shows "Reasoning..." with each step appearing below.
  * On complete: collapses to "Reasoned about [topic] for Xs", expandable to show steps.
@@ -250,6 +265,7 @@ function runConversation(container, suggestion, dialog, options = {}) {
       function showReportOpenState() {
         openReportBtn.style.display = 'none';
         badge.style.display = '';
+        ensureFullscreen(dialog);
         transitionToSplitView(dialog, container, suggestion);
       }
 
@@ -762,6 +778,7 @@ function simulateRefinement(container, chipLabel, suggestion, dialog) {
         const openBtn = responseMsg.querySelector('#open-report-btn');
         if (openBtn && dialog) {
           openBtn.addEventListener('click', () => {
+            ensureFullscreen(dialog);
             transitionToSplitView(dialog, container, refinedSuggestion);
           });
         }
@@ -1612,6 +1629,7 @@ function applyTemplate(panel, template, suggestion) {
 // ---------------------------------------------------------------------------
 
 function openStandardReport(report, dialog) {
+  ensureFullscreen(dialog);
   const content = dialog.querySelector('.chat-dialog-content');
   if (!content) return;
   const existingElements = content.querySelectorAll('.chat-header, .chat-body, .chat-footer, forge-ai-chat-interface');
