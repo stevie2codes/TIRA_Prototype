@@ -484,85 +484,6 @@ function wireQueryCard(responseMsg, container, suggestion, dialog) {
   wireRefinementChips(responseMsg, container, suggestion, dialog);
 }
 
-/**
- * Builds the transparency panel HTML (§4.1) — legacy, kept for handoff card use
- */
-function buildTransparencyPanel(suggestion) {
-  const t = suggestion.transparency;
-  if (!t) return '';
-
-  const assumptionsList = t.assumptions.map(a => `<li>${a}</li>`).join('');
-  const citationsList = t.citations.map(c =>
-    `<div class="citation-item">
-      <span class="citation-label">${c.label}</span>
-      <span class="citation-detail">${c.detail}</span>
-    </div>`
-  ).join('');
-
-  return `
-    <div class="transparency-toggle" role="button" tabindex="0">
-      <forge-icon name="info_outline"></forge-icon>
-      <span>How this was generated</span>
-      <forge-icon name="arrow_drop_down" class="transparency-arrow"></forge-icon>
-    </div>
-    <div class="transparency-panel" style="display: none;">
-      <div class="transparency-section">
-        <div class="transparency-section-header">
-          <forge-icon name="database_outline"></forge-icon>
-          DATA SOURCE
-        </div>
-        <div class="transparency-section-body">
-          <div class="transparency-row">
-            <span class="transparency-label">${t.dataSourceDetail}</span>
-          </div>
-          <div class="transparency-row">
-            <span class="transparency-meta">${t.system} · ${t.totalRecords} records</span>
-          </div>
-          <div class="transparency-row">
-            <span class="transparency-meta">Last updated: ${t.lastUpdated}</span>
-          </div>
-        </div>
-      </div>
-      <div class="transparency-section">
-        <div class="transparency-section-header">
-          <forge-icon name="code"></forge-icon>
-          SQL QUERY
-        </div>
-        <div class="transparency-section-body">
-          <pre class="transparency-sql"><code>${suggestion.sqlCode}</code></pre>
-          <div class="transparency-sql-actions">
-            <button class="transparency-action-btn copy-sql-btn" type="button">
-              <forge-icon name="content_copy"></forge-icon>
-              Copy SQL
-            </button>
-            <button class="transparency-action-btn edit-designer-btn" type="button">
-              <forge-icon name="open_in_new"></forge-icon>
-              Edit in Report Designer
-            </button>
-          </div>
-        </div>
-      </div>
-      <div class="transparency-section">
-        <div class="transparency-section-header">
-          <forge-icon name="info_outline"></forge-icon>
-          ASSUMPTIONS
-        </div>
-        <div class="transparency-section-body">
-          <ul class="transparency-assumptions">${assumptionsList}</ul>
-        </div>
-      </div>
-      <div class="transparency-section">
-        <div class="transparency-section-header">
-          <forge-icon name="link"></forge-icon>
-          DATA CITATIONS
-        </div>
-        <div class="transparency-section-body">
-          ${citationsList}
-        </div>
-      </div>
-    </div>
-  `;
-}
 
 /**
  * Builds refinement suggestion chips (§3.3)
@@ -572,47 +493,6 @@ function buildRefinementChips(suggestion) {
   return `<div class="qc-refinement-row"><forge-ai-suggestions variant="inline" class="refinement-suggestions"></forge-ai-suggestions></div>`;
 }
 
-/**
- * Wires transparency panel toggle
- */
-function wireTransparencyToggle(responseMsg) {
-  const toggle = responseMsg.querySelector('.transparency-toggle');
-  const panel = responseMsg.querySelector('.transparency-panel');
-  if (!toggle || !panel) return;
-
-  toggle.addEventListener('click', () => {
-    const isOpen = panel.style.display !== 'none';
-    panel.style.display = isOpen ? 'none' : 'block';
-    toggle.classList.toggle('open', !isOpen);
-    const arrow = toggle.querySelector('.transparency-arrow');
-    if (arrow) {
-      arrow.style.transform = isOpen ? '' : 'rotate(180deg)';
-    }
-    // After expanding, scroll so the panel is visible
-    if (!isOpen) {
-      requestAnimationFrame(() => {
-        panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      });
-    }
-  });
-
-  // Copy SQL button
-  const copyBtn = panel.querySelector('.copy-sql-btn');
-  if (copyBtn) {
-    copyBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const sql = panel.querySelector('.transparency-sql code')?.textContent;
-      if (sql) {
-        navigator.clipboard.writeText(sql).then(() => {
-          copyBtn.innerHTML = '<forge-icon name="check"></forge-icon> Copied!';
-          setTimeout(() => {
-            copyBtn.innerHTML = '<forge-icon name="content_copy"></forge-icon> Copy SQL';
-          }, 2000);
-        });
-      }
-    });
-  }
-}
 
 /**
  * Wires refinement chip click behavior
