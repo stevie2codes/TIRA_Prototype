@@ -88,6 +88,9 @@ import {
   tylIconBusiness,
   tylIconShuffle,
   tylIconEdit,
+  tylIconFullscreen,
+  tylIconFullscreenExit,
+  tylIconRemove,
 } from '@tylertech/tyler-icons';
 
 // Define components
@@ -173,6 +176,9 @@ IconRegistry.define([
   tylIconBusiness,
   tylIconShuffle,
   tylIconEdit,
+  tylIconFullscreen,
+  tylIconFullscreenExit,
+  tylIconRemove,
 ]);
 
 // Forge AI components (Lit-based, self-register on import)
