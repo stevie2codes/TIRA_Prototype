@@ -25,6 +25,8 @@ import {
   defineOpenIconComponent,
   defineBadgeComponent,
   defineTooltipComponent,
+  defineTabBarComponent,
+  defineTabComponent,
 } from '@tylertech/forge';
 
 // Tyler Icons
@@ -110,6 +112,8 @@ defineExpansionPanelComponent();
 defineOpenIconComponent();
 defineBadgeComponent();
 defineTooltipComponent();
+defineTabBarComponent();
+defineTabComponent();
 
 // Register icons
 IconRegistry.define([
@@ -183,6 +187,8 @@ import '@tylertech/forge-ai/ai-chatbot-launcher';
 import '@tylertech/forge-ai/ai-reasoning';
 import '@tylertech/forge-ai/ai-reasoning-header';
 import '@tylertech/forge-ai/ai-spinner';
+import '@tylertech/forge-ai/ai-artifact';
+import '@tylertech/forge-ai/tools';
 
 // Router
 import { registerView, startRouter } from './router.js';
