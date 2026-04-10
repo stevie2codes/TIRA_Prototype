@@ -91,6 +91,16 @@ import {
   tylIconFullscreen,
   tylIconFullscreenExit,
   tylIconRemove,
+  tylIconVisibility,
+  tylIconLock,
+  tylIconLabel,
+  tylIconDragIndicator,
+  tylIconPublish,
+  tylIconCheckCircle,
+  tylIconTune,
+  tylIconToggleOn,
+  tylIconToggleOff,
+  tylIconExpandLess,
 } from '@tylertech/tyler-icons';
 
 // Define components
@@ -179,6 +189,16 @@ IconRegistry.define([
   tylIconFullscreen,
   tylIconFullscreenExit,
   tylIconRemove,
+  tylIconVisibility,
+  tylIconLock,
+  tylIconLabel,
+  tylIconDragIndicator,
+  tylIconPublish,
+  tylIconCheckCircle,
+  tylIconTune,
+  tylIconToggleOn,
+  tylIconToggleOff,
+  tylIconExpandLess,
 ]);
 
 // Forge AI components (Lit-based, self-register on import)
