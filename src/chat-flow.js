@@ -8,6 +8,7 @@ import { matchStandardReports, getConfidenceTier } from './report-matcher.js';
 import { buildStandardReportCard, getDomainLabel, wireSRDisclosure } from './standard-report-card.js';
 import { buildStandardReportPanel, wireStandardReportPanel } from './standard-report-viewer.js';
 import { getVisibleStandardReports } from './user-context.js';
+import { createReportConfig, transitionMode, buildConfigureMode, buildPublishMode } from './report-configure.js';
 
 /** @param {string} md */
 function markdownToHtml(md) {
@@ -150,6 +151,9 @@ export function openChatFlow(index, options = {}) {
           <forge-icon-button aria-label="Expand" id="chat-expand-btn">
             <forge-icon name="fullscreen"></forge-icon>
           </forge-icon-button>
+          <forge-icon-button aria-label="Close" id="chat-close-btn">
+            <forge-icon name="close"></forge-icon>
+          </forge-icon-button>
         </div>
       </div>
       <forge-ai-chat-interface class="chat-interface">
@@ -161,9 +165,15 @@ export function openChatFlow(index, options = {}) {
 
   dialog.open = true;
 
-  // Minimize — close dialog back to homepage
+  // Minimize — hide dialog (can be re-opened)
   dialog.querySelector('#chat-minimize-btn').addEventListener('click', () => {
     dialog.open = false;
+  });
+
+  // Close — dismiss dialog entirely
+  dialog.querySelector('#chat-close-btn').addEventListener('click', () => {
+    dialog.open = false;
+    dialog.innerHTML = '';
   });
 
   // Expand/Collapse — toggle fullscreen
@@ -181,8 +191,12 @@ export function openChatFlow(index, options = {}) {
     }
   });
 
-  // Start conversation sequence
+  // Wire prompt submit
+  const promptEl = dialog.querySelector('forge-ai-prompt');
   const messagesEl = dialog.querySelector('#chat-messages');
+  wirePromptSubmit(promptEl, messagesEl, suggestion, dialog);
+
+  // Start conversation sequence
   runConversation(messagesEl, suggestion, dialog, options);
 }
 
@@ -417,6 +431,7 @@ function buildQueryCard(suggestion) {
         <forge-button variant="raised" class="qc-open-report-btn" id="open-report-btn" type="button">
           <forge-icon slot="start" name="open_in_new"></forge-icon>
           Explore results
+          
         </forge-button>
       </div>
     </forge-ai-artifact>
@@ -1120,6 +1135,20 @@ export function openLibraryView() {
 }
 
 
+/**
+ * Wires a forge-ai-prompt element to handle submit events.
+ * Appends the user message and triggers a simulated refinement.
+ */
+function wirePromptSubmit(promptEl, container, suggestion, dialog) {
+  promptEl.addEventListener('forge-ai-prompt-submit', (e) => {
+    const text = (e.detail?.value ?? e.detail ?? '').toString().trim();
+    if (!text) return;
+    // Remove existing suggestion chips
+    container.querySelector('.qc-refinement-row')?.remove();
+    simulateRefinement(container, text, suggestion, dialog);
+  });
+}
+
 function scrollToBottom(el) {
   // forge-ai-chat-interface has its own scrollToBottom() method
   const chatInterface = el.closest('forge-ai-chat-interface');
@@ -1138,7 +1167,7 @@ function scrollToBottom(el) {
 /**
  * Collapses the split view back to full-width chat.
  */
-function collapseToFullChat(dialog, splitChatContainer) {
+function collapseToFullChat(dialog, splitChatContainer, suggestion) {
   const content = dialog.querySelector('.chat-dialog-content');
   const customSplit = content.querySelector('.custom-split-container');
   if (!customSplit) return;
@@ -1181,6 +1210,9 @@ function collapseToFullChat(dialog, splitChatContainer) {
   const prompt = document.createElement('forge-ai-prompt');
   prompt.slot = 'prompt';
   prompt.placeholder = 'Ask a question...';
+  if (suggestion && existingMessages) {
+    wirePromptSubmit(prompt, existingMessages, suggestion, dialog);
+  }
   chatInterface.appendChild(prompt);
 
   content.appendChild(chatInterface);
@@ -1259,12 +1291,19 @@ function transitionToSplitView(dialog, chatMessages, suggestion) {
       <forge-icon-button aria-label="Collapse" id="chat-expand-btn">
         <forge-icon name="fullscreen_exit"></forge-icon>
       </forge-icon-button>
+      <forge-icon-button aria-label="Close" id="chat-close-btn">
+        <forge-icon name="close"></forge-icon>
+      </forge-icon-button>
     </div>
   `;
 
   // Wire split-view header buttons
   leftHeader.querySelector('#chat-minimize-btn').addEventListener('click', () => {
     dialog.open = false;
+  });
+  leftHeader.querySelector('#chat-close-btn').addEventListener('click', () => {
+    dialog.open = false;
+    dialog.innerHTML = '';
   });
   leftHeader.querySelector('#chat-expand-btn').addEventListener('click', () => {
     const isFullscreen = dialog.hasAttribute('fullscreen');
@@ -1293,6 +1332,7 @@ function transitionToSplitView(dialog, chatMessages, suggestion) {
   const splitPrompt = document.createElement('forge-ai-prompt');
   splitPrompt.placeholder = 'Ask a question...';
   splitPrompt.className = 'split-chat-prompt';
+  wirePromptSubmit(splitPrompt, existingMessages, suggestion, dialog);
   splitChatContainer.appendChild(splitPrompt);
 
   leftPanel.appendChild(splitChatContainer);
@@ -1322,7 +1362,7 @@ function transitionToSplitView(dialog, chatMessages, suggestion) {
   const closeCanvasBtn = reportPanel.querySelector('.close-canvas-btn');
   if (closeCanvasBtn) {
     closeCanvasBtn.addEventListener('click', () => {
-      collapseToFullChat(dialog, splitChatContainer);
+      collapseToFullChat(dialog, splitChatContainer, suggestion);
     });
   }
 
@@ -1442,15 +1482,12 @@ function buildReportPanel(suggestion) {
             </div>
             <span class="dropdown-item-desc">Send to colleagues or teams</span>
           </button>
-          <button class="canvas-dropdown-item" type="button" data-action="save">
-            <div class="dropdown-item-row">
-              <forge-icon name="save"></forge-icon>
-              <span class="dropdown-item-label">Save to Library</span>
-            </div>
-            <span class="dropdown-item-desc">Add to your saved reports</span>
-          </button>
         </div>
       </div>
+      <button class="configure-report-btn" type="button">
+        <forge-icon name="tune"></forge-icon>
+        Configure as Report
+      </button>
     </div>
   `;
   panel.appendChild(actionBar);
@@ -1546,7 +1583,6 @@ function buildReportPanel(suggestion) {
           export: 'Exported!',
           schedule: 'Scheduled!',
           share: 'Shared!',
-          save: 'Saved!'
         };
         actionLabel.textContent = feedbackMap[action] || 'Done!';
         reportActionsBtn.classList.add('action-success');
@@ -1556,9 +1592,102 @@ function buildReportPanel(suggestion) {
         }, 1500);
       });
     });
+
+    // Wire "Configure as Report" button
+    const configureBtn = panel.querySelector('.configure-report-btn');
+    if (configureBtn) {
+      configureBtn.addEventListener('click', () => {
+        const rightPanel = panel.parentElement;
+        const config = createReportConfig(suggestion);
+        enterConfigureMode(rightPanel, config, suggestion);
+      });
+    }
   });
 
   return panel;
+}
+
+/**
+ * Enters Configure mode in the right panel.
+ */
+function enterConfigureMode(rightPanel, config, suggestion) {
+  const configPanel = buildConfigureMode(config, {
+    onBack: () => {
+      const explorePanel = buildReportPanel(suggestion);
+      transitionMode(rightPanel, explorePanel);
+      // Re-wire Configure button after transition
+      setTimeout(() => {
+        const newConfigBtn = explorePanel.querySelector('.configure-report-btn');
+        if (newConfigBtn) {
+          newConfigBtn.addEventListener('click', () => {
+            const freshConfig = createReportConfig(suggestion);
+            enterConfigureMode(rightPanel, freshConfig, suggestion);
+          });
+        }
+      }, 250);
+    },
+    onPublish: () => {
+      enterPublishMode(rightPanel, config, suggestion);
+    },
+  });
+  transitionMode(rightPanel, configPanel);
+}
+
+/**
+ * Enters Publish mode in the right panel.
+ */
+function enterPublishMode(rightPanel, config, suggestion) {
+  const publishPanel = buildPublishMode(config, {
+    onBack: () => {
+      enterConfigureMode(rightPanel, config, suggestion);
+    },
+    onClose: () => {
+      postPublishChatMessage(config);
+      const explorePanel = buildReportPanel(suggestion);
+      transitionMode(rightPanel, explorePanel);
+      setTimeout(() => {
+        const newConfigBtn = explorePanel.querySelector('.configure-report-btn');
+        if (newConfigBtn) {
+          newConfigBtn.addEventListener('click', () => {
+            const freshConfig = createReportConfig(suggestion);
+            enterConfigureMode(rightPanel, freshConfig, suggestion);
+          });
+        }
+      }, 250);
+    },
+    onViewLibrary: () => {
+      postPublishChatMessage(config);
+      const explorePanel = buildReportPanel(suggestion);
+      transitionMode(rightPanel, explorePanel);
+      setTimeout(() => {
+        const newConfigBtn = explorePanel.querySelector('.configure-report-btn');
+        if (newConfigBtn) {
+          newConfigBtn.addEventListener('click', () => {
+            const freshConfig = createReportConfig(suggestion);
+            enterConfigureMode(rightPanel, freshConfig, suggestion);
+          });
+        }
+      }, 250);
+    },
+  });
+  transitionMode(rightPanel, publishPanel);
+}
+
+/**
+ * Posts a system message to the chat panel after report publication.
+ */
+function postPublishChatMessage(config) {
+  const chatMessages = document.querySelector('#chat-messages');
+  if (!chatMessages) return;
+  const msg = document.createElement('forge-ai-response-message');
+  msg.innerHTML = `
+    <div style="font-size:14px;color:rgba(0,0,0,0.7);line-height:1.5;">
+      <forge-icon name="check_circle" style="--forge-icon-font-size:16px;color:#4caf50;vertical-align:middle;margin-right:4px;"></forge-icon>
+      Report <strong>"${config.name}"</strong> published to the library.
+      ${config.visibility === 'only-me' ? '(Visible only to you — draft mode)' : ''}
+    </div>
+  `;
+  chatMessages.appendChild(msg);
 }
 
 function closeAllDropdowns(panel) {
