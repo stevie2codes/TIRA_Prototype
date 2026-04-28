@@ -53,6 +53,15 @@ The product replaces a search-and-build reporting workflow with a describe-and-r
 - Forge CSS imported in JS: `@tylertech/forge/dist/forge-core.css` and `@tylertech/forge/dist/forge.css`
 - Forge AI components are Lit-based and self-register on import — just `import '@tylertech/forge-ai'` or import individual components like `import '@tylertech/forge-ai/ai-chatbot'`
 - Key AI components: `<forge-ai-chatbot>`, `<forge-ai-chat-interface>`, `<forge-ai-prompt>`, `<forge-ai-sidebar-chat>`, `<forge-ai-floating-chat>`, `<forge-ai-embedded-chat>`, `<forge-ai-suggestions>`, `<forge-ai-thinking-indicator>`
+- `forge-ai-prompt` emits `forge-ai-prompt-submit` event — use `e.detail?.value ?? e.detail` for user input text
+
+## CSS Guidelines
+
+- **Use Forge spacing tokens** instead of hardcoded px: `--forge-spacing-xxsmall` (4px), `--forge-spacing-xsmall` (8px), `--forge-spacing-small` (12px), `--forge-spacing-medium` (16px), `--forge-spacing-large` (20px), `--forge-spacing-xlarge` (24px)
+- **Use Forge color tokens** with fallbacks: `var(--forge-theme-primary, #3f51b5)`, `var(--forge-theme-on-surface, rgba(0,0,0,0.87))`, `var(--forge-theme-outline-variant, #e0e0e0)`, `var(--forge-theme-surface, #fff)`
+- **Never declare `font-family`** — Forge CSS sets it at root level
+- **Use `filter: brightness(0.9)`** for hover darkening instead of hardcoded darker hex values
+- **Prevent overflow**: always use `box-sizing: border-box`, `max-width: 100%`, and `overflow-x: hidden` on scrollable containers
 
 ## Prototyping Guidelines
 
