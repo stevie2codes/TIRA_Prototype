@@ -1,3 +1,12 @@
+/* Wrapper around ParameterStrip + print-canvas-wrapper so the strip sits
+   on top as a thin band and the canvas takes the remaining vertical space. */
+.print-canvas-outer {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
 .param-strip {
   display: flex;
   align-items: center;
@@ -6,6 +15,7 @@
   background: #fffbe8;
   border-bottom: 1px solid #f0e3a0;
   font-size: 11px;
+  flex: 0 0 auto;
 }
 
 .param-strip--empty {

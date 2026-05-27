@@ -169,8 +169,9 @@ export default function PrintCanvas() {
 
   return (
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+      <div className="print-canvas-outer">
+      <ParameterStrip />
       <div className="print-canvas-wrapper">
-        <ParameterStrip />
         {showRulers && (
           <Rulers
             pageDims={pageDims}
@@ -283,6 +284,7 @@ export default function PrintCanvas() {
             ))}
           </div>
         </div>
+      </div>
       </div>
     </DndContext>
   );
