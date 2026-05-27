@@ -11,8 +11,8 @@ export function buildFieldLibrary(selectedSources, measures) {
   const fields = [];
 
   for (const sourceEntry of selectedSources) {
-    const { sourceId, includedFields } = sourceEntry;
-    const schema = getSchemaFor(sourceId);
+    const { sourceId, includedFields, inlineSchema } = sourceEntry;
+    const schema = inlineSchema || getSchemaFor(sourceId);
     for (const field of schema) {
       if (!includedFields.includes(field.name)) continue;
       fields.push({

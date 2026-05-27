@@ -21,58 +21,58 @@ function readHandoffContext() {
 }
 
 /**
- * Build initial data-layer nodes + edges from handoff context.
+ * Heuristic: guess whether a column is a dimension or a measure based on its name.
  */
-function buildHandoffNodes(ctx) {
-  const columns = ctx.columns || [];
-  const fields = columns.map(c => c.property || c.header);
-
-  const sourceNode = {
-    id: 'source-handoff',
-    type: 'source',
-    position: { x: 80, y: 120 },
-    data: {
-      label: ctx.dataSource || 'Chat Query',
-      icon: 'database',
-      subtype: 'database',
-      fields,
-      configured: true,
-      configSummary: `${fields.length} fields from chat`,
-    },
-  };
-
-  const outputNode = {
-    id: 'output-handoff',
-    type: 'output',
-    position: { x: 500, y: 120 },
-    data: {
-      label: ctx.reportTitle || 'Report Data',
-      fields,
-    },
-  };
-
-  const edge = {
-    id: 'e-handoff-source-output',
-    source: 'source-handoff',
-    target: 'output-handoff',
-    animated: true,
-    data: {},
-  };
-
-  return { nodes: [sourceNode, outputNode], edges: [edge] };
+function guessRole(name) {
+  const lower = String(name).toLowerCase();
+  const measureHints = ['count', 'total', 'amount', 'value', 'fee', 'sum', 'avg', 'budget', 'population', 'fine', 'spend', 'qty', 'quantity'];
+  if (measureHints.some(h => lower.includes(h))) return 'measure';
+  // Common region/category columns in chat data are numeric counts — treat known dimension names explicitly
+  const dimensionHints = ['date', 'month', 'year', 'quarter', 'week', 'day', 'type', 'category', 'status', 'name', 'id', 'department', 'region', 'state', 'city'];
+  if (dimensionHints.some(h => lower.includes(h))) return 'dimension';
+  // Fall back: numeric-looking sample values mean measure. We don't have that info here, so default to measure for unknown columns.
+  return 'measure';
 }
 
 /**
- * Try to map a handoff context's dataSource to a known catalog source.
- * If we can match, return a selectedSources entry. Otherwise return null.
- * For prototype-grade matching: lowercase + replace non-alphanumerics with underscore.
+ * Build a selectedSources entry from a handoff context. Includes an inline schema
+ * so the new semantic-model UI can render fields, checkboxes, and previews without
+ * the source being in the static catalog.
  */
 function buildHandoffSelectedSource(ctx) {
   if (!ctx) return null;
-  const fields = (ctx.columns || []).map(c => c.property || c.header);
-  const ds = (ctx.dataSource || '').toLowerCase().replace(/[^a-z0-9_]/g, '_');
-  if (!ds) return null;
-  return { sourceId: ds, includedFields: fields, isSynthetic: true };
+  const columns = ctx.columns || [];
+  if (columns.length === 0) return null;
+
+  const sourceId = (ctx.dataSource || 'chat_query')
+    .toLowerCase().replace(/[^a-z0-9_]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '') || 'chat_query';
+
+  const inlineSchema = columns.map(c => {
+    const name = c.property || c.header;
+    const displayName = c.header || c.property;
+    return {
+      name,
+      displayName,
+      type: 'string',
+      role: guessRole(name),
+      description: '',
+    };
+  });
+
+  const includedFields = inlineSchema.map(f => f.name);
+
+  return {
+    sourceId,
+    includedFields,
+    isSynthetic: true,
+    displayLabel: ctx.dataSource || 'Chat Query',
+    inlineSchema,
+    meta: {
+      system: 'Chat handoff',
+      type: 'inline',
+      rowCount: (ctx.data || []).length,
+    },
+  };
 }
 
 /**
@@ -80,6 +80,10 @@ function buildHandoffSelectedSource(ctx) {
  */
 function buildHandoffWidgets(ctx) {
   const widgets = [];
+  if (!ctx) return widgets;
+
+  const entry = buildHandoffSelectedSource(ctx);
+  const sourceId = entry?.sourceId;
 
   // Section header with report title
   widgets.push({
@@ -93,7 +97,10 @@ function buildHandoffWidgets(ctx) {
     config: {},
   });
 
-  // Data table from the chat results
+  if (!sourceId || !entry) return widgets;
+
+  // Table widget bound to all fields from the handoff
+  const allFieldIds = entry.inlineSchema.map(f => `${sourceId}.${f.name}`);
   widgets.push({
     id: 'widget-handoff-table',
     type: 'table',
@@ -102,20 +109,29 @@ function buildHandoffWidgets(ctx) {
     gridRow: 2,
     colSpan: 12,
     rowSpan: 3,
-    config: { dataSource: ctx.dataSource || 'Chat Query' },
+    config: {},
+    bindings: { columns: allFieldIds },
   });
 
-  // Bar chart
-  widgets.push({
-    id: 'widget-handoff-chart',
-    type: 'chart',
-    title: `${ctx.reportTitle || 'Data'} — Visualization`,
-    gridColumn: 1,
-    gridRow: 5,
-    colSpan: 12,
-    rowSpan: 3,
-    config: { subtype: 'bar', dataSource: ctx.dataSource || 'Chat Query' },
-  });
+  // Chart widget bound to first dimension (xAxis) + first measure (yAxis)
+  const firstDim = entry.inlineSchema.find(f => f.role === 'dimension');
+  const firstMeasure = entry.inlineSchema.find(f => f.role === 'measure');
+  if (firstDim && firstMeasure) {
+    widgets.push({
+      id: 'widget-handoff-chart',
+      type: 'chart',
+      title: `${ctx.reportTitle || 'Data'} — Visualization`,
+      gridColumn: 1,
+      gridRow: 5,
+      colSpan: 12,
+      rowSpan: 3,
+      config: { subtype: 'bar' },
+      bindings: {
+        xAxis: `${sourceId}.${firstDim.name}`,
+        yAxis: `${sourceId}.${firstMeasure.name}`,
+      },
+    });
+  }
 
   return widgets;
 }
@@ -123,14 +139,10 @@ function buildHandoffWidgets(ctx) {
 export function ReportProvider({ children }) {
   const [handoffContext] = useState(() => readHandoffContext());
 
-  // Initialize nodes/edges from handoff if available
-  const handoffData = useMemo(() => {
-    if (!handoffContext) return { nodes: [], edges: [] };
-    return buildHandoffNodes(handoffContext);
-  }, [handoffContext]);
-
-  const [nodes, setNodes] = useState(handoffData.nodes);
-  const [edges, setEdges] = useState(handoffData.edges);
+  // Initial nodes/edges are always empty. Handoff context now seeds selectedSources
+  // (see useState below), which the DataLayerCanvas sync effect projects into nodes.
+  const [nodes, setNodes] = useState([]);
+  const [edges, setEdges] = useState([]);
   const [selectedNodeId, setSelectedNodeId] = useState(null);
 
   // Initialize widgets from handoff if available
@@ -159,11 +171,12 @@ export function ReportProvider({ children }) {
   // API-driven state
   const [availableSources, setAvailableSources] = useState([]);
   const [generatedData, setGeneratedData] = useState(() => {
-    // Pre-populate generated data from handoff context
     if (!handoffContext || !handoffContext.data) return {};
-    const columns = (handoffContext.columns || []).map(c => c.property || c.header);
+    const entry = buildHandoffSelectedSource(handoffContext);
+    if (!entry) return {};
+    const columns = entry.inlineSchema.map(f => f.name);
     return {
-      'source-handoff': {
+      [`source-${entry.sourceId}`]: {
         type: 'handoff',
         rows: handoffContext.data,
         columns,

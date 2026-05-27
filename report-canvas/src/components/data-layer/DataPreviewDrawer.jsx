@@ -14,7 +14,7 @@ const TABS = [
 ];
 
 export default function DataPreviewDrawer() {
-  const { nodes, selectedNodeId, selectedSources, fieldLibrary } = useReport();
+  const { nodes, selectedNodeId, selectedSources, fieldLibrary, generatedData } = useReport();
   const [activeTab, setActiveTab] = useState('library');
   const [collapsed, setCollapsed] = useState(false);
   const [rows, setRows] = useState([]);
@@ -22,38 +22,52 @@ export default function DataPreviewDrawer() {
   const selectedNode = nodes.find(n => n.id === selectedNodeId);
   const selectedSourceId = selectedNode?.data?.sourceId;
 
+  function getSchemaForSource(sourceId) {
+    const entry = selectedSources.find(s => s.sourceId === sourceId);
+    return entry?.inlineSchema || getSchemaFor(sourceId);
+  }
+
   // Fetch preview rows when tab/selection changes
   useEffect(() => {
     let cancelled = false;
     async function load() {
-      if (activeTab === 'selected' && selectedSourceId) {
-        const schema = getSchemaFor(selectedSourceId);
-        const fields = schema.map(f => f.name);
-        const data = await fetchData(selectedSourceId, 5, fields).catch(() => []);
-        if (!cancelled) setRows(data);
-      } else if (activeTab === 'joined' || activeTab === 'library') {
-        if (selectedSources.length === 0) { setRows([]); return; }
-        const primaryId = selectedSources[0].sourceId;
-        const schema = getSchemaFor(primaryId);
-        const fields = schema.map(f => f.name);
-        const data = await fetchData(primaryId, 5, fields).catch(() => []);
-        if (!cancelled) setRows(data);
+      // Determine target sourceId for the active tab
+      let targetId = null;
+      if (activeTab === 'selected') targetId = selectedSourceId;
+      else if ((activeTab === 'joined' || activeTab === 'library') && selectedSources.length > 0) {
+        targetId = selectedSources[0].sourceId;
       }
+      if (!targetId) { setRows([]); return; }
+
+      // Prefer pre-populated generated data (e.g., chat handoff)
+      const pre = generatedData[`source-${targetId}`];
+      if (pre && Array.isArray(pre.rows) && pre.rows.length > 0) {
+        if (!cancelled) setRows(pre.rows);
+        return;
+      }
+
+      // Otherwise fetch mock data via service
+      const entry = selectedSources.find(s => s.sourceId === targetId);
+      const schema = entry?.inlineSchema || getSchemaFor(targetId);
+      const fields = schema.map(f => f.name);
+      const data = await fetchData(targetId, 5, fields).catch(() => []);
+      if (!cancelled) setRows(data);
     }
     load();
     return () => { cancelled = true; };
-  }, [activeTab, selectedSourceId, selectedSources]);
+  }, [activeTab, selectedSourceId, selectedSources, generatedData]);
 
   const columns = useMemo(() => {
     if (activeTab === 'selected' && selectedSourceId) {
-      return getSchemaFor(selectedSourceId).map(f => ({ key: f.name, label: f.name, role: f.role }));
+      return getSchemaForSource(selectedSourceId).map(f => ({ key: f.name, label: f.name, role: f.role }));
     }
     if (activeTab === 'library') {
       return fieldLibrary.map(f => ({ key: f.qualifiedName, label: f.qualifiedName, role: f.role }));
     }
     if (selectedSources.length === 0) return [];
     const primaryId = selectedSources[0].sourceId;
-    return getSchemaFor(primaryId).map(f => ({ key: f.name, label: `${primaryId}.${f.name}`, role: f.role }));
+    return getSchemaForSource(primaryId).map(f => ({ key: f.name, label: `${primaryId}.${f.name}`, role: f.role }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, selectedSourceId, selectedSources, fieldLibrary]);
 
   if (collapsed) {
@@ -82,7 +96,13 @@ export default function DataPreviewDrawer() {
           ))}
         </div>
         <div className="preview-drawer__meta">
-          {rows.length > 0 && `Showing ${rows.length} of ${selectedSources[0] ? findSource(selectedSources[0].sourceId)?.rowCount?.toLocaleString() : '0'}`}
+          {rows.length > 0 && (() => {
+            const primary = selectedSources[0];
+            if (!primary) return null;
+            const entry = primary;
+            const total = entry.meta?.rowCount ?? findSource(primary.sourceId)?.rowCount ?? rows.length;
+            return `Showing ${rows.length} of ${total.toLocaleString()}`;
+          })()}
           <ForgeIconButton density="small" on-click={() => setCollapsed(true)} aria-label="Collapse">
             <ForgeIcon name="expand_more" />
           </ForgeIconButton>

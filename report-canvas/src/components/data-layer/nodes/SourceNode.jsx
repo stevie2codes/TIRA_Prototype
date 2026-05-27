@@ -17,8 +17,13 @@ const ROLE_ICONS = {
 export default function SourceNode({ data, selected }) {
   // New catalog-driven source
   if (data.sourceId) {
-    const meta = findSource(data.sourceId);
-    const schema = getSchemaFor(data.sourceId);
+    const catalogMeta = findSource(data.sourceId);
+    const catalogSchema = getSchemaFor(data.sourceId);
+    const schema = data.inlineSchema || catalogSchema;
+    const label = data.displayLabel || catalogMeta?.label || data.sourceId;
+    const meta = data.meta || catalogMeta;
+    const metaLine = meta ? `${meta.system} · ${(meta.rowCount || 0).toLocaleString()} rows` : '';
+
     const includedSet = new Set(data.includedFields || []);
     const includedFieldDefs = schema.filter(f => includedSet.has(f.name));
     const previewFields = includedFieldDefs.slice(0, 4);
@@ -28,8 +33,8 @@ export default function SourceNode({ data, selected }) {
       <div className={`source-node ${selected ? 'is-selected' : ''}`}>
         <Handle type="target" position={Position.Left} />
         <div className="source-node__header">
-          <div className="source-node__title">{meta?.label || data.sourceId}</div>
-          <div className="source-node__meta">{meta?.system} · {meta?.rowCount?.toLocaleString()} rows</div>
+          <div className="source-node__title">{label}</div>
+          <div className="source-node__meta">{metaLine}</div>
         </div>
         <div className="source-node__fields">
           {previewFields.map(f => (

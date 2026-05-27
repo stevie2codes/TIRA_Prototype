@@ -24,16 +24,19 @@ function SelectionMode() {
   }
 
   const sourceId = node.data.sourceId;
-  const meta = findSource(sourceId);
-  const schema = getSchemaFor(sourceId);
   const sel = selectedSources.find(s => s.sourceId === sourceId);
+  const catalogMeta = findSource(sourceId);
+  const catalogSchema = getSchemaFor(sourceId);
+  const schema = sel?.inlineSchema || catalogSchema;
+  const label = sel?.displayLabel || catalogMeta?.label || sourceId;
+  const meta = sel?.meta || catalogMeta;
   const includedSet = new Set(sel?.includedFields || []);
 
   return (
     <div className="inspector__pane">
-      <div className="inspector__section-label">{meta?.label?.toUpperCase()}</div>
+      <div className="inspector__section-label">{label?.toUpperCase()}</div>
       <div className="inspector__meta">
-        {meta?.system} · {meta?.type} · {meta?.rowCount?.toLocaleString()} rows
+        {meta?.system} · {meta?.type} · {(meta?.rowCount || 0).toLocaleString()} rows
       </div>
 
       <div className="inspector__subsection">

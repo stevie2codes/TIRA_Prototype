@@ -88,6 +88,9 @@ function DataLayerCanvasInner() {
           data: {
             sourceId: sel.sourceId,
             includedFields: sel.includedFields,
+            displayLabel: sel.displayLabel,
+            inlineSchema: sel.inlineSchema,
+            meta: sel.meta,
             configured: true,
           },
         });
