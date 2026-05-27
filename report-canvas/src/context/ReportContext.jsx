@@ -21,24 +21,43 @@ function readHandoffContext() {
 }
 
 /**
- * Heuristic: guess whether a column is a dimension or a measure based on its name.
+ * Best-effort role guess from a column name (fallback when no sample data).
  */
-function guessRole(name) {
+function guessRoleByName(name) {
   const lower = String(name).toLowerCase();
   const measureHints = ['count', 'total', 'amount', 'value', 'fee', 'sum', 'avg', 'budget', 'population', 'fine', 'spend', 'qty', 'quantity'];
   if (measureHints.some(h => lower.includes(h))) return 'measure';
-  // Common region/category columns in chat data are numeric counts — treat known dimension names explicitly
-  const dimensionHints = ['date', 'month', 'year', 'quarter', 'week', 'day', 'type', 'category', 'status', 'name', 'id', 'department', 'region', 'state', 'city'];
-  if (dimensionHints.some(h => lower.includes(h))) return 'dimension';
-  // Fall back: numeric-looking sample values mean measure. We don't have that info here, so default to measure for unknown columns.
-  return 'measure';
+  return 'dimension';
 }
 
 /**
- * Build a selectedSources entry from a handoff context. Includes an inline schema
- * so the new semantic-model UI can render fields, checkboxes, and previews without
- * the source being in the static catalog.
+ * Determine role from a sample value. Numbers are measures; everything else
+ * is a dimension.
  */
+function roleFromSample(sample) {
+  if (sample == null) return null;
+  if (typeof sample === 'number' && Number.isFinite(sample)) return 'measure';
+  if (typeof sample === 'string') return 'dimension';
+  if (typeof sample === 'boolean') return 'dimension';
+  return null;
+}
+
+/**
+ * Best-effort type guess from a column name + sample value.
+ */
+function typeFromSample(name, sample) {
+  if (typeof sample === 'number') {
+    const lower = String(name).toLowerCase();
+    if (lower.includes('amount') || lower.includes('fee') || lower.includes('budget') || lower.includes('value') || lower.includes('spend') || lower.includes('fine')) return 'currency';
+    return 'number';
+  }
+  if (typeof sample === 'string') {
+    if (/^\d{4}-\d{2}-\d{2}/.test(sample)) return 'date';
+    return 'string';
+  }
+  return 'string';
+}
+
 function buildHandoffSelectedSource(ctx) {
   if (!ctx) return null;
   const columns = ctx.columns || [];
@@ -47,16 +66,15 @@ function buildHandoffSelectedSource(ctx) {
   const sourceId = (ctx.dataSource || 'chat_query')
     .toLowerCase().replace(/[^a-z0-9_]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '') || 'chat_query';
 
+  const firstRow = (ctx.data && ctx.data[0]) || null;
+
   const inlineSchema = columns.map(c => {
     const name = c.property || c.header;
     const displayName = c.header || c.property;
-    return {
-      name,
-      displayName,
-      type: 'string',
-      role: guessRole(name),
-      description: '',
-    };
+    const sample = firstRow ? firstRow[name] : null;
+    const role = roleFromSample(sample) || guessRoleByName(name);
+    const type = typeFromSample(name, sample);
+    return { name, displayName, type, role, description: '' };
   });
 
   const includedFields = inlineSchema.map(f => f.name);
@@ -241,6 +259,10 @@ export function ReportProvider({ children }) {
     setMeasures(prev => prev.filter(m => m.id !== id));
   }, []);
 
+  const updateMeasure = useCallback((id, updates) => {
+    setMeasures(prev => prev.map(m => m.id === id ? { ...m, ...updates } : m));
+  }, []);
+
   const addParameter = useCallback((param) => {
     setParameters(prev => [...prev, { id: `param-${Date.now()}`, ...param }]);
   }, []);
@@ -317,6 +339,33 @@ export function ReportProvider({ children }) {
     }));
   }, []);
 
+  const addFieldToWidgetBinding = useCallback((widgetId, slot, fieldId) => {
+    setWidgets(prev => prev.map(w => {
+      if (w.id !== widgetId) return w;
+      const current = w.bindings?.[slot];
+      const arr = Array.isArray(current) ? current : (current ? [current] : []);
+      if (arr.includes(fieldId)) return w;
+      const bindings = { ...(w.bindings || {}), [slot]: [...arr, fieldId] };
+      return { ...w, bindings };
+    }));
+  }, []);
+
+  const removeFieldFromWidgetBinding = useCallback((widgetId, slot, fieldId) => {
+    setWidgets(prev => prev.map(w => {
+      if (w.id !== widgetId) return w;
+      const current = w.bindings?.[slot];
+      const arr = Array.isArray(current) ? current : (current ? [current] : []);
+      const next = arr.filter(id => id !== fieldId);
+      const bindings = { ...(w.bindings || {}) };
+      if (next.length === 0) {
+        delete bindings[slot];
+      } else {
+        bindings[slot] = next;
+      }
+      return { ...w, bindings };
+    }));
+  }, []);
+
   const removeWidget = useCallback((id) => {
     setWidgets(prev => prev.filter(w => w.id !== id));
     setSelectedWidgetId(null);
@@ -336,7 +385,7 @@ export function ReportProvider({ children }) {
       nodes, setNodes, edges, setEdges,
       selectedNodeId, setSelectedNodeId,
       widgets, setWidgets, addWidget, updateWidget, removeWidget, duplicateWidget,
-      setWidgetBinding,
+      setWidgetBinding, addFieldToWidgetBinding, removeFieldFromWidgetBinding,
       selectedWidgetId, setSelectedWidgetId,
       activeTab, setActiveTab,
       datasets, datasetNames,
@@ -355,7 +404,7 @@ export function ReportProvider({ children }) {
       selectedSources, setSelectedSources,
       addSourceFromCatalog, removeSource, toggleSourceField,
       relationships, setRelationships,
-      measures, setMeasures, addMeasure, removeMeasure,
+      measures, setMeasures, addMeasure, updateMeasure, removeMeasure,
       parameters, setParameters, addParameter, updateParameter, removeParameter,
       inspectorMode, setInspectorMode,
       fieldLibrary,

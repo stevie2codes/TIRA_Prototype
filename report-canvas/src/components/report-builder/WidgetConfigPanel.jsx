@@ -6,10 +6,10 @@ import { useReport } from '../../context/ReportContext.jsx';
 import { WIDGET_SLOTS, DATA_WIDGET_TYPES } from '../../data/widgetSlots.js';
 import './WidgetConfigPanel.css';
 
-function SlotEditor({ slot, widgetId, currentFieldId }) {
-  const { fieldLibrary, setWidgetBinding } = useReport();
-  const current = fieldLibrary.find(f => f.id === currentFieldId);
+function SlotEditor({ slot, widgetId, currentBinding }) {
+  const { fieldLibrary, setWidgetBinding, addFieldToWidgetBinding, removeFieldFromWidgetBinding } = useReport();
   const accept = slot.accept;
+  const isMulti = !!slot.multiple;
 
   const matches = (f) => {
     if (accept === 'any') return true;
@@ -29,10 +29,58 @@ function SlotEditor({ slot, widgetId, currentFieldId }) {
     if (!raw) return;
     const field = JSON.parse(raw);
     if (!matches(field)) return;
-    setWidgetBinding(widgetId, slot.id, field.id);
+    if (isMulti) addFieldToWidgetBinding(widgetId, slot.id, field.id);
+    else setWidgetBinding(widgetId, slot.id, field.id);
   };
 
   const eligible = fieldLibrary.filter(matches);
+
+  if (isMulti) {
+    const ids = Array.isArray(currentBinding) ? currentBinding : (currentBinding ? [currentBinding] : []);
+    const fields = ids.map(id => fieldLibrary.find(f => f.id === id)).filter(Boolean);
+
+    return (
+      <div className="binding-slot">
+        <label className="binding-slot__label">
+          {slot.label} {slot.optional && <span className="binding-slot__optional">(optional)</span>}
+        </label>
+        <div className="binding-slot__multi" onDragOver={onDragOver} onDrop={onDrop}>
+          {fields.length === 0 && (
+            <div className="binding-slot__drop binding-slot__drop--inline">Drag fields here</div>
+          )}
+          {fields.map(f => (
+            <span key={f.id} className={`binding-slot__chip binding-slot__chip--${f.role}`}>
+              <span>{f.qualifiedName}</span>
+              <button
+                className="binding-slot__clear"
+                onClick={() => removeFieldFromWidgetBinding(widgetId, slot.id, f.id)}
+                aria-label="Remove"
+              >×</button>
+            </span>
+          ))}
+        </div>
+        {eligible.length > 0 && (
+          <select
+            className="binding-slot__select"
+            value=""
+            onChange={(e) => {
+              const id = e.target.value;
+              if (id) addFieldToWidgetBinding(widgetId, slot.id, id);
+            }}
+          >
+            <option value="">＋ Add field…</option>
+            {eligible.filter(f => !ids.includes(f.id)).map(f => (
+              <option key={f.id} value={f.id}>{f.qualifiedName}</option>
+            ))}
+          </select>
+        )}
+      </div>
+    );
+  }
+
+  // Single-value slot (existing behavior)
+  const currentFieldId = currentBinding;
+  const current = fieldLibrary.find(f => f.id === currentFieldId);
 
   return (
     <div className="binding-slot">
@@ -104,7 +152,7 @@ export default function WidgetConfigPanel() {
               key={slot.id}
               slot={slot}
               widgetId={widget.id}
-              currentFieldId={widget.bindings?.[slot.id]}
+              currentBinding={widget.bindings?.[slot.id]}
             />
           ))}
         </div>

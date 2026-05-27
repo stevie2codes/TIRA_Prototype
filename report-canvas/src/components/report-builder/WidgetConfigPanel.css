@@ -66,3 +66,37 @@
   border-radius: 3px;
   background: #fff;
 }
+
+.binding-slot__multi {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 6px;
+  background: #fff;
+  border: 1px solid #d4dae3;
+  border-radius: 3px;
+  min-height: 32px;
+}
+
+.binding-slot__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 4px 2px 8px;
+  background: #eef2f7;
+  border-radius: 3px;
+  font-family: 'Menlo', 'Monaco', monospace;
+  font-size: 11px;
+  color: #1f2937;
+}
+
+.binding-slot__chip--dimension { background: #eaf2fb; color: #3b6ea5; }
+.binding-slot__chip--measure   { background: #e9f5ee; color: #2d8659; }
+
+.binding-slot__drop--inline {
+  flex: 1;
+  border: none;
+  padding: 4px 6px;
+  font-size: 11px;
+  color: #a8b2c0;
+}

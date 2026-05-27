@@ -39,9 +39,9 @@ export function pickSlotForField(widget, field) {
   for (const slot of slots) {
     const filled = widget.bindings?.[slot.id];
     if (filled && !slot.multiple) continue;
-    if (slot.accept === 'any') return slot.id;
-    if (slot.accept === field.role) return slot.id;
+    if (slot.accept === 'any') return { slotId: slot.id, multiple: !!slot.multiple };
+    if (slot.accept === field.role) return { slotId: slot.id, multiple: !!slot.multiple };
   }
   const fallback = slots.find(s => s.accept === field.role || s.accept === 'any');
-  return fallback?.id;
+  return fallback ? { slotId: fallback.id, multiple: !!fallback.multiple } : null;
 }

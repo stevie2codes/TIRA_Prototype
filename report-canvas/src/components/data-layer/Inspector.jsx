@@ -72,7 +72,7 @@ function SelectionMode() {
 
 function ModelMode() {
   const {
-    fieldLibrary, measures, addMeasure, removeMeasure,
+    fieldLibrary, measures, addMeasure, updateMeasure, removeMeasure,
     parameters, addParameter, updateParameter, removeParameter,
   } = useReport();
 
@@ -118,10 +118,24 @@ function ModelMode() {
           <div className="inspector__empty-small">No calculated measures yet.</div>
         ) : (
           measures.map(m => (
-            <div key={m.id} className="inspector__measure-row">
+            <div key={m.id} className="inspector__measure-row inspector__measure-row--editable">
               <div className="inspector__measure-main">
-                <div className="inspector__measure-name">{m.displayName || m.name}</div>
-                <code className="inspector__measure-expr">{m.expression}</code>
+                <ForgeTextField density="small">
+                  <label>Name</label>
+                  <input
+                    type="text"
+                    value={m.displayName || m.name}
+                    onChange={(e) => updateMeasure(m.id, { displayName: e.target.value, name: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '_') })}
+                  />
+                </ForgeTextField>
+                <ForgeTextField density="small">
+                  <label>Expression</label>
+                  <input
+                    type="text"
+                    value={m.expression}
+                    onChange={(e) => updateMeasure(m.id, { expression: e.target.value })}
+                  />
+                </ForgeTextField>
               </div>
               <ForgeIconButton density="small" on-click={() => removeMeasure(m.id)} aria-label="Remove">
                 <ForgeIcon name="close" />
@@ -143,6 +157,7 @@ function ModelMode() {
           <div key={p.id} className="inspector__param-row">
             <div className="inspector__param-main">
               <ForgeTextField density="small">
+                <label>Display name</label>
                 <input
                   type="text"
                   value={p.displayName}
@@ -155,6 +170,19 @@ function ModelMode() {
                 <ForgeOption value="date_range">Date Range</ForgeOption>
                 <ForgeOption value="multi_select">Multi-select</ForgeOption>
               </ForgeSelect>
+              <ForgeTextField density="small">
+                <label>Default value</label>
+                <input
+                  type="text"
+                  value={Array.isArray(p.defaultValue) ? p.defaultValue.join(', ') : String(p.defaultValue ?? '')}
+                  onChange={(e) => {
+                    const val = p.type === 'multi_select'
+                      ? e.target.value.split(',').map(s => s.trim()).filter(Boolean)
+                      : e.target.value;
+                    updateParameter(p.id, { defaultValue: val });
+                  }}
+                />
+              </ForgeTextField>
             </div>
             <ForgeIconButton density="small" on-click={() => removeParameter(p.id)} aria-label="Remove">
               <ForgeIcon name="close" />

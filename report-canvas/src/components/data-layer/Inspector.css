@@ -190,3 +190,13 @@
 .inspector__empty p {
   margin-top: 8px;
 }
+
+.inspector__measure-row--editable .inspector__measure-main {
+  gap: 6px;
+}
+
+.inspector__measure-row--editable forge-text-field,
+.inspector__param-row forge-text-field,
+.inspector__param-row forge-select {
+  width: 100%;
+}

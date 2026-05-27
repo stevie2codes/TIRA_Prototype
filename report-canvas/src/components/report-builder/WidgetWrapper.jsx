@@ -18,7 +18,7 @@ const RESIZE_EFFECTS = {
 };
 
 export default function WidgetWrapper({ widget, children }) {
-  const { selectedWidgetId, setSelectedWidgetId, updateWidget, setWidgetBinding } = useReport();
+  const { selectedWidgetId, setSelectedWidgetId, updateWidget, setWidgetBinding, addFieldToWidgetBinding } = useReport();
   const isSelected = selectedWidgetId === widget.id;
   const [contextMenu, setContextMenu] = useState(null);
   const [isResizing, setIsResizing] = useState(false);
@@ -111,8 +111,13 @@ export default function WidgetWrapper({ widget, children }) {
     e.preventDefault();
     e.stopPropagation();
     const field = JSON.parse(raw);
-    const slotId = pickSlotForField(widget, field);
-    if (slotId) setWidgetBinding(widget.id, slotId, field.id);
+    const pick = pickSlotForField(widget, field);
+    if (!pick) return;
+    if (pick.multiple) {
+      addFieldToWidgetBinding(widget.id, pick.slotId, field.id);
+    } else {
+      setWidgetBinding(widget.id, pick.slotId, field.id);
+    }
   };
 
   return (
