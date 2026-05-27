@@ -159,6 +159,19 @@ function DataLayerCanvasInner() {
 
   const isEmpty = nodes.length === 0;
 
+  const onEdgeClick = useCallback((event, edge) => {
+    event.stopPropagation();
+    const wrapper = reactFlowWrapper.current;
+    if (!wrapper) return;
+    const rect = wrapper.getBoundingClientRect();
+    setJoinPopover({
+      edgeId: edge.id,
+      sourceNodeId: edge.source,
+      targetNodeId: edge.target,
+      position: { x: rect.width / 2 - 160, y: rect.height / 2 - 160 },
+    });
+  }, []);
+
   return (
     <div className="data-layer-layout">
       <div ref={reactFlowWrapper} className="data-layer-canvas">
@@ -169,11 +182,12 @@ function DataLayerCanvasInner() {
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           onNodeClick={onNodeClick}
+          onEdgeClick={onEdgeClick}
           onPaneClick={onPaneClick}
           onDragOver={onDragOver}
           onDrop={onDrop}
           nodeTypes={nodeTypes}
-          defaultEdgeOptions={{ type: 'smoothstep' }}
+          defaultEdgeOptions={{ type: 'smoothstep', animated: true, style: { stroke: '#a05c2c', strokeWidth: 2 } }}
           connectionLineComponent={CustomConnectionLine}
           fitView
           proOptions={{ hideAttribution: true }}

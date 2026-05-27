@@ -31,7 +31,7 @@ export default function SourceNode({ data, selected }) {
 
     return (
       <div className={`source-node ${selected ? 'is-selected' : ''}`}>
-        <Handle type="target" position={Position.Left} />
+        <Handle type="target" position={Position.Left} className="source-node__handle source-node__handle--target" />
         <div className="source-node__header">
           <div className="source-node__title">{label}</div>
           <div className="source-node__meta">{metaLine}</div>
@@ -52,7 +52,7 @@ export default function SourceNode({ data, selected }) {
             <div className="source-node__field source-node__field--empty">No fields selected</div>
           )}
         </div>
-        <Handle type="source" position={Position.Right} />
+        <Handle type="source" position={Position.Right} className="source-node__handle source-node__handle--source" />
       </div>
     );
   }

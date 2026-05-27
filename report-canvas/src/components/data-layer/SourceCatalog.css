@@ -155,6 +155,114 @@
   font-style: italic;
 }
 
+/* Prominent handles so users can find where to drag from */
+.source-node__handle {
+  width: 12px !important;
+  height: 12px !important;
+  background: #3b6ea5 !important;
+  border: 2px solid #fff !important;
+  box-shadow: 0 0 0 1px #3b6ea5;
+}
+
+.source-node__handle--target {
+  left: -6px !important;
+}
+
+.source-node__handle--source {
+  right: -6px !important;
+}
+
+.source-node__handle:hover {
+  background: #c44569 !important;
+  box-shadow: 0 0 0 1px #c44569, 0 0 0 4px rgba(196, 69, 105, 0.15);
+  cursor: crosshair;
+}
+
+/* Hint label next to the source handle */
+.source-node {
+  position: relative;
+}
+
+.source-node::after {
+  content: 'drag to join →';
+  position: absolute;
+  right: -76px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 9px;
+  color: #9ca3af;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  white-space: nowrap;
+}
+
+.source-node:hover::after {
+  opacity: 1;
+}
+
+/* Join popover */
+.join-popover {
+  position: absolute;
+  z-index: 100;
+  background: #fff;
+  border: 1px solid #d4dae3;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  padding: 16px;
+  width: 320px;
+  font-size: 12px;
+}
+
+.join-popover-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 8px;
+}
+
+.join-popover-summary {
+  font-size: 11px;
+  color: #6c7a8c;
+  margin-bottom: 12px;
+  padding: 6px 8px;
+  background: #f4f6f9;
+  border-radius: 4px;
+}
+
+.join-popover-field {
+  margin-bottom: 10px;
+}
+
+.join-popover-field forge-select {
+  width: 100%;
+}
+
+.join-popover-empty {
+  font-size: 11px;
+  color: #c44569;
+  background: #fef0f3;
+  padding: 8px 10px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+}
+
+.join-popover-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+  margin-top: 12px;
+  border-top: 1px solid #eef2f7;
+  padding-top: 10px;
+}
+
+.join-popover-actions forge-button:first-child:has([type="outlined"]) {
+  margin-right: auto;
+}
+
 .data-layer-tab {
   display: grid;
   grid-template-columns: 240px 1fr 300px;
