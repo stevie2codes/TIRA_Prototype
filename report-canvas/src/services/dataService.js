@@ -2,6 +2,7 @@
  * Static mock data service — replaces the gov-data-generator API
  * so the prototype works standalone without a backend.
  */
+import { getSchemaFor } from '../data/sourceSchemas.js';
 
 const MOCK_TYPES = [
   { type: 'departments', label: 'Departments', category: 'Reference', description: 'Government department directory', fieldCount: 3 },
@@ -69,6 +70,17 @@ export async function fetchSchema(type) {
 
 export async function fetchData(type, count = 50, fields = []) {
   let rows = MOCK_ROWS[type] || [];
+
+  // Fallback: if no explicit mock exists for this type, generate rows
+  // deterministically from the catalog schema. Lets every catalog source
+  // be previewable without per-source mock-data maintenance.
+  if (rows.length === 0) {
+    const schema = getSchemaFor(type);
+    if (schema.length > 0) {
+      rows = generateRowsFromSchema(type, schema, Math.max(8, Math.min(count, 20)));
+    }
+  }
+
   if (fields.length > 0) {
     rows = rows.map(row => {
       const filtered = {};
@@ -77,4 +89,93 @@ export async function fetchData(type, count = 50, fields = []) {
     });
   }
   return Promise.resolve(rows.slice(0, count));
+}
+
+/**
+ * Tiny deterministic PRNG so the same (sourceId, rowIndex, fieldName) tuple
+ * always produces the same value — preview rows are stable across renders.
+ */
+function seeded(sourceId, i, field) {
+  const s = `${sourceId}|${i}|${field}`;
+  let h = 2166136261;
+  for (let k = 0; k < s.length; k++) {
+    h ^= s.charCodeAt(k);
+    h = Math.imul(h, 16777619);
+  }
+  return (h >>> 0) / 0xffffffff;
+}
+
+const ENUM_VALUES = {
+  type: ['Residential', 'Commercial', 'Industrial', 'Mixed-use'],
+  status: ['Open', 'Closed', 'In progress', 'Pending'],
+  result: ['Pass', 'Fail', 'Re-inspect'],
+  category: ['Personnel', 'Operations', 'Capital', 'Maintenance'],
+  // fallback used if field name doesn't match any of the above
+  _default: ['Option A', 'Option B', 'Option C', 'Option D'],
+};
+
+const NAME_SAMPLES = {
+  'permit_applications': ['Smith Residence', 'Hartwell Plaza', 'Westside Industrial', 'Downtown Lofts', 'River Park Mixed-Use'],
+  'department_budgets':  ['Public Works', 'Planning & Zoning', 'Code Enforcement', 'Parks & Recreation', 'Building'],
+  'inspection_results':  ['Routine', 'Pre-CO', 'Complaint-driven', 'Annual'],
+  'citizen_complaints':  ['Noise', 'Trash', 'Building violation', 'Parking'],
+  'code_violations':     ['Overgrown lot', 'Illegal dumping', 'Building w/o permit', 'Junk vehicle'],
+  'budget_actuals':      ['Personnel', 'Operations', 'Capital', 'Maintenance'],
+  'employee_roster':     ['Inspector', 'Planner', 'Supervisor', 'Administrator'],
+  'court_cases':         ['Civil', 'Criminal', 'Traffic', 'Small Claims'],
+  'court_dockets':       ['Morning', 'Afternoon', 'Special', 'Continued'],
+};
+
+function generateRowsFromSchema(sourceId, schema, count) {
+  const rows = [];
+  for (let i = 0; i < count; i++) {
+    const row = {};
+    for (const field of schema) {
+      row[field.name] = valueFor(sourceId, i, field);
+    }
+    rows.push(row);
+  }
+  return rows;
+}
+
+function valueFor(sourceId, i, field) {
+  const r = seeded(sourceId, i, field.name);
+  const name = field.name.toLowerCase();
+  const type = field.type;
+
+  // ID-like fields: prefix + index
+  if (name === 'id') return `${sourceId.split('_')[0].slice(0, 3).toUpperCase()}-${String(i + 101).padStart(3, '0')}`;
+  if (name.endsWith('_id')) return Math.floor(r * 50) + 1;
+
+  // Date fields
+  if (type === 'date') {
+    const days = Math.floor(r * 365);
+    const d = new Date(2026, 0, 1);
+    d.setDate(d.getDate() - days);
+    return d.toISOString().slice(0, 10);
+  }
+
+  // Currency / numeric fields
+  if (type === 'currency') {
+    const base = name.includes('budget') ? 1_000_000 : name.includes('fee') || name.includes('fine') ? 500 : 100_000;
+    return Math.round(r * base + base * 0.2);
+  }
+  if (type === 'number') {
+    if (name.includes('population')) return Math.round(5_000 + r * 95_000);
+    if (name.includes('year') || name === 'fiscal_year') return 2024 + (i % 3);
+    return Math.round(r * 1000);
+  }
+
+  // Enums
+  if (type === 'enum') {
+    const pool = ENUM_VALUES[name] || ENUM_VALUES._default;
+    return pool[Math.floor(r * pool.length)];
+  }
+
+  // String: prefer realistic samples for known sources, otherwise generic
+  if (name === 'name') {
+    const samples = NAME_SAMPLES[sourceId];
+    if (samples) return samples[i % samples.length];
+  }
+  return `${field.displayName} ${i + 1}`;
 }
