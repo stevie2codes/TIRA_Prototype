@@ -1,5 +1,5 @@
 // Forge components: ForgeIcon, ForgeIconButton
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { ForgeIcon, ForgeIconButton } from '@tylertech/forge-react';
 import { useReport } from '../../context/ReportContext.jsx';
 import { fetchData } from '../../services/dataService.js';
@@ -12,11 +12,39 @@ const TABS = [
   { id: 'model',  label: 'Model output',   desc: 'Rows your report and the chat AI will see (joins applied)' },
 ];
 
+const MIN_HEIGHT = 120;
+const MAX_HEIGHT = 720;
+const DEFAULT_HEIGHT = 360;
+
 export default function DataPreviewDrawer() {
   const { nodes, selectedNodeId, selectedSources, fieldLibrary, generatedData } = useReport();
   const [activeTab, setActiveTab] = useState('model');
   const [collapsed, setCollapsed] = useState(false);
   const [rows, setRows] = useState([]);
+  const [height, setHeight] = useState(DEFAULT_HEIGHT);
+  const drawerRef = useRef(null);
+
+  // Resize: drag the top handle up/down
+  const onResizeStart = useCallback((e) => {
+    e.preventDefault();
+    const startY = e.clientY;
+    const startHeight = height;
+    document.body.style.cursor = 'ns-resize';
+    document.body.style.userSelect = 'none';
+
+    const onMove = (ev) => {
+      const next = Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, startHeight - (ev.clientY - startY)));
+      setHeight(next);
+    };
+    const onUp = () => {
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  }, [height]);
 
   const selectedNode = nodes.find(n => n.id === selectedNodeId);
   const selectedSourceId = selectedNode?.data?.sourceId;
@@ -82,7 +110,14 @@ export default function DataPreviewDrawer() {
   }
 
   return (
-    <div className="preview-drawer">
+    <div className="preview-drawer" ref={drawerRef} style={{ height: `${height}px`, flex: `0 0 ${height}px` }}>
+      <div
+        className="preview-drawer__resize"
+        onMouseDown={onResizeStart}
+        title="Drag to resize"
+      >
+        <div className="preview-drawer__resize-grip" />
+      </div>
       <div className="preview-drawer__top">
         <div className="preview-drawer__top-label">DATA PREVIEW</div>
         <div className="preview-drawer__top-help">

@@ -1,12 +1,40 @@
 .preview-drawer {
   border-top: 1px solid #e3e8ee;
   background: #fff;
-  height: 280px;
-  flex: 0 0 280px;
   display: flex;
   flex-direction: column;
   font-size: 11px;
   min-height: 0;
+  /* height + flex set inline via React state */
+  position: relative;
+}
+
+/* Drag handle at the top to resize the drawer */
+.preview-drawer__resize {
+  position: relative;
+  height: 6px;
+  cursor: ns-resize;
+  background: transparent;
+  flex: 0 0 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-top: 1px solid #e3e8ee;
+}
+
+.preview-drawer__resize:hover {
+  background: #eef2f7;
+}
+
+.preview-drawer__resize-grip {
+  width: 36px;
+  height: 3px;
+  border-radius: 2px;
+  background: #c4cdd9;
+}
+
+.preview-drawer__resize:hover .preview-drawer__resize-grip {
+  background: #3b6ea5;
 }
 
 .preview-drawer__top {
@@ -103,28 +131,43 @@
 .preview-drawer__table-wrap {
   flex: 1;
   overflow: auto;
+  min-height: 0;
 }
 
 .preview-drawer__table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   font-size: 11px;
 }
 
 .preview-drawer__table th {
   text-align: left;
   background: #f4f6f9;
-  padding: 6px 10px;
+  padding: 8px 12px;
   font-weight: 600;
   color: #3a4a5c;
-  border-bottom: 1px solid #e3e8ee;
+  border-bottom: 1px solid #d4dae3;
   white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 .preview-drawer__table td {
-  padding: 6px 10px;
+  padding: 7px 12px;
   border-bottom: 1px solid #eef2f7;
   color: #3a4a5c;
+  white-space: nowrap;
+}
+
+/* Zebra striping for legibility */
+.preview-drawer__table tbody tr:nth-child(even) td {
+  background: #fafbfc;
+}
+
+.preview-drawer__table tbody tr:hover td {
+  background: #f4f6f9;
 }
 
 .preview-drawer__role-tag {
