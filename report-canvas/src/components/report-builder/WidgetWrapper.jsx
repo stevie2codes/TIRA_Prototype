@@ -4,6 +4,33 @@ import { useDraggable } from '@dnd-kit/core';
 import { useReport } from '../../context/ReportContext.jsx';
 import WidgetContextMenu from './WidgetContextMenu.jsx';
 
+const SLOTS_FOR_TYPE = {
+  chart: [
+    { id: 'xAxis',   accept: 'dimension' },
+    { id: 'yAxis',   accept: 'measure'   },
+    { id: 'groupBy', accept: 'dimension' },
+  ],
+  table: [
+    { id: 'columns', accept: 'any', multiple: true },
+  ],
+  kpi: [
+    { id: 'value', accept: 'measure'   },
+    { id: 'label', accept: 'dimension' },
+  ],
+};
+
+function pickSlotForField(widget, field) {
+  const slots = SLOTS_FOR_TYPE[widget.type] || [];
+  for (const slot of slots) {
+    const filled = widget.bindings?.[slot.id];
+    if (filled && !slot.multiple) continue;
+    if (slot.accept === 'any') return slot.id;
+    if (slot.accept === field.role) return slot.id;
+  }
+  const fallback = slots.find(s => s.accept === field.role || s.accept === 'any');
+  return fallback?.id;
+}
+
 // Maps resize handle direction to which dimensions it affects
 const RESIZE_EFFECTS = {
   e:  { col: 0, row: 0, colSpan: 1, rowSpan: 0 },
@@ -17,7 +44,7 @@ const RESIZE_EFFECTS = {
 };
 
 export default function WidgetWrapper({ widget, children }) {
-  const { selectedWidgetId, setSelectedWidgetId, updateWidget } = useReport();
+  const { selectedWidgetId, setSelectedWidgetId, updateWidget, setWidgetBinding } = useReport();
   const isSelected = selectedWidgetId === widget.id;
   const [contextMenu, setContextMenu] = useState(null);
   const [isResizing, setIsResizing] = useState(false);
@@ -97,6 +124,23 @@ export default function WidgetWrapper({ widget, children }) {
     document.querySelector('.report-grid')?.classList.add('dragging');
   }, [widget, updateWidget]);
 
+  const onFieldDragOver = (e) => {
+    if (Array.from(e.dataTransfer.types).includes('application/x-tira-field')) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+    }
+  };
+
+  const onFieldDrop = (e) => {
+    const raw = e.dataTransfer.getData('application/x-tira-field');
+    if (!raw) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const field = JSON.parse(raw);
+    const slotId = pickSlotForField(widget, field);
+    if (slotId) setWidgetBinding(widget.id, slotId, field.id);
+  };
+
   return (
     <div
       ref={(el) => { setNodeRef(el); resizeRef.current = el; }}
@@ -104,6 +148,8 @@ export default function WidgetWrapper({ widget, children }) {
       style={style}
       onClick={handleClick}
       onContextMenu={handleContextMenu}
+      onDragOver={onFieldDragOver}
+      onDrop={onFieldDrop}
     >
       <div className="widget-drag-handle" {...listeners} {...attributes}>
         <span className="drag-dots">⋮⋮</span>
