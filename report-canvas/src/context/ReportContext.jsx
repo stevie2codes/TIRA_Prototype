@@ -1,6 +1,8 @@
 import { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
 import { fetchDataTypes, fetchData } from '../services/dataService.js';
 import { DEFAULT_MARGINS } from '../constants/pageSettings.js';
+import { getSchemaFor } from '../data/sourceSchemas.js';
+import { buildFieldLibrary } from '../utils/fieldLibrary.js';
 
 const ReportContext = createContext(null);
 
@@ -157,6 +159,77 @@ export function ReportProvider({ children }) {
   });
   const [loadingNodes, setLoadingNodes] = useState(new Set());
 
+  // Semantic-model state (new — runs alongside existing nodes/edges for now)
+  // selectedSources: [{ sourceId, includedFields: [fieldName, ...] }]
+  const [selectedSources, setSelectedSources] = useState([]);
+
+  // relationships: [{ id, leftSourceId, leftField, rightSourceId, rightField, joinType, cardinality }]
+  const [relationships, setRelationships] = useState([]);
+
+  // measures: [{ id, name, displayName, expression, type }]
+  const [measures, setMeasures] = useState([]);
+
+  // parameters: [{ id, name, displayName, type, defaultValue, options? }]
+  const [parameters, setParameters] = useState([
+    { id: 'param-date-range', name: 'date_range',  displayName: 'Date Range',  type: 'date_range', defaultValue: 'last_90d' },
+    { id: 'param-department', name: 'department',  displayName: 'Department',  type: 'multi_select', defaultValue: ['all'] },
+  ]);
+
+  // Inspector mode in the Data Layer tab: 'selection' | 'model'
+  const [inspectorMode, setInspectorMode] = useState('model');
+
+  // Add a source from catalog to the model (idempotent on sourceId).
+  const addSourceFromCatalog = useCallback((sourceId) => {
+    setSelectedSources(prev => {
+      if (prev.some(s => s.sourceId === sourceId)) return prev;
+      const schema = getSchemaFor(sourceId);
+      // Default: include all fields
+      const includedFields = schema.map(f => f.name);
+      return [...prev, { sourceId, includedFields }];
+    });
+  }, []);
+
+  const removeSource = useCallback((sourceId) => {
+    setSelectedSources(prev => prev.filter(s => s.sourceId !== sourceId));
+    setRelationships(prev => prev.filter(r => r.leftSourceId !== sourceId && r.rightSourceId !== sourceId));
+  }, []);
+
+  const toggleSourceField = useCallback((sourceId, fieldName) => {
+    setSelectedSources(prev => prev.map(s => {
+      if (s.sourceId !== sourceId) return s;
+      const included = s.includedFields.includes(fieldName)
+        ? s.includedFields.filter(f => f !== fieldName)
+        : [...s.includedFields, fieldName];
+      return { ...s, includedFields: included };
+    }));
+  }, []);
+
+  const addMeasure = useCallback((measure) => {
+    setMeasures(prev => [...prev, { id: `measure-${Date.now()}`, ...measure }]);
+  }, []);
+
+  const removeMeasure = useCallback((id) => {
+    setMeasures(prev => prev.filter(m => m.id !== id));
+  }, []);
+
+  const addParameter = useCallback((param) => {
+    setParameters(prev => [...prev, { id: `param-${Date.now()}`, ...param }]);
+  }, []);
+
+  const updateParameter = useCallback((id, updates) => {
+    setParameters(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
+  }, []);
+
+  const removeParameter = useCallback((id) => {
+    setParameters(prev => prev.filter(p => p.id !== id));
+  }, []);
+
+  // Derived: the unified Field Library
+  const fieldLibrary = useMemo(
+    () => buildFieldLibrary(selectedSources, measures),
+    [selectedSources, measures]
+  );
+
   // Fetch available data types on mount
   useEffect(() => {
     fetchDataTypes()
@@ -235,6 +308,14 @@ export function ReportProvider({ children }) {
       margins, setMargins,
       rightPanelTab, setRightPanelTab,
       showRulers, setShowRulers,
+      // Semantic-model state
+      selectedSources, setSelectedSources,
+      addSourceFromCatalog, removeSource, toggleSourceField,
+      relationships, setRelationships,
+      measures, setMeasures, addMeasure, removeMeasure,
+      parameters, setParameters, addParameter, updateParameter, removeParameter,
+      inspectorMode, setInspectorMode,
+      fieldLibrary,
     }}>
       {children}
     </ReportContext.Provider>
