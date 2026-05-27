@@ -123,7 +123,8 @@ export default function JoinConfigPopover({ edgeId, sourceNodeId, targetNodeId, 
   const noFields = sourceFields.length === 0 || targetFields.length === 0;
 
   return (
-    <div className="join-popover" style={{ left: position.x, top: position.y }}>
+    <div className="join-popover-backdrop" onClick={handleCancel}>
+      <div className="join-popover" onClick={(e) => e.stopPropagation()}>
       <h3 className="join-popover-title">
         <ForgeIcon name="link" />
         Configure Join
@@ -176,6 +177,7 @@ export default function JoinConfigPopover({ edgeId, sourceNodeId, targetNodeId, 
         <ForgeButton type="raised" on-click={handleApply} disabled={noFields}>
           Apply
         </ForgeButton>
+      </div>
       </div>
     </div>
   );

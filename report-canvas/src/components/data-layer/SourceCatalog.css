@@ -201,16 +201,29 @@
   opacity: 1;
 }
 
-/* Join popover */
+/* Join popover — viewport-centered modal so it can't get pushed off-screen */
+.join-popover-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.35);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
 .join-popover {
-  position: absolute;
-  z-index: 100;
+  position: relative;
   background: #fff;
   border: 1px solid #d4dae3;
   border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  padding: 16px;
-  width: 320px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+  padding: 20px;
+  width: 380px;
+  max-width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
   font-size: 12px;
 }
 
