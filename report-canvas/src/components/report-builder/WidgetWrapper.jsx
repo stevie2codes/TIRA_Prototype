@@ -2,34 +2,8 @@
 import { useState, useCallback, useRef } from 'react';
 import { useDraggable } from '@dnd-kit/core';
 import { useReport } from '../../context/ReportContext.jsx';
+import { pickSlotForField } from '../../data/widgetSlots.js';
 import WidgetContextMenu from './WidgetContextMenu.jsx';
-
-const SLOTS_FOR_TYPE = {
-  chart: [
-    { id: 'xAxis',   accept: 'dimension' },
-    { id: 'yAxis',   accept: 'measure'   },
-    { id: 'groupBy', accept: 'dimension' },
-  ],
-  table: [
-    { id: 'columns', accept: 'any', multiple: true },
-  ],
-  kpi: [
-    { id: 'value', accept: 'measure'   },
-    { id: 'label', accept: 'dimension' },
-  ],
-};
-
-function pickSlotForField(widget, field) {
-  const slots = SLOTS_FOR_TYPE[widget.type] || [];
-  for (const slot of slots) {
-    const filled = widget.bindings?.[slot.id];
-    if (filled && !slot.multiple) continue;
-    if (slot.accept === 'any') return slot.id;
-    if (slot.accept === field.role) return slot.id;
-  }
-  const fallback = slots.find(s => s.accept === field.role || s.accept === 'any');
-  return fallback?.id;
-}
 
 // Maps resize handle direction to which dimensions it affects
 const RESIZE_EFFECTS = {

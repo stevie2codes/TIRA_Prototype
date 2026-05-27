@@ -3,24 +3,8 @@ import {
   ForgeTextField, ForgeSelect, ForgeOption, ForgeSlider, ForgeSwitch, ForgeIcon,
 } from '@tylertech/forge-react';
 import { useReport } from '../../context/ReportContext.jsx';
+import { WIDGET_SLOTS, DATA_WIDGET_TYPES } from '../../data/widgetSlots.js';
 import './WidgetConfigPanel.css';
-
-const WIDGET_SLOTS = {
-  chart: [
-    { id: 'xAxis',   label: 'X axis',     accept: 'dimension' },
-    { id: 'yAxis',   label: 'Y axis',     accept: 'measure'   },
-    { id: 'groupBy', label: 'Group by',   accept: 'dimension', optional: true },
-  ],
-  table: [
-    { id: 'columns', label: 'Columns',    accept: 'any', multiple: true },
-  ],
-  kpi: [
-    { id: 'value',   label: 'Value',      accept: 'measure'   },
-    { id: 'label',   label: 'Label',      accept: 'dimension', optional: true },
-  ],
-};
-
-const DATA_WIDGET_TYPES = Object.keys(WIDGET_SLOTS);
 
 function SlotEditor({ slot, widgetId, currentFieldId }) {
   const { fieldLibrary, setWidgetBinding } = useReport();
