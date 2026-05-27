@@ -122,46 +122,50 @@ export default function AppShell() {
           </ForgeButtonToggle>
         </ForgeButtonToggleGroup>
         <div className="mode-bar-actions">
-          <div className="designer-template-picker" ref={templatePickerRef} style={{ position: 'relative' }}>
-            <button
-              className={`designer-template-btn${activeTemplate ? ' has-template' : ''}`}
-              onClick={(e) => { e.stopPropagation(); setTemplateDropdownOpen(o => !o); }}
-              style={activeTemplate ? { borderColor: activeTemplate.theme.primary, color: activeTemplate.theme.primary } : {}}
-            >
-              <ForgeIcon name="palette" />
-              <span>{activeTemplate ? `Template: ${activeTemplate.name}` : 'Template: None'}</span>
-              <ForgeIcon name="arrow_drop_down" />
-            </button>
-            {templateDropdownOpen && (
-              <div className="designer-template-dropdown" onClick={() => setTemplateDropdownOpen(false)}>
+          {activeTab === 1 && (
+            <>
+              <div className="designer-template-picker" ref={templatePickerRef} style={{ position: 'relative' }}>
                 <button
-                  className="designer-template-option"
-                  onClick={() => { setActiveTemplateId(null); setTemplateDropdownOpen(false); }}
+                  className={`designer-template-btn${activeTemplate ? ' has-template' : ''}`}
+                  onClick={(e) => { e.stopPropagation(); setTemplateDropdownOpen(o => !o); }}
+                  style={activeTemplate ? { borderColor: activeTemplate.theme.primary, color: activeTemplate.theme.primary } : {}}
                 >
-                  <span className="template-color-dot" style={{ background: '#9e9e9e' }} />
-                  <span>None</span>
+                  <ForgeIcon name="palette" />
+                  <span>{activeTemplate ? `Template: ${activeTemplate.name}` : 'Template: None'}</span>
+                  <ForgeIcon name="arrow_drop_down" />
                 </button>
-                <div className="designer-template-divider" />
-                {outputTemplates.map(t => (
-                  <button
-                    key={t.id}
-                    className={`designer-template-option${activeTemplateId === t.id ? ' active' : ''}`}
-                    onClick={() => { setActiveTemplateId(t.id); setTemplateDropdownOpen(false); }}
-                  >
-                    <span className="template-color-dot" style={{ background: t.theme.primary }} />
-                    <span>{t.name}</span>
-                  </button>
-                ))}
+                {templateDropdownOpen && (
+                  <div className="designer-template-dropdown" onClick={() => setTemplateDropdownOpen(false)}>
+                    <button
+                      className="designer-template-option"
+                      onClick={() => { setActiveTemplateId(null); setTemplateDropdownOpen(false); }}
+                    >
+                      <span className="template-color-dot" style={{ background: '#9e9e9e' }} />
+                      <span>None</span>
+                    </button>
+                    <div className="designer-template-divider" />
+                    {outputTemplates.map(t => (
+                      <button
+                        key={t.id}
+                        className={`designer-template-option${activeTemplateId === t.id ? ' active' : ''}`}
+                        onClick={() => { setActiveTemplateId(t.id); setTemplateDropdownOpen(false); }}
+                      >
+                        <span className="template-color-dot" style={{ background: t.theme.primary }} />
+                        <span>{t.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-          <ForgeButton variant="outlined" on-click={() => window.print()}>
-            <ForgeIcon name="print" slot="leading" />
-            Print
-          </ForgeButton>
-          <ForgeButton variant="raised" on-click={handleSave}>
-            Publish
-          </ForgeButton>
+              <ForgeButton variant="outlined" on-click={() => window.print()}>
+                <ForgeIcon name="print" slot="leading" />
+                Print
+              </ForgeButton>
+              <ForgeButton variant="raised" on-click={handleSave}>
+                Publish
+              </ForgeButton>
+            </>
+          )}
         </div>
       </div>
 
