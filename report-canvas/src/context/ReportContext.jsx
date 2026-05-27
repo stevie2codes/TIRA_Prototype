@@ -63,6 +63,19 @@ function buildHandoffNodes(ctx) {
 }
 
 /**
+ * Try to map a handoff context's dataSource to a known catalog source.
+ * If we can match, return a selectedSources entry. Otherwise return null.
+ * For prototype-grade matching: lowercase + replace non-alphanumerics with underscore.
+ */
+function buildHandoffSelectedSource(ctx) {
+  if (!ctx) return null;
+  const fields = (ctx.columns || []).map(c => c.property || c.header);
+  const ds = (ctx.dataSource || '').toLowerCase().replace(/[^a-z0-9_]/g, '_');
+  if (!ds) return null;
+  return { sourceId: ds, includedFields: fields, isSynthetic: true };
+}
+
+/**
  * Build initial report-builder widgets from handoff context.
  */
 function buildHandoffWidgets(ctx) {
@@ -161,7 +174,10 @@ export function ReportProvider({ children }) {
 
   // Semantic-model state (new — runs alongside existing nodes/edges for now)
   // selectedSources: [{ sourceId, includedFields: [fieldName, ...] }]
-  const [selectedSources, setSelectedSources] = useState([]);
+  const [selectedSources, setSelectedSources] = useState(() => {
+    const handoff = buildHandoffSelectedSource(handoffContext);
+    return handoff ? [handoff] : [];
+  });
 
   // relationships: [{ id, leftSourceId, leftField, rightSourceId, rightField, joinType, cardinality }]
   const [relationships, setRelationships] = useState([]);
