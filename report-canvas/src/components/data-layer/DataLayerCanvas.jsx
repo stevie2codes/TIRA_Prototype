@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ReactFlow, Controls, Background,
   addEdge, applyNodeChanges, applyEdgeChanges,
-  useReactFlow,
+  useReactFlow, ReactFlowProvider,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { ForgeIcon } from '@tylertech/forge-react';
@@ -13,6 +13,8 @@ import TransformNode from './nodes/TransformNode.jsx';
 import OutputNode from './nodes/OutputNode.jsx';
 import JoinConfigPopover from './JoinConfigPopover.jsx';
 import DataPreviewDrawer from './DataPreviewDrawer.jsx';
+import SourceCatalog from './SourceCatalog.jsx';
+import Inspector from './Inspector.jsx';
 
 const nodeTypes = {
   source: SourceNode,
@@ -217,12 +219,16 @@ function DataLayerCanvasInner() {
 }
 
 // Wrap in ReactFlowProvider so useReactFlow() works
-import { ReactFlowProvider } from '@xyflow/react';
-
 export default function DataLayerCanvas() {
   return (
     <ReactFlowProvider>
-      <DataLayerCanvasInner />
+      <div className="data-layer-tab">
+        <SourceCatalog />
+        <div className="data-layer-tab__main">
+          <DataLayerCanvasInner />
+        </div>
+        <Inspector />
+      </div>
     </ReactFlowProvider>
   );
 }

@@ -7,9 +7,7 @@ import {
 import { useReport } from '../context/ReportContext.jsx';
 import { outputTemplates, getTemplateById } from '../../../src/output-templates.js';
 import DataLayerCanvas from './data-layer/DataLayerCanvas.jsx';
-import SourceCatalog from './data-layer/SourceCatalog.jsx';
 import PropertiesPanel from './PropertiesPanel.jsx';
-import Inspector from './data-layer/Inspector.jsx';
 import ReportCanvas from './report-builder/ReportCanvas.jsx';
 import WidgetPalette from './report-builder/WidgetPalette.jsx';
 import CanvasToolbar from './report-builder/CanvasToolbar.jsx';
@@ -168,62 +166,62 @@ export default function AppShell() {
       </div>
 
       <div className="canvas-area">
-        <div className={`left-sidebar${leftOpen ? '' : ' collapsed'}`}>
-          <div className="sidebar-toggle-header">
+        {activeTab === 1 && (
+          <div className={`left-sidebar${leftOpen ? '' : ' collapsed'}`}>
+            <div className="sidebar-toggle-header">
+              {leftOpen && (
+                <div className="sidebar-header-group">
+                  <span className="sidebar-title">Widgets</span>
+                  <span className="sidebar-subtitle">Click or drag to add</span>
+                </div>
+              )}
+              <ForgeIconButton on-click={() => setLeftOpen(o => !o)} density="small">
+                <ForgeIcon name={leftOpen ? 'chevron_left' : 'chevron_right'} />
+              </ForgeIconButton>
+            </div>
             {leftOpen && (
-              <div className="sidebar-header-group">
-                <span className="sidebar-title">
-                  {activeTab === 0 ? 'Sources' : 'Widgets'}
-                </span>
-                <span className="sidebar-subtitle">
-                  {activeTab === 0 ? 'Drag onto canvas' : 'Click or drag to add'}
-                </span>
+              <div className="sidebar-body">
+                <WidgetPalette />
               </div>
             )}
-            <ForgeIconButton on-click={() => setLeftOpen(o => !o)} density="small">
-              <ForgeIcon name={leftOpen ? 'chevron_left' : 'chevron_right'} />
-            </ForgeIconButton>
           </div>
-          {leftOpen && (
-            <div className="sidebar-body">
-              {activeTab === 0 ? <SourceCatalog /> : <WidgetPalette />}
-            </div>
-          )}
-        </div>
+        )}
         <div className="canvas-main">
           {activeTab === 1 && <CanvasToolbar />}
           {activeTab === 0 ? <DataLayerCanvas /> : <ReportCanvas />}
         </div>
-        <div className={`right-sidebar${rightOpen ? '' : ' collapsed'}`}>
-          <div className="sidebar-toggle-header">
-            <ForgeIconButton on-click={() => setRightOpen(o => !o)} density="small">
-              <ForgeIcon name={rightOpen ? 'chevron_right' : 'chevron_left'} />
-            </ForgeIconButton>
+        {activeTab === 1 && (
+          <div className={`right-sidebar${rightOpen ? '' : ' collapsed'}`}>
+            <div className="sidebar-toggle-header">
+              <ForgeIconButton on-click={() => setRightOpen(o => !o)} density="small">
+                <ForgeIcon name={rightOpen ? 'chevron_right' : 'chevron_left'} />
+              </ForgeIconButton>
+              {rightOpen && (
+                <div className="right-sidebar-tabs">
+                  <button
+                    className={`sidebar-tab${rightPanelTab === 'properties' ? ' active' : ''}`}
+                    onClick={() => setRightPanelTab('properties')}
+                  >
+                    <ForgeIcon name="tune" />
+                    <span>Properties</span>
+                  </button>
+                  <button
+                    className={`sidebar-tab${rightPanelTab === 'ai-chat' ? ' active' : ''}`}
+                    onClick={() => setRightPanelTab('ai-chat')}
+                  >
+                    <ForgeIcon name="auto_awesome" />
+                    <span>AI Chat</span>
+                  </button>
+                </div>
+              )}
+            </div>
             {rightOpen && (
-              <div className="right-sidebar-tabs">
-                <button
-                  className={`sidebar-tab${rightPanelTab === 'properties' ? ' active' : ''}`}
-                  onClick={() => setRightPanelTab('properties')}
-                >
-                  <ForgeIcon name="tune" />
-                  <span>Properties</span>
-                </button>
-                <button
-                  className={`sidebar-tab${rightPanelTab === 'ai-chat' ? ' active' : ''}`}
-                  onClick={() => setRightPanelTab('ai-chat')}
-                >
-                  <ForgeIcon name="auto_awesome" />
-                  <span>AI Chat</span>
-                </button>
+              <div className="sidebar-body">
+                {rightPanelTab === 'properties' ? <PropertiesPanel /> : <AIChatPanel />}
               </div>
             )}
           </div>
-          {rightOpen && (
-            <div className="sidebar-body">
-              {rightPanelTab === 'properties' ? (activeTab === 0 ? <Inspector /> : <PropertiesPanel />) : <AIChatPanel />}
-            </div>
-          )}
-        </div>
+        )}
       </div>
 
       <ForgeToast ref={saveToastRef} placement="bottom">
