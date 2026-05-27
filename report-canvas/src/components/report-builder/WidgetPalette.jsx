@@ -1,6 +1,8 @@
 // Forge components: ForgeExpansionPanel, ForgeIcon
+import { useState } from 'react';
 import { ForgeExpansionPanel, ForgeIcon } from '@tylertech/forge-react';
 import { useReport } from '../../context/ReportContext.jsx';
+import FieldsTab from './FieldsTab.jsx';
 
 const widgetTypes = {
   visualizations: [
@@ -23,21 +25,17 @@ const widgetTypes = {
 };
 
 const ICON_STYLES = {
-  viz: { bg: '#eff6ff', fg: '#1d4ed8' },
-  data: { bg: '#f5f3ff', fg: '#7c3aed' },
+  viz:     { bg: '#eff6ff', fg: '#1d4ed8' },
+  data:    { bg: '#f5f3ff', fg: '#7c3aed' },
   content: { bg: '#f3f4f6', fg: '#4b5563' },
 };
 
-export default function WidgetPalette() {
+function WidgetsTab() {
   const { widgets, addWidget } = useReport();
-
-  const getNextRow = () => {
-    if (widgets.length === 0) return 1;
-    return Math.max(...widgets.map(w => w.gridRow + w.rowSpan));
-  };
+  const getNextRow = () => widgets.length === 0 ? 1 : Math.max(...widgets.map(w => w.gridRow + w.rowSpan));
 
   const handleClick = (config) => {
-    const newWidget = {
+    addWidget({
       id: `widget-${Date.now()}`,
       type: config.type,
       title: config.label,
@@ -46,8 +44,7 @@ export default function WidgetPalette() {
       colSpan: config.colSpan,
       rowSpan: config.rowSpan,
       config: config.subtype ? { subtype: config.subtype } : {},
-    };
-    addWidget(newWidget);
+    });
   };
 
   const onDragStart = (event, config) => {
@@ -91,6 +88,26 @@ export default function WidgetPalette() {
           {widgetTypes.content.map(w => renderItem(w, 'content', ICON_STYLES.content))}
         </div>
       </ForgeExpansionPanel>
+    </div>
+  );
+}
+
+export default function WidgetPalette() {
+  const [tab, setTab] = useState('widgets');
+
+  return (
+    <div className="palette-container">
+      <div className="palette-tabs">
+        <button className={`palette-tab ${tab === 'widgets' ? 'is-active' : ''}`} onClick={() => setTab('widgets')}>
+          WIDGETS
+        </button>
+        <button className={`palette-tab ${tab === 'fields' ? 'is-active' : ''}`} onClick={() => setTab('fields')}>
+          FIELDS
+        </button>
+      </div>
+      <div className="palette-body">
+        {tab === 'widgets' ? <WidgetsTab /> : <FieldsTab />}
+      </div>
     </div>
   );
 }

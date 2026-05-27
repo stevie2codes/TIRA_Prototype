@@ -1,0 +1,109 @@
+.fields-tab {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.fields-tab__empty {
+  padding: 20px 16px;
+  text-align: center;
+  color: #6c7a8c;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.fields-tab__search {
+  margin-bottom: 8px;
+}
+
+.fields-tab__group {
+  margin-bottom: 12px;
+}
+
+.fields-tab__group-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: #6c7a8c;
+  letter-spacing: 0.5px;
+  margin: 6px 4px;
+}
+
+.fields-tab__group--measures .fields-tab__group-title {
+  color: #7a4ca8;
+}
+
+.fields-tab__field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  font-size: 11px;
+  cursor: grab;
+  border-radius: 3px;
+  user-select: none;
+}
+
+.fields-tab__field:hover {
+  background: #f4f6f9;
+}
+
+.fields-tab__field:active {
+  cursor: grabbing;
+}
+
+.fields-tab__field--measure {
+  background: #faf6fc;
+}
+
+.fields-tab__field--measure:hover {
+  background: #f4eff8;
+}
+
+.fields-tab__field-icon {
+  width: 16px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.fields-tab__field-name {
+  font-family: 'Menlo', 'Monaco', monospace;
+  font-size: 11px;
+  color: #3a4a5c;
+}
+
+.palette-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.palette-tabs {
+  display: flex;
+  border-bottom: 1px solid #e3e8ee;
+  background: #fafbfc;
+}
+
+.palette-tab {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 10px 12px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: #6c7a8c;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+
+.palette-tab.is-active {
+  color: #3b6ea5;
+  border-bottom-color: #3b6ea5;
+}
+
+.palette-body {
+  flex: 1;
+  overflow-y: auto;
+}
