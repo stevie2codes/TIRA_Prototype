@@ -1,5 +1,3 @@
-/* Wrapper around ParameterStrip + print-canvas-wrapper so the strip sits
-   on top as a thin band and the canvas takes the remaining vertical space. */
 .print-canvas-outer {
   display: flex;
   flex-direction: column;
@@ -16,6 +14,7 @@
   border-bottom: 1px solid #f0e3a0;
   font-size: 11px;
   flex: 0 0 auto;
+  flex-wrap: wrap;
 }
 
 .param-strip--empty {
@@ -34,38 +33,11 @@
   margin-right: 4px;
 }
 
-.param-strip__chip {
-  display: inline-flex;
+.param-strip__chips {
+  display: flex;
   align-items: center;
-  gap: 4px;
-  background: #fff;
-  border: 1px solid #d4ca8a;
-  padding: 3px 8px;
-  border-radius: 4px;
-  font-size: 11px;
-}
-
-.param-strip__chip-name {
-  color: #6c7a8c;
-}
-
-.param-strip__chip-value {
-  color: #1f2937;
-  cursor: pointer;
-  font-weight: 500;
-}
-
-.param-strip__chip-value:hover {
-  text-decoration: underline;
-  text-decoration-style: dotted;
-}
-
-.param-strip__chip-input {
-  border: none;
-  outline: none;
-  background: transparent;
-  font: inherit;
-  width: 100px;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 .param-strip__hint {
@@ -73,4 +45,82 @@
   color: #a08400;
   font-size: 10px;
   font-style: italic;
+}
+
+/* Parameter chip */
+.param-chip {
+  position: relative;
+  display: inline-block;
+}
+
+.param-chip__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #fff;
+  border: 1px solid #d4ca8a;
+  padding: 4px 6px 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.param-chip__btn:hover {
+  border-color: #a08400;
+  background: #fff8d3;
+}
+
+.param-chip__btn.is-open {
+  border-color: #3b6ea5;
+  background: #fff;
+  box-shadow: 0 0 0 2px rgba(59, 110, 165, 0.15);
+}
+
+.param-chip__name {
+  color: #6c7a8c;
+}
+
+.param-chip__sep {
+  color: #c4cdd9;
+  margin: 0 2px;
+}
+
+.param-chip__value {
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.param-chip__popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 100;
+  background: #fff;
+  border: 1px solid #d4dae3;
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  padding: 12px;
+  min-width: 220px;
+  max-width: 320px;
+}
+
+.param-chip__popover-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #3a4a5c;
+  margin-bottom: 4px;
+}
+
+.param-chip__popover-desc {
+  font-size: 10px;
+  color: #6c7a8c;
+  font-style: italic;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.param-chip__popover forge-text-field,
+.param-chip__popover forge-select {
+  width: 100%;
 }

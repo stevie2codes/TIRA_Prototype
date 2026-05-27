@@ -1,4 +1,5 @@
 // Forge components: ForgeIcon, ForgeIconButton, ForgeButton, ForgeTextField, ForgeSelect, ForgeOption
+import { useState } from 'react';
 import {
   ForgeIcon, ForgeIconButton, ForgeButton, ForgeTextField, ForgeSelect, ForgeOption,
 } from '@tylertech/forge-react';
@@ -6,6 +7,8 @@ import { useReport } from '../../context/ReportContext.jsx';
 import { findSource } from '../../data/sourceCatalog.js';
 import { getSchemaFor } from '../../data/sourceSchemas.js';
 import { groupFieldsBySource } from '../../utils/fieldLibrary.js';
+import ParameterValueEditor from './ParameterValueEditor.jsx';
+import { DATE_RANGE_PRESETS, PARAMETER_TYPES, defaultValueForType } from '../../data/parameterPresets.js';
 import './Inspector.css';
 
 function SelectionMode() {
@@ -70,11 +73,151 @@ function SelectionMode() {
   );
 }
 
+function ParameterCard({ param, expanded, onToggle, onUpdate, onRemove }) {
+  const valueLabel = formatParamValueLabel(param);
+  const typeLabel = PARAMETER_TYPES.find(t => t.value === param.type)?.label || param.type;
+
+  return (
+    <div className={`param-card ${expanded ? 'is-expanded' : ''}`}>
+      <div className="param-card__head" onClick={onToggle}>
+        <ForgeIcon name={expanded ? 'expand_more' : 'chevron_right'} style={{ fontSize: 16 }} />
+        <div className="param-card__main">
+          <div className="param-card__name">{param.displayName || param.name}</div>
+          <div className="param-card__meta">
+            <span className="param-card__type">{typeLabel}</span>
+            <span className="param-card__sep">·</span>
+            <span className="param-card__value">{valueLabel}</span>
+          </div>
+        </div>
+        <ForgeIconButton density="small" on-click={(e) => { e.stopPropagation(); onRemove(); }} aria-label="Remove">
+          <ForgeIcon name="close" />
+        </ForgeIconButton>
+      </div>
+
+      {expanded && (
+        <div className="param-card__body">
+          <div className="param-card__field">
+            <label className="param-card__label">Display name</label>
+            <ForgeTextField density="small">
+              <input
+                type="text"
+                value={param.displayName}
+                onChange={(e) => {
+                  const dn = e.target.value;
+                  onUpdate({
+                    displayName: dn,
+                    name: dn.toLowerCase().replace(/[^a-z0-9_]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '') || 'param',
+                  });
+                }}
+              />
+            </ForgeTextField>
+            <div className="param-card__hint">id: <code>{param.name}</code></div>
+          </div>
+
+          <div className="param-card__field">
+            <label className="param-card__label">Type</label>
+            <ForgeSelect
+              density="small"
+              value={param.type}
+              on-change={(e) => onUpdate({ type: e.detail, defaultValue: defaultValueForType(e.detail) })}
+            >
+              {PARAMETER_TYPES.map(t => (
+                <ForgeOption key={t.value} value={t.value}>{t.label}</ForgeOption>
+              ))}
+            </ForgeSelect>
+          </div>
+
+          {param.type === 'multi_select' && (
+            <div className="param-card__field">
+              <label className="param-card__label">Options</label>
+              <ParamOptionsEditor
+                options={param.options || []}
+                onChange={(options) => onUpdate({ options })}
+              />
+            </div>
+          )}
+
+          <div className="param-card__field">
+            <label className="param-card__label">Default value</label>
+            <ParameterValueEditor
+              param={param}
+              value={param.defaultValue}
+              onChange={(v) => onUpdate({ defaultValue: v })}
+            />
+          </div>
+
+          <div className="param-card__field">
+            <label className="param-card__label">Description <span className="param-card__optional">(optional)</span></label>
+            <ForgeTextField density="small">
+              <input
+                type="text"
+                value={param.description || ''}
+                onChange={(e) => onUpdate({ description: e.target.value })}
+                placeholder="What this parameter filters or controls"
+              />
+            </ForgeTextField>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ParamOptionsEditor({ options, onChange }) {
+  const add = () => onChange([...options, { value: `opt_${options.length + 1}`, label: `Option ${options.length + 1}` }]);
+  const update = (i, patch) => onChange(options.map((o, idx) => idx === i ? { ...o, ...patch } : o));
+  const remove = (i) => onChange(options.filter((_, idx) => idx !== i));
+
+  return (
+    <div className="param-options">
+      {options.length === 0 && (
+        <div className="param-options__empty">
+          Add the choices end users can pick from. Include an "all" option if you want to allow no-filter.
+        </div>
+      )}
+      {options.map((o, i) => (
+        <div key={i} className="param-options__row">
+          <input
+            className="param-options__input"
+            value={o.value}
+            onChange={(e) => update(i, { value: e.target.value })}
+            placeholder="value"
+          />
+          <input
+            className="param-options__input"
+            value={o.label}
+            onChange={(e) => update(i, { label: e.target.value })}
+            placeholder="label"
+          />
+          <button className="param-options__remove" onClick={() => remove(i)} aria-label="Remove">×</button>
+        </div>
+      ))}
+      <button className="param-options__add" onClick={add}>＋ Add option</button>
+    </div>
+  );
+}
+
+function formatParamValueLabel(p) {
+  if (p.type === 'date_range') {
+    const preset = DATE_RANGE_PRESETS.find(x => x.value === p.defaultValue);
+    return preset?.label || String(p.defaultValue);
+  }
+  if (p.type === 'multi_select') {
+    const arr = Array.isArray(p.defaultValue) ? p.defaultValue : [];
+    if (arr.length === 0 || arr.includes('all')) return 'All';
+    const labels = arr.map(v => (p.options || []).find(o => o.value === v)?.label || v);
+    return labels.join(', ');
+  }
+  if (p.defaultValue == null || p.defaultValue === '') return '—';
+  return String(p.defaultValue);
+}
+
 function ModelMode() {
   const {
     fieldLibrary, measures, addMeasure, updateMeasure, removeMeasure,
     parameters, addParameter, updateParameter, removeParameter,
   } = useReport();
+  const [expandedParamId, setExpandedParamId] = useState(null);
 
   const grouped = groupFieldsBySource(fieldLibrary);
   const sourceGroups = Object.keys(grouped).filter(k => k !== 'CALCULATED MEASURES');
@@ -149,46 +292,28 @@ function ModelMode() {
       <div className="inspector__subsection">
         <div className="inspector__subsection-title">
           Parameters
-          <ForgeIconButton density="small" on-click={() => addParameter({ name: 'new_param', displayName: 'New Parameter', type: 'string', defaultValue: '' })} aria-label="Add parameter">
+          <ForgeIconButton density="small" on-click={() => {
+            const id = `param-${Date.now()}`;
+            addParameter({ name: 'new_param', displayName: 'New parameter', type: 'string', defaultValue: '', description: '' });
+            setExpandedParamId(id);
+          }} aria-label="Add parameter">
             <ForgeIcon name="add" />
           </ForgeIconButton>
         </div>
-        {parameters.map(p => (
-          <div key={p.id} className="inspector__param-row">
-            <div className="inspector__param-main">
-              <ForgeTextField density="small">
-                <label>Display name</label>
-                <input
-                  type="text"
-                  value={p.displayName}
-                  onChange={(e) => updateParameter(p.id, { displayName: e.target.value })}
-                />
-              </ForgeTextField>
-              <ForgeSelect density="small" value={p.type} on-change={(e) => updateParameter(p.id, { type: e.detail })}>
-                <ForgeOption value="string">String</ForgeOption>
-                <ForgeOption value="number">Number</ForgeOption>
-                <ForgeOption value="date_range">Date Range</ForgeOption>
-                <ForgeOption value="multi_select">Multi-select</ForgeOption>
-              </ForgeSelect>
-              <ForgeTextField density="small">
-                <label>Default value</label>
-                <input
-                  type="text"
-                  value={Array.isArray(p.defaultValue) ? p.defaultValue.join(', ') : String(p.defaultValue ?? '')}
-                  onChange={(e) => {
-                    const val = p.type === 'multi_select'
-                      ? e.target.value.split(',').map(s => s.trim()).filter(Boolean)
-                      : e.target.value;
-                    updateParameter(p.id, { defaultValue: val });
-                  }}
-                />
-              </ForgeTextField>
-            </div>
-            <ForgeIconButton density="small" on-click={() => removeParameter(p.id)} aria-label="Remove">
-              <ForgeIcon name="close" />
-            </ForgeIconButton>
-          </div>
-        ))}
+        {parameters.length === 0 ? (
+          <div className="inspector__empty-small">No parameters yet. Click + to add one.</div>
+        ) : (
+          parameters.map(p => (
+            <ParameterCard
+              key={p.id}
+              param={p}
+              expanded={expandedParamId === p.id}
+              onToggle={() => setExpandedParamId(expandedParamId === p.id ? null : p.id)}
+              onUpdate={(updates) => updateParameter(p.id, updates)}
+              onRemove={() => removeParameter(p.id)}
+            />
+          ))
+        )}
       </div>
     </div>
   );

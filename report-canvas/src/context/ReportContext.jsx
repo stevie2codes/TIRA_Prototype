@@ -218,8 +218,23 @@ export function ReportProvider({ children }) {
 
   // parameters: [{ id, name, displayName, type, defaultValue, options? }]
   const [parameters, setParameters] = useState([
-    { id: 'param-date-range', name: 'date_range',  displayName: 'Date Range',  type: 'date_range', defaultValue: 'last_90d' },
-    { id: 'param-department', name: 'department',  displayName: 'Department',  type: 'multi_select', defaultValue: ['all'] },
+    {
+      id: 'param-date-range', name: 'date_range', displayName: 'Date range',
+      type: 'date_range', defaultValue: 'last_90d',
+      description: 'Time window applied to filterable date fields.',
+    },
+    {
+      id: 'param-department', name: 'department', displayName: 'Department',
+      type: 'multi_select', defaultValue: ['all'],
+      options: [
+        { value: 'all',      label: 'All' },
+        { value: 'planning', label: 'Planning & Zoning' },
+        { value: 'building', label: 'Building' },
+        { value: 'code',     label: 'Code Enforcement' },
+        { value: 'public_works', label: 'Public Works' },
+      ],
+      description: 'Restrict the report to one or more departments.',
+    },
   ]);
 
   // Inspector mode in the Data Layer tab: 'selection' | 'model'

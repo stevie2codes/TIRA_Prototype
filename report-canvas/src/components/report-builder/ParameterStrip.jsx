@@ -1,23 +1,74 @@
-// Forge components: ForgeIcon, ForgeIconButton
-import { useState } from 'react';
-import { ForgeIcon } from '@tylertech/forge-react';
+// Forge components: ForgeIcon, ForgeButton, ForgeIconButton
+import { useState, useRef, useEffect } from 'react';
+import { ForgeIcon, ForgeIconButton } from '@tylertech/forge-react';
 import { useReport } from '../../context/ReportContext.jsx';
+import ParameterValueEditor from '../data-layer/ParameterValueEditor.jsx';
+import { DATE_RANGE_PRESETS } from '../../data/parameterPresets.js';
 import './ParameterStrip.css';
 
-function formatDefault(p) {
-  if (Array.isArray(p.defaultValue)) {
-    if (p.defaultValue.length === 0 || p.defaultValue.includes('all')) return 'All';
-    return p.defaultValue.join(', ');
+function formatValueLabel(p, value) {
+  if (p.type === 'date_range') {
+    const preset = DATE_RANGE_PRESETS.find(x => x.value === value);
+    return preset?.label || String(value ?? '—');
   }
-  if (p.defaultValue === 'last_90d')  return 'Last 90 days';
-  if (p.defaultValue === 'last_30d')  return 'Last 30 days';
-  if (p.defaultValue === 'ytd')       return 'Year to date';
-  return String(p.defaultValue ?? '—');
+  if (p.type === 'multi_select') {
+    const arr = Array.isArray(value) ? value : [];
+    if (arr.length === 0 || arr.includes('all')) return 'All';
+    const labels = arr.map(v => (p.options || []).find(o => o.value === v)?.label || v);
+    return labels.length <= 2 ? labels.join(', ') : `${labels.length} selected`;
+  }
+  if (value == null || value === '') return '—';
+  return String(value);
+}
+
+function ParamChip({ param }) {
+  const { updateParameter } = useReport();
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDocClick = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener('mousedown', onDocClick);
+    return () => document.removeEventListener('mousedown', onDocClick);
+  }, [open]);
+
+  const valueLabel = formatValueLabel(param, param.defaultValue);
+  const isDefault = true; // For now, strip edits the parameter's default value directly.
+
+  return (
+    <div className="param-chip" ref={ref}>
+      <button
+        className={`param-chip__btn ${open ? 'is-open' : ''}`}
+        onClick={() => setOpen(o => !o)}
+      >
+        <span className="param-chip__name">{param.displayName}</span>
+        <span className="param-chip__sep">:</span>
+        <span className="param-chip__value">{valueLabel}</span>
+        <ForgeIcon name="arrow_drop_down" style={{ fontSize: 16, marginLeft: 2 }} />
+      </button>
+      {open && (
+        <div className="param-chip__popover">
+          <div className="param-chip__popover-label">{param.displayName}</div>
+          {param.description && (
+            <div className="param-chip__popover-desc">{param.description}</div>
+          )}
+          <ParameterValueEditor
+            param={param}
+            value={param.defaultValue}
+            onChange={(v) => updateParameter(param.id, { defaultValue: v })}
+            compact
+          />
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function ParameterStrip() {
-  const { parameters, updateParameter } = useReport();
-  const [editingId, setEditingId] = useState(null);
+  const { parameters } = useReport();
 
   if (parameters.length === 0) {
     return (
@@ -34,25 +85,12 @@ export default function ParameterStrip() {
         <ForgeIcon name="tune" style={{ fontSize: 14 }} />
         PARAMETERS
       </span>
-      {parameters.map(p => (
-        <div key={p.id} className="param-strip__chip">
-          <span className="param-strip__chip-name">{p.displayName}:</span>
-          {editingId === p.id ? (
-            <input
-              autoFocus
-              className="param-strip__chip-input"
-              defaultValue={String(p.defaultValue)}
-              onBlur={(e) => { updateParameter(p.id, { defaultValue: e.target.value }); setEditingId(null); }}
-              onKeyDown={(e) => { if (e.key === 'Enter') e.target.blur(); if (e.key === 'Escape') setEditingId(null); }}
-            />
-          ) : (
-            <span className="param-strip__chip-value" onClick={() => setEditingId(p.id)}>
-              {formatDefault(p)}
-            </span>
-          )}
-        </div>
-      ))}
-      <div className="param-strip__hint">Set defaults · Used by chat AI</div>
+      <div className="param-strip__chips">
+        {parameters.map(p => (
+          <ParamChip key={p.id} param={p} />
+        ))}
+      </div>
+      <div className="param-strip__hint">Click a chip to change its default · Used by chat AI</div>
     </div>
   );
 }

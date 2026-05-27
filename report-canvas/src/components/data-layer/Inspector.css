@@ -210,3 +210,207 @@
 .inspector__param-row forge-select {
   width: 100%;
 }
+
+.param-card {
+  background: #fff;
+  border: 1px solid #d4dae3;
+  border-radius: 4px;
+  margin-bottom: 6px;
+  overflow: hidden;
+}
+
+.param-card.is-expanded {
+  border-color: #3b6ea5;
+  box-shadow: 0 1px 3px rgba(59, 110, 165, 0.08);
+}
+
+.param-card__head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 8px;
+  cursor: pointer;
+}
+
+.param-card__head:hover {
+  background: #f4f6f9;
+}
+
+.param-card__main {
+  flex: 1;
+  min-width: 0;
+}
+
+.param-card__name {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.param-card__meta {
+  font-size: 10px;
+  color: #6c7a8c;
+  margin-top: 2px;
+  display: flex;
+  gap: 6px;
+}
+
+.param-card__type {
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  font-weight: 600;
+  color: #3b6ea5;
+}
+
+.param-card__value {
+  font-style: italic;
+}
+
+.param-card__body {
+  padding: 8px 12px 12px;
+  border-top: 1px solid #eef2f7;
+  background: #fafbfc;
+}
+
+.param-card__field {
+  margin-bottom: 10px;
+}
+
+.param-card__field:last-child {
+  margin-bottom: 0;
+}
+
+.param-card__label {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  color: #3a4a5c;
+  margin-bottom: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.param-card__optional {
+  font-weight: 400;
+  color: #9ca3af;
+  text-transform: none;
+  font-style: italic;
+  letter-spacing: 0;
+}
+
+.param-card__hint {
+  font-size: 10px;
+  color: #6c7a8c;
+  margin-top: 3px;
+}
+
+.param-card__hint code {
+  background: #eef2f7;
+  padding: 1px 4px;
+  border-radius: 2px;
+  font-family: 'Menlo', 'Monaco', monospace;
+  font-size: 10px;
+}
+
+.param-card__field forge-text-field,
+.param-card__field forge-select {
+  width: 100%;
+}
+
+/* Options editor for multi_select */
+.param-options {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.param-options__empty {
+  font-size: 10px;
+  color: #6c7a8c;
+  font-style: italic;
+  padding: 4px 0;
+}
+
+.param-options__row {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.param-options__input {
+  flex: 1;
+  font-size: 11px;
+  padding: 4px 6px;
+  border: 1px solid #d4dae3;
+  border-radius: 3px;
+}
+
+.param-options__remove {
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  font-size: 14px;
+  width: 22px;
+  height: 22px;
+  border-radius: 3px;
+}
+
+.param-options__remove:hover {
+  background: #fef0f3;
+  color: #c44569;
+}
+
+.param-options__add {
+  background: transparent;
+  border: 1px dashed #d4dae3;
+  border-radius: 3px;
+  font-size: 11px;
+  color: #3b6ea5;
+  padding: 4px 8px;
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+.param-options__add:hover {
+  background: #f4f6f9;
+  border-color: #3b6ea5;
+}
+
+/* Multi-select value editor (used in card body and parameter strip) */
+.param-multi-edit {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.param-multi-edit__hint {
+  font-size: 10px;
+  color: #6c7a8c;
+  font-style: italic;
+}
+
+.param-multi-edit__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: #fff;
+  border: 1px solid #d4dae3;
+  border-radius: 12px;
+  font-size: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.param-multi-edit__chip.is-on {
+  background: #eaf2fb;
+  border-color: #3b6ea5;
+  color: #3b6ea5;
+  font-weight: 600;
+}
+
+.param-multi-edit__chip input {
+  margin: 0;
+}
