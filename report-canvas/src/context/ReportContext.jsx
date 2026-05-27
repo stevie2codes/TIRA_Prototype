@@ -405,6 +405,7 @@ export function ReportProvider({ children }) {
       datasets, datasetNames,
       availableSources,
       generateNodeData,
+      generatedData,
       loadingNodes,
       handoffContext,
       activeTemplateId, setActiveTemplateId,
