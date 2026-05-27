@@ -1,5 +1,5 @@
 // Forge components: ForgeIcon
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ReactFlow, Controls, Background,
   addEdge, applyNodeChanges, applyEdgeChanges,
@@ -37,7 +37,9 @@ function CustomConnectionLine({ fromX, fromY, toX, toY }) {
 }
 
 function DataLayerCanvasInner() {
-  const { nodes, setNodes, edges, setEdges, setSelectedNodeId } = useReport();
+  const { nodes, setNodes, edges, setEdges, setSelectedNodeId, selectedSources, addSourceFromCatalog } = useReport();
+  const SOURCE_NODE_SPACING = 240;
+  const SOURCE_NODE_Y = 120;
   const reactFlowWrapper = useRef(null);
   const { screenToFlowPosition } = useReactFlow();
   const [joinPopover, setJoinPopover] = useState(null);
@@ -68,6 +70,38 @@ function DataLayerCanvasInner() {
     }
   }, [setEdges]);
 
+  // Sync selectedSources (semantic-model state) → ReactFlow nodes
+  useEffect(() => {
+    setNodes(prevNodes => {
+      const prevById = new Map(prevNodes.map(n => [n.id, n]));
+      const next = [];
+
+      selectedSources.forEach((sel, idx) => {
+        const nodeId = `source-${sel.sourceId}`;
+        const existing = prevById.get(nodeId);
+        next.push({
+          id: nodeId,
+          type: 'source',
+          position: existing?.position || { x: 80 + idx * SOURCE_NODE_SPACING, y: SOURCE_NODE_Y },
+          data: {
+            sourceId: sel.sourceId,
+            includedFields: sel.includedFields,
+            configured: true,
+          },
+        });
+      });
+
+      // Preserve any non-catalog nodes (output, handoff, transforms) by keeping
+      // anything that's not a catalog source.
+      prevNodes.forEach(n => {
+        const isCatalogSource = selectedSources.some(s => `source-${s.sourceId}` === n.id);
+        if (!isCatalogSource && !n.id.startsWith('source-')) next.push(n);
+      });
+
+      return next;
+    });
+  }, [selectedSources, setNodes]);
+
   const onNodeClick = useCallback((_, node) => {
     setSelectedNodeId(node.id);
   }, [setSelectedNodeId]);
@@ -83,12 +117,21 @@ function DataLayerCanvasInner() {
 
   const onDrop = useCallback((event) => {
     event.preventDefault();
+
+    // New semantic-model source drag
+    const sourceRaw = event.dataTransfer.getData('application/x-tira-source');
+    if (sourceRaw) {
+      const { sourceId } = JSON.parse(sourceRaw);
+      addSourceFromCatalog(sourceId);
+      return;
+    }
+
+    // Legacy palette drag (kept for compatibility while we transition)
     const raw = event.dataTransfer.getData('application/reactflow');
     if (!raw) return;
 
     const config = JSON.parse(raw);
     const position = screenToFlowPosition({ x: event.clientX, y: event.clientY });
-
     const isSource = config.type === 'source';
     const newNode = {
       id: `${config.type}-${Date.now()}`,
@@ -106,7 +149,7 @@ function DataLayerCanvasInner() {
 
     setNodes(nds => [...nds, newNode]);
     if (isSource) setSelectedNodeId(newNode.id);
-  }, [screenToFlowPosition, setNodes, setSelectedNodeId]);
+  }, [screenToFlowPosition, setNodes, setSelectedNodeId, addSourceFromCatalog]);
 
   const isEmpty = nodes.length === 0;
 
