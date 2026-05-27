@@ -8,14 +8,13 @@ import { getSchemaFor } from '../../data/sourceSchemas.js';
 import './DataPreviewDrawer.css';
 
 const TABS = [
-  { id: 'selected', label: 'Selected Source' },
-  { id: 'joined',   label: 'Joined Output' },
-  { id: 'library',  label: 'Field Library Preview' },
+  { id: 'source', label: 'Source data',    desc: 'Raw rows from the source you clicked on the canvas' },
+  { id: 'model',  label: 'Model output',   desc: 'Rows your report and the chat AI will see (joins applied)' },
 ];
 
 export default function DataPreviewDrawer() {
   const { nodes, selectedNodeId, selectedSources, fieldLibrary, generatedData } = useReport();
-  const [activeTab, setActiveTab] = useState('library');
+  const [activeTab, setActiveTab] = useState('model');
   const [collapsed, setCollapsed] = useState(false);
   const [rows, setRows] = useState([]);
 
@@ -33,8 +32,8 @@ export default function DataPreviewDrawer() {
     async function load() {
       // Determine target sourceId for the active tab
       let targetId = null;
-      if (activeTab === 'selected') targetId = selectedSourceId;
-      else if ((activeTab === 'joined' || activeTab === 'library') && selectedSources.length > 0) {
+      if (activeTab === 'source') targetId = selectedSourceId;
+      else if (activeTab === 'model' && selectedSources.length > 0) {
         targetId = selectedSources[0].sourceId;
       }
       if (!targetId) { setRows([]); return; }
@@ -58,24 +57,25 @@ export default function DataPreviewDrawer() {
   }, [activeTab, selectedSourceId, selectedSources, generatedData]);
 
   const columns = useMemo(() => {
-    if (activeTab === 'selected' && selectedSourceId) {
+    if (activeTab === 'source' && selectedSourceId) {
       return getSchemaForSource(selectedSourceId).map(f => ({ key: f.name, label: f.name, role: f.role }));
     }
-    if (activeTab === 'library') {
+    // model tab: show the unified Field Library (joined model output)
+    if (activeTab === 'model') {
       return fieldLibrary.map(f => ({ key: f.qualifiedName, label: f.qualifiedName, role: f.role }));
     }
-    if (selectedSources.length === 0) return [];
-    const primaryId = selectedSources[0].sourceId;
-    return getSchemaForSource(primaryId).map(f => ({ key: f.name, label: `${primaryId}.${f.name}`, role: f.role }));
+    return [];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, selectedSourceId, selectedSources, fieldLibrary]);
+
+  const activeTabDef = TABS.find(t => t.id === activeTab);
 
   if (collapsed) {
     return (
       <div className="preview-drawer preview-drawer--collapsed">
         <button className="preview-drawer__toggle" onClick={() => setCollapsed(false)}>
           <ForgeIcon name="expand_less" />
-          <span>Data Preview</span>
+          <span>Data preview — sample rows your model will produce</span>
         </button>
       </div>
     );
@@ -83,6 +83,12 @@ export default function DataPreviewDrawer() {
 
   return (
     <div className="preview-drawer">
+      <div className="preview-drawer__top">
+        <div className="preview-drawer__top-label">DATA PREVIEW</div>
+        <div className="preview-drawer__top-help">
+          Sample rows · Right rail's MODEL tab shows the schema; this shows the rows that schema produces.
+        </div>
+      </div>
       <div className="preview-drawer__header">
         <div className="preview-drawer__tabs">
           {TABS.map(t => (
@@ -90,6 +96,7 @@ export default function DataPreviewDrawer() {
               key={t.id}
               className={`preview-drawer__tab ${activeTab === t.id ? 'is-active' : ''}`}
               onClick={() => setActiveTab(t.id)}
+              title={t.desc}
             >
               {t.label}
             </button>
@@ -108,6 +115,7 @@ export default function DataPreviewDrawer() {
           </ForgeIconButton>
         </div>
       </div>
+      <div className="preview-drawer__subtitle">{activeTabDef?.desc}</div>
       <div className="preview-drawer__table-wrap">
         {columns.length === 0 ? (
           <div className="preview-drawer__empty">No data to preview. Add a source to the model.</div>

@@ -197,22 +197,29 @@ function ModelMode() {
 export default function Inspector() {
   const { inspectorMode, setInspectorMode } = useReport();
 
+  const subtitle = inspectorMode === 'selection'
+    ? "Configure what you've clicked on the canvas"
+    : "The published schema — what your report and the chat AI will see";
+
   return (
     <div className="inspector">
       <div className="inspector__tabs">
         <button
           className={`inspector__tab ${inspectorMode === 'selection' ? 'is-active' : ''}`}
           onClick={() => setInspectorMode('selection')}
+          title="Configure the source, join, or field you clicked on the canvas"
         >
           SELECTION
         </button>
         <button
           className={`inspector__tab ${inspectorMode === 'model' ? 'is-active' : ''}`}
           onClick={() => setInspectorMode('model')}
+          title="The whole semantic model — fields, measures, and parameters that will be exposed downstream"
         >
           MODEL
         </button>
       </div>
+      <div className="inspector__subtitle">{subtitle}</div>
       <div className="inspector__body">
         {inspectorMode === 'selection' ? <SelectionMode /> : <ModelMode />}
       </div>

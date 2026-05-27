@@ -30,6 +30,16 @@
   border-bottom-color: #3b6ea5;
 }
 
+.inspector__subtitle {
+  padding: 6px 12px 8px;
+  font-size: 10px;
+  color: #6c7a8c;
+  font-style: italic;
+  background: #f7f9fc;
+  border-bottom: 1px solid #e3e8ee;
+  line-height: 1.4;
+}
+
 .inspector__body {
   flex: 1;
   overflow-y: auto;
