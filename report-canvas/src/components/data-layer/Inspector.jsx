@@ -212,12 +212,34 @@ function formatParamValueLabel(p) {
   return String(p.defaultValue);
 }
 
+function CollapsibleSection({ title, count, open, onToggle, actions, children }) {
+  return (
+    <div className={`inspector__subsection inspector__subsection--collapsible ${open ? 'is-open' : ''}`}>
+      <div className="inspector__subsection-title inspector__subsection-title--clickable">
+        <button className="inspector__section-toggle" onClick={onToggle}>
+          <ForgeIcon name={open ? 'expand_more' : 'chevron_right'} style={{ fontSize: 16 }} />
+          <span>{title}</span>
+          {count != null && <span className="inspector__section-count">{count}</span>}
+        </button>
+        {actions}
+      </div>
+      {open && <div className="inspector__section-body">{children}</div>}
+    </div>
+  );
+}
+
 function ModelMode() {
   const {
     fieldLibrary, measures, addMeasure, updateMeasure, removeMeasure,
     parameters, addParameter, updateParameter, removeParameter,
   } = useReport();
   const [expandedParamId, setExpandedParamId] = useState(null);
+  const [openSection, setOpenSection] = useState({
+    fields: true,
+    measures: false,
+    parameters: false,
+  });
+  const toggle = (key) => setOpenSection(s => ({ ...s, [key]: !s[key] }));
 
   const grouped = groupFieldsBySource(fieldLibrary);
   const sourceGroups = Object.keys(grouped).filter(k => k !== 'CALCULATED MEASURES');
@@ -230,8 +252,12 @@ function ModelMode() {
       </div>
 
       {/* Field library */}
-      <div className="inspector__subsection">
-        <div className="inspector__subsection-title">Field Library</div>
+      <CollapsibleSection
+        title="Field Library"
+        count={fieldLibrary.length}
+        open={openSection.fields}
+        onToggle={() => toggle('fields')}
+      >
         {sourceGroups.length === 0 ? (
           <div className="inspector__empty-small">Add sources from the catalog on the left.</div>
         ) : (
@@ -247,16 +273,20 @@ function ModelMode() {
             </div>
           ))
         )}
-      </div>
+      </CollapsibleSection>
 
       {/* Measures */}
-      <div className="inspector__subsection">
-        <div className="inspector__subsection-title">
-          Calculated Measures
-          <ForgeIconButton density="small" on-click={() => addMeasure({ name: 'new_measure', displayName: 'New Measure', expression: 'SUM(field)', type: 'number' })} aria-label="Add measure">
+      <CollapsibleSection
+        title="Calculated Measures"
+        count={measures.length}
+        open={openSection.measures}
+        onToggle={() => toggle('measures')}
+        actions={
+          <ForgeIconButton density="small" on-click={(e) => { e.stopPropagation(); addMeasure({ name: 'new_measure', displayName: 'New Measure', expression: 'SUM(field)', type: 'number' }); setOpenSection(s => ({ ...s, measures: true })); }} aria-label="Add measure">
             <ForgeIcon name="add" />
           </ForgeIconButton>
-        </div>
+        }
+      >
         {measures.length === 0 ? (
           <div className="inspector__empty-small">No calculated measures yet.</div>
         ) : (
@@ -286,20 +316,24 @@ function ModelMode() {
             </div>
           ))
         )}
-      </div>
+      </CollapsibleSection>
 
       {/* Parameters */}
-      <div className="inspector__subsection">
-        <div className="inspector__subsection-title">
-          Parameters
-          <ForgeIconButton density="small" on-click={() => {
-            const id = `param-${Date.now()}`;
+      <CollapsibleSection
+        title="Parameters"
+        count={parameters.length}
+        open={openSection.parameters}
+        onToggle={() => toggle('parameters')}
+        actions={
+          <ForgeIconButton density="small" on-click={(e) => {
+            e.stopPropagation();
             addParameter({ name: 'new_param', displayName: 'New parameter', type: 'string', defaultValue: '', description: '' });
-            setExpandedParamId(id);
+            setOpenSection(s => ({ ...s, parameters: true }));
           }} aria-label="Add parameter">
             <ForgeIcon name="add" />
           </ForgeIconButton>
-        </div>
+        }
+      >
         {parameters.length === 0 ? (
           <div className="inspector__empty-small">No parameters yet. Click + to add one.</div>
         ) : (
@@ -314,7 +348,7 @@ function ModelMode() {
             />
           ))
         )}
-      </div>
+      </CollapsibleSection>
     </div>
   );
 }
