@@ -1,0 +1,66 @@
+.param-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #fffbe8;
+  border-bottom: 1px solid #f0e3a0;
+  font-size: 11px;
+}
+
+.param-strip--empty {
+  color: #a08400;
+  font-style: italic;
+}
+
+.param-strip__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #a08400;
+  letter-spacing: 0.5px;
+  margin-right: 4px;
+}
+
+.param-strip__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #fff;
+  border: 1px solid #d4ca8a;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+.param-strip__chip-name {
+  color: #6c7a8c;
+}
+
+.param-strip__chip-value {
+  color: #1f2937;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.param-strip__chip-value:hover {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+}
+
+.param-strip__chip-input {
+  border: none;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  width: 100px;
+}
+
+.param-strip__hint {
+  margin-left: auto;
+  color: #a08400;
+  font-size: 10px;
+  font-style: italic;
+}

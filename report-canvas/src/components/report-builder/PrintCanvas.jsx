@@ -13,6 +13,7 @@ import TextWidget from './widgets/TextWidget.jsx';
 import ImageWidget from './widgets/ImageWidget.jsx';
 import DividerWidget from './widgets/DividerWidget.jsx';
 import SectionHeader from './widgets/SectionHeader.jsx';
+import ParameterStrip from './ParameterStrip.jsx';
 
 const WIDGET_MAP = {
   chart: ChartWidget,
@@ -169,6 +170,7 @@ export default function PrintCanvas() {
   return (
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
       <div className="print-canvas-wrapper">
+        <ParameterStrip />
         {showRulers && (
           <Rulers
             pageDims={pageDims}
