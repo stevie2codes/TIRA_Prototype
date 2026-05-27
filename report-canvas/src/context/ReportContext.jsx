@@ -275,6 +275,19 @@ export function ReportProvider({ children }) {
     setWidgets(prev => prev.map(w => w.id === id ? { ...w, ...updates } : w));
   }, []);
 
+  const setWidgetBinding = useCallback((widgetId, slot, fieldId) => {
+    setWidgets(prev => prev.map(w => {
+      if (w.id !== widgetId) return w;
+      const bindings = { ...(w.bindings || {}) };
+      if (fieldId == null) {
+        delete bindings[slot];
+      } else {
+        bindings[slot] = fieldId;
+      }
+      return { ...w, bindings };
+    }));
+  }, []);
+
   const removeWidget = useCallback((id) => {
     setWidgets(prev => prev.filter(w => w.id !== id));
     setSelectedWidgetId(null);
@@ -294,6 +307,7 @@ export function ReportProvider({ children }) {
       nodes, setNodes, edges, setEdges,
       selectedNodeId, setSelectedNodeId,
       widgets, setWidgets, addWidget, updateWidget, removeWidget, duplicateWidget,
+      setWidgetBinding,
       selectedWidgetId, setSelectedWidgetId,
       activeTab, setActiveTab,
       datasets, datasetNames,

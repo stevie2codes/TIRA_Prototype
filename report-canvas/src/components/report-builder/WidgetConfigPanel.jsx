@@ -3,11 +3,94 @@ import {
   ForgeTextField, ForgeSelect, ForgeOption, ForgeSlider, ForgeSwitch, ForgeIcon,
 } from '@tylertech/forge-react';
 import { useReport } from '../../context/ReportContext.jsx';
+import './WidgetConfigPanel.css';
 
-const DATA_WIDGET_TYPES = ['chart', 'table', 'kpi'];
+const WIDGET_SLOTS = {
+  chart: [
+    { id: 'xAxis',   label: 'X axis',     accept: 'dimension' },
+    { id: 'yAxis',   label: 'Y axis',     accept: 'measure'   },
+    { id: 'groupBy', label: 'Group by',   accept: 'dimension', optional: true },
+  ],
+  table: [
+    { id: 'columns', label: 'Columns',    accept: 'any', multiple: true },
+  ],
+  kpi: [
+    { id: 'value',   label: 'Value',      accept: 'measure'   },
+    { id: 'label',   label: 'Label',      accept: 'dimension', optional: true },
+  ],
+};
+
+const DATA_WIDGET_TYPES = Object.keys(WIDGET_SLOTS);
+
+function SlotEditor({ slot, widgetId, currentFieldId }) {
+  const { fieldLibrary, setWidgetBinding } = useReport();
+  const current = fieldLibrary.find(f => f.id === currentFieldId);
+  const accept = slot.accept;
+
+  const matches = (f) => {
+    if (accept === 'any') return true;
+    if (accept === 'dimension') return f.role === 'dimension';
+    if (accept === 'measure')   return f.role === 'measure';
+    return true;
+  };
+
+  const onDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  };
+
+  const onDrop = (e) => {
+    e.preventDefault();
+    const raw = e.dataTransfer.getData('application/x-tira-field');
+    if (!raw) return;
+    const field = JSON.parse(raw);
+    if (!matches(field)) return;
+    setWidgetBinding(widgetId, slot.id, field.id);
+  };
+
+  const eligible = fieldLibrary.filter(matches);
+
+  return (
+    <div className="binding-slot">
+      <label className="binding-slot__label">
+        {slot.label} {slot.optional && <span className="binding-slot__optional">(optional)</span>}
+      </label>
+      {current ? (
+        <div
+          className={`binding-slot__value binding-slot__value--${current.role}`}
+          onDragOver={onDragOver}
+          onDrop={onDrop}
+        >
+          <span>{current.qualifiedName}</span>
+          <button className="binding-slot__clear" onClick={() => setWidgetBinding(widgetId, slot.id, null)} aria-label="Clear">×</button>
+        </div>
+      ) : (
+        <div
+          className="binding-slot__drop"
+          onDragOver={onDragOver}
+          onDrop={onDrop}
+        >
+          Drag a {accept === 'any' ? 'field' : accept} here
+        </div>
+      )}
+      {eligible.length > 0 && (
+        <select
+          className="binding-slot__select"
+          value={currentFieldId || ''}
+          onChange={(e) => setWidgetBinding(widgetId, slot.id, e.target.value || null)}
+        >
+          <option value="">— pick from list —</option>
+          {eligible.map(f => (
+            <option key={f.id} value={f.id}>{f.qualifiedName}</option>
+          ))}
+        </select>
+      )}
+    </div>
+  );
+}
 
 export default function WidgetConfigPanel() {
-  const { widgets, selectedWidgetId, updateWidget, datasets, datasetNames } = useReport();
+  const { widgets, selectedWidgetId, updateWidget } = useReport();
   const widget = widgets.find(w => w.id === selectedWidgetId);
 
   if (!widget) {
@@ -25,36 +108,21 @@ export default function WidgetConfigPanel() {
   const update = (updates) => updateWidget(widget.id, updates);
   const updateConfig = (configUpdates) => update({ config: { ...widget.config, ...configUpdates } });
   const showDataSource = DATA_WIDGET_TYPES.includes(widget.type);
-  const currentDataSource = widget.config?.dataSource || '';
-
-  // Get available KPI metrics from the selected dataset
-  const selectedDataset = currentDataSource ? datasets[currentDataSource] : null;
-  const kpiMetricKeys = selectedDataset?.kpiMetrics
-    ? Object.keys(selectedDataset.kpiMetrics)
-    : selectedDataset?.columns || [];
 
   return (
     <div className="config-panel">
-      {/* Data Source Section — shown for data-driven widgets */}
+      {/* Field Bindings — for data-driven widgets */}
       {showDataSource && (
         <div className="config-section">
-          <h3 className="config-section-title">Data Source</h3>
-          <ForgeSelect
-            label="Dataset"
-            value={currentDataSource}
-            on-change={(e) => updateConfig({ dataSource: e.detail })}
-          >
-            <ForgeOption value="">None</ForgeOption>
-            {datasetNames.map(name => (
-              <ForgeOption key={name} value={name}>{name}</ForgeOption>
-            ))}
-          </ForgeSelect>
-          {currentDataSource && selectedDataset && (
-            <div className="config-row" style={{ marginTop: 8 }}>
-              <span className="config-label">Rows</span>
-              <span className="config-value">{selectedDataset.rows.length}</span>
-            </div>
-          )}
+          <h3 className="config-section-title">Field Bindings</h3>
+          {(WIDGET_SLOTS[widget.type] || []).map(slot => (
+            <SlotEditor
+              key={slot.id}
+              slot={slot}
+              widgetId={widget.id}
+              currentFieldId={widget.bindings?.[slot.id]}
+            />
+          ))}
         </div>
       )}
 
@@ -101,28 +169,15 @@ export default function WidgetConfigPanel() {
 
         {/* KPI-specific config */}
         {widget.type === 'kpi' && (
-          <>
-            <ForgeSelect
-              label="Metric"
-              value={widget.config?.metric || ''}
-              on-change={(e) => updateConfig({ metric: e.detail })}
-            >
-              {kpiMetricKeys.map(key => (
-                <ForgeOption key={key} value={key}>
-                  {key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase()).trim()}
-                </ForgeOption>
-              ))}
-            </ForgeSelect>
-            <ForgeSelect
-              label="Format"
-              value={widget.config?.format || 'currency'}
-              on-change={(e) => updateConfig({ format: e.detail })}
-            >
-              <ForgeOption value="currency">Currency</ForgeOption>
-              <ForgeOption value="percent">Percent</ForgeOption>
-              <ForgeOption value="number">Number</ForgeOption>
-            </ForgeSelect>
-          </>
+          <ForgeSelect
+            label="Format"
+            value={widget.config?.format || 'currency'}
+            on-change={(e) => updateConfig({ format: e.detail })}
+          >
+            <ForgeOption value="currency">Currency</ForgeOption>
+            <ForgeOption value="percent">Percent</ForgeOption>
+            <ForgeOption value="number">Number</ForgeOption>
+          </ForgeSelect>
         )}
 
         {/* Text-specific config */}
