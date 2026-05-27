@@ -1,0 +1,119 @@
+.preview-drawer {
+  border-top: 1px solid #e3e8ee;
+  background: #fff;
+  max-height: 240px;
+  display: flex;
+  flex-direction: column;
+  font-size: 11px;
+}
+
+.preview-drawer--collapsed {
+  max-height: 32px;
+}
+
+.preview-drawer__toggle {
+  width: 100%;
+  background: #f7f9fc;
+  border: none;
+  border-top: 1px solid #e3e8ee;
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #3b6ea5;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.preview-drawer__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  border-bottom: 1px solid #e3e8ee;
+  background: #f7f9fc;
+}
+
+.preview-drawer__tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.preview-drawer__tab {
+  background: transparent;
+  border: none;
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #6c7a8c;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+
+.preview-drawer__tab.is-active {
+  color: #3b6ea5;
+  border-bottom-color: #3b6ea5;
+  font-weight: 600;
+}
+
+.preview-drawer__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #6c7a8c;
+  font-size: 11px;
+}
+
+.preview-drawer__table-wrap {
+  flex: 1;
+  overflow: auto;
+}
+
+.preview-drawer__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.preview-drawer__table th {
+  text-align: left;
+  background: #f4f6f9;
+  padding: 6px 10px;
+  font-weight: 600;
+  color: #3a4a5c;
+  border-bottom: 1px solid #e3e8ee;
+  white-space: nowrap;
+}
+
+.preview-drawer__table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid #eef2f7;
+  color: #3a4a5c;
+}
+
+.preview-drawer__role-tag {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 9px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.preview-drawer__role-tag--dimension {
+  background: #eaf2fb;
+  color: #3b6ea5;
+}
+
+.preview-drawer__role-tag--measure {
+  background: #e9f5ee;
+  color: #2d8659;
+}
+
+.preview-drawer__empty {
+  padding: 24px;
+  text-align: center;
+  color: #6c7a8c;
+}

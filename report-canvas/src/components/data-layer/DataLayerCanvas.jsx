@@ -12,7 +12,7 @@ import SourceNode from './nodes/SourceNode.jsx';
 import TransformNode from './nodes/TransformNode.jsx';
 import OutputNode from './nodes/OutputNode.jsx';
 import JoinConfigPopover from './JoinConfigPopover.jsx';
-import DataPreviewPanel from './DataPreviewPanel.jsx';
+import DataPreviewDrawer from './DataPreviewDrawer.jsx';
 
 const nodeTypes = {
   source: SourceNode,
@@ -211,7 +211,7 @@ function DataLayerCanvasInner() {
           />
         )}
       </div>
-      {!isEmpty && <DataPreviewPanel />}
+      <DataPreviewDrawer />
     </div>
   );
 }
