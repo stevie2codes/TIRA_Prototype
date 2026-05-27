@@ -1,14 +1,17 @@
 .preview-drawer {
   border-top: 1px solid #e3e8ee;
   background: #fff;
-  max-height: 240px;
+  height: 240px;
+  flex: 0 0 240px;
   display: flex;
   flex-direction: column;
   font-size: 11px;
+  min-height: 0;
 }
 
 .preview-drawer--collapsed {
-  max-height: 32px;
+  height: 36px;
+  flex: 0 0 36px;
 }
 
 .preview-drawer__toggle {
