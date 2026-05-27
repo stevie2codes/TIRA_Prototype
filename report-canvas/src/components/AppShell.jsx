@@ -7,7 +7,7 @@ import {
 import { useReport } from '../context/ReportContext.jsx';
 import { outputTemplates, getTemplateById } from '../../../src/output-templates.js';
 import DataLayerCanvas from './data-layer/DataLayerCanvas.jsx';
-import SourcePalette from './data-layer/SourcePalette.jsx';
+import SourceCatalog from './data-layer/SourceCatalog.jsx';
 import PropertiesPanel from './PropertiesPanel.jsx';
 import ReportCanvas from './report-builder/ReportCanvas.jsx';
 import WidgetPalette from './report-builder/WidgetPalette.jsx';
@@ -185,7 +185,7 @@ export default function AppShell() {
           </div>
           {leftOpen && (
             <div className="sidebar-body">
-              {activeTab === 0 ? <SourcePalette /> : <WidgetPalette />}
+              {activeTab === 0 ? <SourceCatalog /> : <WidgetPalette />}
             </div>
           )}
         </div>
