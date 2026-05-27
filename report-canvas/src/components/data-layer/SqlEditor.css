@@ -1,0 +1,71 @@
+.sql-editor {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: #fff;
+}
+
+.sql-editor__host {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.sql-editor__host .cm-editor {
+  height: 100%;
+}
+
+.sql-editor__host .cm-focused {
+  outline: none;
+}
+
+/* View-switcher toolbar */
+.data-layer-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background: #fff;
+  border-bottom: 1px solid #e3e8ee;
+  flex: 0 0 auto;
+}
+
+.data-layer-toolbar__switcher {
+  display: inline-flex;
+  border: 1px solid #d4dae3;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.data-layer-toolbar__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #fff;
+  border: none;
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #6c7a8c;
+  cursor: pointer;
+  border-right: 1px solid #d4dae3;
+}
+
+.data-layer-toolbar__btn:last-child {
+  border-right: none;
+}
+
+.data-layer-toolbar__btn:hover {
+  background: #f4f6f9;
+}
+
+.data-layer-toolbar__btn.is-active {
+  background: #3b6ea5;
+  color: #fff;
+}
+
+.data-layer-toolbar__actions {
+  display: flex;
+  gap: 6px;
+}

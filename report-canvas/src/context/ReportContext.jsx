@@ -240,6 +240,9 @@ export function ReportProvider({ children }) {
   // Inspector mode in the Data Layer tab: 'selection' | 'model'
   const [inspectorMode, setInspectorMode] = useState('model');
 
+  const [dataLayerView, setDataLayerView] = useState('canvas'); // 'canvas' | 'sql'
+  const [sqlDraft, setSqlDraft] = useState('');
+
   // Add a source from catalog to the model (idempotent on sourceId).
   const addSourceFromCatalog = useCallback((sourceId) => {
     setSelectedSources(prev => {
@@ -437,6 +440,8 @@ export function ReportProvider({ children }) {
       measures, setMeasures, addMeasure, updateMeasure, removeMeasure,
       parameters, setParameters, addParameter, updateParameter, removeParameter,
       inspectorMode, setInspectorMode,
+      dataLayerView, setDataLayerView,
+      sqlDraft, setSqlDraft,
       fieldLibrary,
     }}>
       {children}

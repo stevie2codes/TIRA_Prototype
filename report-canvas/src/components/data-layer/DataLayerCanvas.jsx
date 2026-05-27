@@ -15,6 +15,8 @@ import JoinConfigPopover from './JoinConfigPopover.jsx';
 import DataPreviewDrawer from './DataPreviewDrawer.jsx';
 import SourceCatalog from './SourceCatalog.jsx';
 import Inspector from './Inspector.jsx';
+import DataLayerToolbar from './DataLayerToolbar.jsx';
+import SqlEditor from './SqlEditor.jsx';
 
 const nodeTypes = {
   source: SourceNode,
@@ -39,7 +41,7 @@ function CustomConnectionLine({ fromX, fromY, toX, toY }) {
 }
 
 function DataLayerCanvasInner() {
-  const { nodes, setNodes, edges, setEdges, setSelectedNodeId, selectedSources, addSourceFromCatalog, setInspectorMode } = useReport();
+  const { nodes, setNodes, edges, setEdges, setSelectedNodeId, selectedSources, addSourceFromCatalog, setInspectorMode, dataLayerView } = useReport();
   const SOURCE_NODE_SPACING = 240;
   const SOURCE_NODE_Y = 120;
   const reactFlowWrapper = useRef(null);
@@ -174,6 +176,10 @@ function DataLayerCanvasInner() {
 
   return (
     <div className="data-layer-layout">
+      <DataLayerToolbar />
+      {dataLayerView === 'sql' ? (
+        <SqlEditor />
+      ) : (
       <div ref={reactFlowWrapper} className="data-layer-canvas">
         <ReactFlow
           nodes={nodes}
@@ -230,6 +236,7 @@ function DataLayerCanvasInner() {
           />
         )}
       </div>
+      )}
       <DataPreviewDrawer />
     </div>
   );
