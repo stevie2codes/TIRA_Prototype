@@ -9,6 +9,7 @@ import { outputTemplates, getTemplateById } from '../../../src/output-templates.
 import DataLayerCanvas from './data-layer/DataLayerCanvas.jsx';
 import SourceCatalog from './data-layer/SourceCatalog.jsx';
 import PropertiesPanel from './PropertiesPanel.jsx';
+import Inspector from './data-layer/Inspector.jsx';
 import ReportCanvas from './report-builder/ReportCanvas.jsx';
 import WidgetPalette from './report-builder/WidgetPalette.jsx';
 import CanvasToolbar from './report-builder/CanvasToolbar.jsx';
@@ -219,7 +220,7 @@ export default function AppShell() {
           </div>
           {rightOpen && (
             <div className="sidebar-body">
-              {rightPanelTab === 'properties' ? <PropertiesPanel /> : <AIChatPanel />}
+              {rightPanelTab === 'properties' ? (activeTab === 0 ? <Inspector /> : <PropertiesPanel />) : <AIChatPanel />}
             </div>
           )}
         </div>

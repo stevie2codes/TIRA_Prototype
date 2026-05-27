@@ -37,7 +37,7 @@ function CustomConnectionLine({ fromX, fromY, toX, toY }) {
 }
 
 function DataLayerCanvasInner() {
-  const { nodes, setNodes, edges, setEdges, setSelectedNodeId, selectedSources, addSourceFromCatalog } = useReport();
+  const { nodes, setNodes, edges, setEdges, setSelectedNodeId, selectedSources, addSourceFromCatalog, setInspectorMode } = useReport();
   const SOURCE_NODE_SPACING = 240;
   const SOURCE_NODE_Y = 120;
   const reactFlowWrapper = useRef(null);
@@ -104,7 +104,8 @@ function DataLayerCanvasInner() {
 
   const onNodeClick = useCallback((_, node) => {
     setSelectedNodeId(node.id);
-  }, [setSelectedNodeId]);
+    setInspectorMode('selection');
+  }, [setSelectedNodeId, setInspectorMode]);
 
   const onPaneClick = useCallback(() => {
     setSelectedNodeId(null);
