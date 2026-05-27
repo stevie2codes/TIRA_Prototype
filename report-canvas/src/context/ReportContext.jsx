@@ -305,6 +305,20 @@ export function ReportProvider({ children }) {
     }
   }, []);
 
+  // Auto-fetch rows for catalog sources so widgets and the preview drawer
+  // can render synchronously. Skips synthetic (handoff) sources — they have
+  // their rows pre-populated in generatedData.
+  useEffect(() => {
+    selectedSources.forEach(sel => {
+      if (sel.isSynthetic) return;
+      const nodeId = `source-${sel.sourceId}`;
+      if (generatedData[nodeId]) return;
+      // Fire-and-forget; generateNodeData updates state when done
+      generateNodeData(nodeId, sel.sourceId, 20, sel.includedFields).catch(() => {});
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSources]);
+
   // Derive datasets from generatedData, keyed by node label
   const datasets = useMemo(() => {
     const ds = {};

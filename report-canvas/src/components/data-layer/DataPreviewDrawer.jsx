@@ -54,31 +54,58 @@ export default function DataPreviewDrawer() {
     return entry?.inlineSchema || getSchemaFor(sourceId);
   }
 
-  // Fetch preview rows when tab/selection changes
+  // Load rows whenever tab / selection / sources change
   useEffect(() => {
     let cancelled = false;
     async function load() {
-      // Determine target sourceId for the active tab
-      let targetId = null;
-      if (activeTab === 'source') targetId = selectedSourceId;
-      else if (activeTab === 'model' && selectedSources.length > 0) {
-        targetId = selectedSources[0].sourceId;
-      }
-      if (!targetId) { setRows([]); return; }
-
-      // Prefer pre-populated generated data (e.g., chat handoff)
-      const pre = generatedData[`source-${targetId}`];
-      if (pre && Array.isArray(pre.rows) && pre.rows.length > 0) {
-        if (!cancelled) setRows(pre.rows);
+      // SOURCE DATA TAB — rows for the clicked source
+      if (activeTab === 'source') {
+        if (!selectedSourceId) { setRows([]); return; }
+        const entry = selectedSources.find(s => s.sourceId === selectedSourceId);
+        // Pre-populated (handoff)
+        const pre = generatedData[`source-${selectedSourceId}`];
+        if (pre && Array.isArray(pre.rows)) {
+          if (!cancelled) setRows(pre.rows);
+          return;
+        }
+        const schema = entry?.inlineSchema || getSchemaFor(selectedSourceId);
+        const fields = schema.map(f => f.name);
+        const data = await fetchData(selectedSourceId, 8, fields).catch(() => []);
+        if (!cancelled) setRows(data);
         return;
       }
 
-      // Otherwise fetch mock data via service
-      const entry = selectedSources.find(s => s.sourceId === targetId);
-      const schema = entry?.inlineSchema || getSchemaFor(targetId);
-      const fields = schema.map(f => f.name);
-      const data = await fetchData(targetId, 5, fields).catch(() => []);
-      if (!cancelled) setRows(data);
+      // MODEL OUTPUT TAB — combined rows from all sources
+      if (activeTab === 'model') {
+        if (selectedSources.length === 0) { setRows([]); return; }
+
+        // Fetch (or use pre-loaded) rows per source, in parallel
+        const perSource = await Promise.all(
+          selectedSources.map(async (sel) => {
+            const pre = generatedData[`source-${sel.sourceId}`];
+            if (pre && Array.isArray(pre.rows)) return { sourceId: sel.sourceId, rows: pre.rows };
+            const schema = sel.inlineSchema || getSchemaFor(sel.sourceId);
+            const fields = schema.map(f => f.name);
+            const rows = await fetchData(sel.sourceId, 8, fields).catch(() => []);
+            return { sourceId: sel.sourceId, rows };
+          })
+        );
+
+        // Positional zip: row i = combined { qualifiedField: value } from all sources
+        const maxLen = Math.max(...perSource.map(p => p.rows.length), 0);
+        const combined = [];
+        for (let i = 0; i < maxLen; i++) {
+          const merged = {};
+          for (const { sourceId, rows } of perSource) {
+            const row = rows[i] || {};
+            for (const key of Object.keys(row)) {
+              merged[`${sourceId}.${key}`] = row[key];
+            }
+          }
+          combined.push(merged);
+        }
+        if (!cancelled) setRows(combined);
+      }
     }
     load();
     return () => { cancelled = true; };
@@ -170,7 +197,7 @@ export default function DataPreviewDrawer() {
               {rows.map((row, i) => (
                 <tr key={i}>
                   {columns.map(c => (
-                    <td key={c.key}>{formatCell(row[c.key.split('.').pop()])}</td>
+                    <td key={c.key}>{formatCell(row[c.key])}</td>
                   ))}
                 </tr>
               ))}

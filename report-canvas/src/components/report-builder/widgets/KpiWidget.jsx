@@ -3,29 +3,49 @@ import { ForgeCard, ForgeIcon } from '@tylertech/forge-react';
 import { useReport } from '../../../context/ReportContext.jsx';
 
 function formatValue(value, format) {
+  if (value == null || Number.isNaN(value)) return '--';
   if (format === 'currency') {
-    return '$' + (value / 1_000_000).toFixed(1) + 'M';
+    if (Math.abs(value) >= 1_000_000) return '$' + (value / 1_000_000).toFixed(1) + 'M';
+    if (Math.abs(value) >= 1_000) return '$' + (value / 1_000).toFixed(1) + 'K';
+    return '$' + value.toLocaleString();
   }
   if (format === 'percent') {
     return value + '%';
   }
+  if (typeof value === 'number') return value.toLocaleString();
   return String(value);
 }
 
 export default function KpiWidget({ widget }) {
-  const { datasets } = useReport();
-  const dsName = widget.config?.dataSource;
-  const dataset = dsName ? datasets[dsName] : null;
-  const metricKey = widget.config?.metric;
+  const { fieldLibrary, generatedData } = useReport();
+  const valueField = fieldLibrary.find(f => f.id === widget.bindings?.value);
 
-  // Try to get value from the dataset's kpiMetrics map, or fall back to row data
-  let value = '--';
-  if (dataset?.kpiMetrics?.[metricKey]) {
-    const m = dataset.kpiMetrics[metricKey];
-    value = formatValue(m.value, widget.config?.format || m.format);
-  } else if (dataset?.rows?.[0]?.[metricKey] !== undefined) {
-    value = formatValue(dataset.rows[0][metricKey], widget.config?.format);
+  let value = null;
+  if (valueField) {
+    const rows = generatedData[`source-${valueField.sourceId}`]?.rows || [];
+    const fieldName = valueField.qualifiedName.split('.').pop();
+    const sum = rows.reduce((acc, r) => {
+      const v = r[fieldName];
+      return acc + (typeof v === 'number' ? v : 0);
+    }, 0);
+    value = sum;
   }
+
+  if (!valueField) {
+    return (
+      <ForgeCard style={{ height: '100%' }}>
+        <div className="kpi-widget">
+          <span className="kpi-label">{widget.title}</span>
+          <span className="kpi-value" style={{ fontSize: '0.85rem', opacity: 0.7 }}>
+            Bind a measure to display a KPI
+          </span>
+        </div>
+      </ForgeCard>
+    );
+  }
+
+  const format = widget.config?.format || (valueField.type === 'currency' ? 'currency' : 'number');
+  const display = formatValue(value, format);
 
   const trend = widget.config?.trend;
   const trendValue = widget.config?.trendValue || '';
@@ -34,7 +54,7 @@ export default function KpiWidget({ widget }) {
     <ForgeCard style={{ height: '100%' }}>
       <div className="kpi-widget">
         <span className="kpi-label">{widget.title}</span>
-        <span className="kpi-value">{value}</span>
+        <span className="kpi-value">{display}</span>
         {trend && (
           <span className={`kpi-trend ${trend === 'down' ? 'positive' : ''}`}>
             <ForgeIcon name={trend === 'up' ? 'trending_up' : 'trending_down'} />
