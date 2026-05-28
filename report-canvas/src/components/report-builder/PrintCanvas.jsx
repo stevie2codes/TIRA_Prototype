@@ -38,6 +38,8 @@ const ROW_GAP = 8;
 const HEADER_HEIGHT = 64; // template header area
 const FOOTER_HEIGHT = 40; // template footer area
 
+const ALL_RESIZE_HANDLES = ['s', 'w', 'e', 'n', 'sw', 'nw', 'se', 'ne'];
+
 function widgetToLayoutItem(widget, rowOffset) {
   return {
     i: widget.id,
@@ -45,6 +47,7 @@ function widgetToLayoutItem(widget, rowOffset) {
     y: (widget.gridRow - 1) - rowOffset,
     w: widget.colSpan,
     h: widget.rowSpan,
+    resizeHandles: ALL_RESIZE_HANDLES,
   };
 }
 
