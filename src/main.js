@@ -83,6 +83,10 @@ import {
   tylIconShuffle,
   tylIconEdit,
   tylIconPrint,
+  tylIconChatPlus,
+  tylIconForum,
+  tylIconLocalLibrary,
+  tylIconMenuOpen,
 } from '@tylertech/tyler-icons';
 
 // Define components
@@ -163,6 +167,10 @@ IconRegistry.define([
   tylIconShuffle,
   tylIconEdit,
   tylIconPrint,
+  tylIconChatPlus,
+  tylIconForum,
+  tylIconLocalLibrary,
+  tylIconMenuOpen,
 ]);
 
 // Forge AI components (Lit-based, self-register on import)
@@ -181,6 +189,9 @@ import { registerView, startRouter, navigateTo, getCurrentView } from './router.
 import * as tiraView from './views/tira-view.js';
 import * as hubView from './views/hub-view.js';
 
+// TIRA rail (persistent left sidebar)
+import { mountTiraRail, showTiraRail, hideTiraRail } from './tira-rail.js';
+
 // App switcher
 import { initAppSwitcher } from './app-switcher.js';
 
@@ -195,6 +206,10 @@ document.addEventListener('DOMContentLoaded', () => {
   registerView('tira', tiraView);
   registerView('hub', hubView);
 
+  // Mount the persistent rail (hidden by default until first view-changed fires)
+  const railRoot = document.querySelector('#tira-rail-root');
+  if (railRoot) mountTiraRail(railRoot);
+
   // Init app switcher dropdown
   initAppSwitcher();
 
@@ -202,6 +217,8 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('view-changed', (e) => {
     const view = e.detail.view;
     updateAppBar(view);
+    if (view === 'hub') hideTiraRail();
+    else showTiraRail();
   });
 
   // Start router (defaults to 'tira' for backward compat)
