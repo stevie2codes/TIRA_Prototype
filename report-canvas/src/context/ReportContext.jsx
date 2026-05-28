@@ -379,10 +379,19 @@ export function ReportProvider({ children }) {
     setWidgets(prev => prev.map(w => {
       if (w.id !== widgetId) return w;
       const current = w.bindings?.[slot];
-      const arr = Array.isArray(current) ? current : (current ? [current] : []);
+      const arr = Array.isArray(current) ? current : (current != null ? [current] : []);
+
+      // For the table 'columns' slot, store objects {fieldId, ...settings}
+      if (slot === 'columns') {
+        const existing = arr.map(e => (typeof e === 'string' ? { fieldId: e } : e));
+        if (existing.some(e => e.fieldId === fieldId)) return w;
+        const next = [...existing, { fieldId }];
+        return { ...w, bindings: { ...(w.bindings || {}), [slot]: next } };
+      }
+
+      // Other slots stay as string field IDs
       if (arr.includes(fieldId)) return w;
-      const bindings = { ...(w.bindings || {}), [slot]: [...arr, fieldId] };
-      return { ...w, bindings };
+      return { ...w, bindings: { ...(w.bindings || {}), [slot]: [...arr, fieldId] } };
     }));
   }, []);
 
@@ -390,7 +399,18 @@ export function ReportProvider({ children }) {
     setWidgets(prev => prev.map(w => {
       if (w.id !== widgetId) return w;
       const current = w.bindings?.[slot];
-      const arr = Array.isArray(current) ? current : (current ? [current] : []);
+      const arr = Array.isArray(current) ? current : (current != null ? [current] : []);
+
+      if (slot === 'columns') {
+        const next = arr
+          .map(e => (typeof e === 'string' ? { fieldId: e } : e))
+          .filter(e => e.fieldId !== fieldId);
+        const bindings = { ...(w.bindings || {}) };
+        if (next.length === 0) delete bindings[slot];
+        else bindings[slot] = next;
+        return { ...w, bindings };
+      }
+
       const next = arr.filter(id => id !== fieldId);
       const bindings = { ...(w.bindings || {}) };
       if (next.length === 0) {
@@ -399,6 +419,38 @@ export function ReportProvider({ children }) {
         bindings[slot] = next;
       }
       return { ...w, bindings };
+    }));
+  }, []);
+
+  const updateColumnConfig = useCallback((widgetId, fieldId, updates) => {
+    setWidgets(prev => prev.map(w => {
+      if (w.id !== widgetId) return w;
+      const columns = w.bindings?.columns || [];
+      const next = columns.map(e => {
+        const obj = typeof e === 'string' ? { fieldId: e } : e;
+        return obj.fieldId === fieldId ? { ...obj, ...updates } : obj;
+      });
+      return { ...w, bindings: { ...(w.bindings || {}), columns: next } };
+    }));
+  }, []);
+
+  const reorderColumns = useCallback((widgetId, fromIndex, toIndex) => {
+    setWidgets(prev => prev.map(w => {
+      if (w.id !== widgetId) return w;
+      const columns = (w.bindings?.columns || []).map(e => (typeof e === 'string' ? { fieldId: e } : e));
+      if (fromIndex < 0 || toIndex < 0 || fromIndex >= columns.length || toIndex >= columns.length) return w;
+      const next = [...columns];
+      const [moved] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, moved);
+      return { ...w, bindings: { ...(w.bindings || {}), columns: next } };
+    }));
+  }, []);
+
+  const updateTableSettings = useCallback((widgetId, updates) => {
+    setWidgets(prev => prev.map(w => {
+      if (w.id !== widgetId) return w;
+      const current = w.config?.tableSettings || {};
+      return { ...w, config: { ...(w.config || {}), tableSettings: { ...current, ...updates } } };
     }));
   }, []);
 
@@ -422,6 +474,7 @@ export function ReportProvider({ children }) {
       selectedNodeId, setSelectedNodeId,
       widgets, setWidgets, addWidget, updateWidget, removeWidget, duplicateWidget,
       setWidgetBinding, addFieldToWidgetBinding, removeFieldFromWidgetBinding,
+      updateColumnConfig, reorderColumns, updateTableSettings,
       selectedWidgetId, setSelectedWidgetId,
       paletteDragging, setPaletteDragging,
       activeTab, setActiveTab,

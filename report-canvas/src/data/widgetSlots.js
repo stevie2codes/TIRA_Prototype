@@ -9,6 +9,13 @@
 //   - 'dimension'  → only fields tagged role === 'dimension'
 //   - 'measure'    → only fields tagged role === 'measure'
 //   - 'any'        → anything
+//
+// NOTE: for slots with { accept: 'any', multiple: true } (currently only the
+// table 'columns' slot), the stored value is an array of column-config OBJECTS
+// of shape { fieldId, displayName?, format?, formatOptions?, align?, hidden?,
+// includeInTotals? } once normalized — NOT bare field-id strings. Legacy
+// string entries are still accepted on read and normalized by
+// normalizeColumn() in src/utils/columnConfig.js.
 
 export const WIDGET_SLOTS = {
   chart: [

@@ -1,9 +1,12 @@
-// Forge components: ForgeTextField, ForgeSelect, ForgeOption, ForgeSlider, ForgeSwitch, ForgeIcon
+// Forge components: ForgeTextField, ForgeSelect, ForgeOption, ForgeSlider, ForgeSwitch, ForgeIcon, ForgeButton
+import { useState } from 'react';
 import {
-  ForgeTextField, ForgeSelect, ForgeOption, ForgeSlider, ForgeSwitch, ForgeIcon,
+  ForgeTextField, ForgeSelect, ForgeOption, ForgeSlider, ForgeSwitch, ForgeIcon, ForgeButton,
 } from '@tylertech/forge-react';
 import { useReport } from '../../context/ReportContext.jsx';
 import { WIDGET_SLOTS, DATA_WIDGET_TYPES } from '../../data/widgetSlots.js';
+import { COLUMN_DENSITIES } from '../../utils/columnConfig.js';
+import EditColumnsModal from './EditColumnsModal.jsx';
 import './WidgetConfigPanel.css';
 
 function SlotEditor({ slot, widgetId, currentBinding }) {
@@ -34,6 +37,23 @@ function SlotEditor({ slot, widgetId, currentBinding }) {
   };
 
   const eligible = fieldLibrary.filter(matches);
+
+  if (isMulti && slot.id === 'columns') {
+    const ids = (Array.isArray(currentBinding) ? currentBinding : []).map(e => typeof e === 'string' ? e : e?.fieldId).filter(Boolean);
+    return (
+      <div className="binding-slot">
+        <label className="binding-slot__label">
+          {slot.label} {slot.optional && <span className="binding-slot__optional">(optional)</span>}
+        </label>
+        <div className="binding-slot__multi" onDragOver={onDragOver} onDrop={onDrop}>
+          {ids.length === 0
+            ? <div className="binding-slot__drop binding-slot__drop--inline">Drag fields here or use Edit columns…</div>
+            : <div style={{ flex: 1, color: '#3a4a5c', fontSize: 11 }}>{ids.length} column{ids.length === 1 ? '' : 's'} bound</div>
+          }
+        </div>
+      </div>
+    );
+  }
 
   if (isMulti) {
     const ids = Array.isArray(currentBinding) ? currentBinding : (currentBinding ? [currentBinding] : []);
@@ -122,7 +142,8 @@ function SlotEditor({ slot, widgetId, currentBinding }) {
 }
 
 export default function WidgetConfigPanel() {
-  const { widgets, selectedWidgetId, updateWidget } = useReport();
+  const { widgets, selectedWidgetId, updateWidget, updateTableSettings } = useReport();
+  const [editColumnsOpen, setEditColumnsOpen] = useState(false);
   const widget = widgets.find(w => w.id === selectedWidgetId);
 
   if (!widget) {
@@ -155,6 +176,52 @@ export default function WidgetConfigPanel() {
               currentBinding={widget.bindings?.[slot.id]}
             />
           ))}
+        </div>
+      )}
+
+      {/* Table-specific section */}
+      {widget.type === 'table' && (
+        <div className="config-section">
+          <h3 className="config-section-title">Table</h3>
+
+          <div className="config-field-row">
+            <span>Show header</span>
+            <ForgeSwitch
+              selected={widget.config?.tableSettings?.showHeader !== false}
+              on-forge-switch-change={() => updateTableSettings(widget.id, { showHeader: !(widget.config?.tableSettings?.showHeader !== false) })}
+            />
+          </div>
+
+          <div className="config-field-row">
+            <span>Striped rows</span>
+            <ForgeSwitch
+              selected={widget.config?.tableSettings?.striped !== false}
+              on-forge-switch-change={() => updateTableSettings(widget.id, { striped: !(widget.config?.tableSettings?.striped !== false) })}
+            />
+          </div>
+
+          <div className="config-field-row">
+            <span>Totals row</span>
+            <ForgeSwitch
+              selected={!!widget.config?.tableSettings?.showTotals}
+              on-forge-switch-change={() => updateTableSettings(widget.id, { showTotals: !widget.config?.tableSettings?.showTotals })}
+            />
+          </div>
+
+          <ForgeSelect
+            label="Row density"
+            value={widget.config?.tableSettings?.density || 'normal'}
+            on-change={(e) => updateTableSettings(widget.id, { density: e.detail })}
+          >
+            {COLUMN_DENSITIES.map(d => (
+              <ForgeOption key={d.value} value={d.value}>{d.label}</ForgeOption>
+            ))}
+          </ForgeSelect>
+
+          <ForgeButton type="outlined" on-click={() => setEditColumnsOpen(true)} style={{ marginTop: 12, width: '100%' }}>
+            <ForgeIcon name="view_column" slot="leading" />
+            Edit columns…
+          </ForgeButton>
         </div>
       )}
 
@@ -259,6 +326,10 @@ export default function WidgetConfigPanel() {
           <span className="config-value">{widget.gridRow}</span>
         </div>
       </div>
+
+      {editColumnsOpen && widget.type === 'table' && (
+        <EditColumnsModal widget={widget} onClose={() => setEditColumnsOpen(false)} />
+      )}
     </div>
   );
 }

@@ -1084,6 +1084,26 @@ html, body, #root { height: 100%; font-family: 'DM Sans', system-ui, sans-serif;
   color: #dc2626;
 }
 
+/* Table density variants applied at the widget level */
+.table-widget--compact .data-table th,
+.table-widget--compact .data-table td { padding: 4px 8px; font-size: 11px; }
+
+.table-widget--normal .data-table th,
+.table-widget--normal .data-table td { padding: 7px 12px; font-size: 12px; }
+
+.table-widget--comfortable .data-table th,
+.table-widget--comfortable .data-table td { padding: 11px 16px; font-size: 13px; }
+
+/* Zebra striping */
+.table-widget.is-striped .data-table tbody tr:nth-child(even) td { background: #fafbfc; }
+
+/* Totals row */
+.data-table__totals td {
+  font-weight: 600;
+  background: #f4f6f9;
+  border-top: 2px solid #d4dae3;
+}
+
 /* ── Text Widget ── */
 
 .text-widget {
