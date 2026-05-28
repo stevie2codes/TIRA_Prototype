@@ -412,11 +412,67 @@ export function ReportProvider({ children }) {
     });
   }, []);
 
+  /**
+   * Insert a new widget at a specific gridRow, pushing existing widgets at or
+   * below that row DOWN by the new widget's rowSpan. Widgets above stay put.
+   *
+   * Use this for palette drops between existing rows.
+   */
+  const insertWidgetAtRow = useCallback((widget, targetRow) => {
+    setWidgets(prev => {
+      const pushed = prev.map(w =>
+        w.gridRow >= targetRow ? { ...w, gridRow: w.gridRow + (widget.rowSpan || 1) } : w
+      );
+      return [...pushed, { ...widget, gridRow: targetRow }];
+    });
+  }, []);
+
+  /**
+   * Move an existing widget to a new gridRow, shifting other widgets out of the
+   * way. If the target row is currently occupied and the widget is moving DOWN,
+   * the displaced widgets shift up to fill the vacated space; if moving UP, the
+   * displaced widgets shift down by the widget's rowSpan.
+   *
+   * Simple semantics: rebuild the row order with the moved widget at target row.
+   */
+  const moveWidgetToRow = useCallback((widgetId, targetRow, targetCol) => {
+    setWidgets(prev => {
+      const moving = prev.find(w => w.id === widgetId);
+      if (!moving) return prev;
+
+      // If the target is the same, just update column (if changed)
+      if (moving.gridRow === targetRow && (targetCol == null || moving.gridColumn === targetCol)) {
+        return prev;
+      }
+
+      // Sort other widgets by their current gridRow
+      const others = prev
+        .filter(w => w.id !== widgetId)
+        .sort((a, b) => a.gridRow - b.gridRow);
+
+      // Build a new ordering: insert the moving widget at targetRow, push others
+      // at or below targetRow down by the moving widget's rowSpan.
+      const pushed = others.map(w =>
+        w.gridRow >= targetRow ? { ...w, gridRow: w.gridRow + moving.rowSpan } : w
+      );
+
+      return [
+        ...pushed,
+        {
+          ...moving,
+          gridRow: targetRow,
+          gridColumn: targetCol != null ? targetCol : moving.gridColumn,
+        },
+      ];
+    });
+  }, []);
+
   return (
     <ReportContext.Provider value={{
       nodes, setNodes, edges, setEdges,
       selectedNodeId, setSelectedNodeId,
       widgets, setWidgets, addWidget, updateWidget, removeWidget, duplicateWidget,
+      insertWidgetAtRow, moveWidgetToRow,
       setWidgetBinding, addFieldToWidgetBinding, removeFieldFromWidgetBinding,
       selectedWidgetId, setSelectedWidgetId,
       activeTab, setActiveTab,

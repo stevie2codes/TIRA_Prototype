@@ -40,7 +40,7 @@ const FOOTER_HEIGHT = 40; // template footer area
 
 export default function PrintCanvas() {
   const {
-    widgets, addWidget, updateWidget,
+    widgets, addWidget, updateWidget, insertWidgetAtRow, moveWidgetToRow,
     selectedWidgetId, setSelectedWidgetId,
     removeWidget, duplicateWidget,
     activeTemplateId, handoffContext,
@@ -50,6 +50,7 @@ export default function PrintCanvas() {
   const template = activeTemplateId ? getTemplateById(activeTemplateId) : null;
   const viewportRef = useRef(null);
   const [scrollPos, setScrollPos] = useState({ top: 0, left: 0 });
+  const [dropIndicator, setDropIndicator] = useState(null); // { pageIndex, row, top } | null
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   const pageDims = useMemo(() => getPageDimensions(pageSize, orientation), [pageSize, orientation]);
@@ -106,6 +107,70 @@ export default function PrintCanvas() {
     }
   }, []);
 
+  /**
+   * Given a page-content DOM element and a mouse Y position, return the gridRow
+   * where a widget would be inserted. Looks at each child widget's bounding box
+   * and picks the nearest "between rows" gap (or above-first / below-last).
+   *
+   * Returns { row, indicatorTop } — row is a 1-based grid row; indicatorTop is
+   * the Y coordinate (relative to the page-content) where the visual line
+   * should render.
+   */
+  function computeDropTarget(pageContentEl, mouseY, pageRowOffset) {
+    if (!pageContentEl) return null;
+    const rect = pageContentEl.getBoundingClientRect();
+    const relativeY = mouseY - rect.top;
+
+    // Collect widget wrappers in this page (rendered children)
+    const wrappers = Array.from(pageContentEl.querySelectorAll('.widget-wrapper'));
+
+    if (wrappers.length === 0) {
+      return { row: 1 + pageRowOffset, indicatorTop: 0 };
+    }
+
+    // Find the gap with the smallest distance to the cursor
+    let bestRow = null;
+    let bestDist = Infinity;
+    let bestTop = 0;
+
+    // Above first
+    const firstRect = wrappers[0].getBoundingClientRect();
+    const firstTopRel = firstRect.top - rect.top;
+    if (relativeY < firstTopRel + firstRect.height / 2) {
+      bestRow = parseInt(wrappers[0].dataset.gridRow, 10) || 1;
+      bestDist = Math.abs(relativeY - firstTopRel);
+      bestTop = Math.max(0, firstTopRel - 4);
+    }
+
+    for (let i = 0; i < wrappers.length - 1; i++) {
+      const aRect = wrappers[i].getBoundingClientRect();
+      const bRect = wrappers[i + 1].getBoundingClientRect();
+      const gapMid = ((aRect.bottom + bRect.top) / 2) - rect.top;
+      const dist = Math.abs(relativeY - gapMid);
+      if (dist < bestDist) {
+        bestDist = dist;
+        // The "between" insertion goes at the row of the LATER widget
+        bestRow = parseInt(wrappers[i + 1].dataset.gridRow, 10);
+        bestTop = gapMid - 2;
+      }
+    }
+
+    // Below last
+    const lastRect = wrappers[wrappers.length - 1].getBoundingClientRect();
+    const lastBottomRel = lastRect.bottom - rect.top;
+    if (relativeY > lastBottomRel - lastRect.height / 2) {
+      const lastRow = parseInt(wrappers[wrappers.length - 1].dataset.gridRow, 10) || 1;
+      const lastRowSpan = parseInt(wrappers[wrappers.length - 1].dataset.rowSpan, 10) || 1;
+      const dist = Math.abs(relativeY - lastBottomRel);
+      if (dist < bestDist) {
+        bestRow = lastRow + lastRowSpan;
+        bestTop = Math.min(rect.height, lastBottomRel + 4);
+      }
+    }
+
+    return { row: bestRow, indicatorTop: bestTop };
+  }
+
   const handleDragEnd = (event) => {
     const { active, delta } = event;
     if (!active || !delta) return;
@@ -117,32 +182,63 @@ export default function PrintCanvas() {
     if (colDelta === 0 && rowDelta === 0) return;
     const newCol = Math.max(1, Math.min(13 - widget.colSpan, widget.gridColumn + colDelta));
     const newRow = Math.max(1, widget.gridRow + rowDelta);
-    updateWidget(widget.id, { gridColumn: newCol, gridRow: newRow });
+    moveWidgetToRow(widget.id, newRow, newCol);
   };
 
   // Handle drops from widget palette
   const onDragOver = useCallback((e) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'copy';
-  }, []);
+    // Only respond to widget palette drags
+    const types = Array.from(e.dataTransfer.types || []);
+    if (!types.includes('application/widget')) return;
+
+    // Find the page-content element under the cursor
+    const pageEl = e.target.closest?.('.print-page-content');
+    if (!pageEl) {
+      setDropIndicator(null);
+      return;
+    }
+    const pageIndex = parseInt(pageEl.dataset.pageIndex, 10) || 0;
+    const pageRowOffset = pageIndex * rowsPerPage;
+    const target = computeDropTarget(pageEl, e.clientY, pageRowOffset);
+    if (target) setDropIndicator({ pageIndex, ...target });
+  }, [rowsPerPage]);
 
   const onDrop = useCallback((e) => {
     e.preventDefault();
     const raw = e.dataTransfer.getData('application/widget');
-    if (!raw) return;
+    if (!raw) { setDropIndicator(null); return; }
     const config = JSON.parse(raw);
+
+    const pageEl = e.target.closest?.('.print-page-content');
+    let targetRow = 1;
+    if (pageEl) {
+      const pageIndex = parseInt(pageEl.dataset.pageIndex, 10) || 0;
+      const pageRowOffset = pageIndex * rowsPerPage;
+      const target = computeDropTarget(pageEl, e.clientY, pageRowOffset);
+      if (target) targetRow = target.row;
+    }
+
     const newWidget = {
       id: `widget-${Date.now()}`,
       type: config.type,
       title: config.label,
       gridColumn: 1,
-      gridRow: (pages.length > 0 ? pages[0].length : 0) + 1,
-      colSpan: config.colSpan,
       rowSpan: config.rowSpan,
+      colSpan: config.colSpan,
       config: config.subtype ? { subtype: config.subtype } : {},
     };
-    addWidget(newWidget);
-  }, [addWidget, pages]);
+
+    insertWidgetAtRow(newWidget, targetRow);
+    setDropIndicator(null);
+  }, [insertWidgetAtRow, rowsPerPage]);
+
+  const onDragLeave = useCallback((e) => {
+    // Only clear if leaving the canvas entirely
+    if (e.currentTarget.contains(e.relatedTarget)) return;
+    setDropIndicator(null);
+  }, []);
 
   const handleCanvasClick = (e) => {
     if (e.target.closest('.widget-wrapper')) return;
@@ -187,6 +283,7 @@ export default function PrintCanvas() {
           onClick={handleCanvasClick}
           onDragOver={onDragOver}
           onDrop={onDrop}
+          onDragLeave={onDragLeave}
         >
           <div
             className="print-pages-container"
@@ -237,7 +334,9 @@ export default function PrintCanvas() {
                 {/* Page content grid */}
                 <div
                   className="print-page-content"
+                  data-page-index={pageIndex}
                   style={{
+                    position: 'relative',
                     padding: template
                       ? `12px ${margins.right * DPI}px 0 ${margins.left * DPI}px`
                       : `${margins.top * DPI}px ${margins.right * DPI}px 0 ${margins.left * DPI}px`,
@@ -259,6 +358,12 @@ export default function PrintCanvas() {
                         <WidgetRenderer widget={widget} />
                       </WidgetWrapper>
                     ))
+                  )}
+                  {dropIndicator && dropIndicator.pageIndex === pageIndex && (
+                    <div
+                      className="canvas-drop-indicator"
+                      style={{ top: `${dropIndicator.indicatorTop}px` }}
+                    />
                   )}
                 </div>
 

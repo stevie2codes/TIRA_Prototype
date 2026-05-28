@@ -124,6 +124,8 @@ export default function WidgetWrapper({ widget, children }) {
     <div
       ref={(el) => { setNodeRef(el); resizeRef.current = el; }}
       className={`widget-wrapper${isSelected ? ' selected' : ''}${isResizing ? ' resizing' : ''}`}
+      data-grid-row={widget.gridRow}
+      data-row-span={widget.rowSpan}
       style={style}
       onClick={handleClick}
       onContextMenu={handleContextMenu}
