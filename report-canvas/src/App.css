@@ -920,117 +920,12 @@ html, body, #root { height: 100%; font-family: 'DM Sans', system-ui, sans-serif;
   padding: 14px;
 }
 
-/* ── Resize Handles (react-grid-layout) ──────────────────────────
-   Strategy: the .react-resizable-handle element is a TRANSPARENT, larger
-   hit target. The visible signifier is drawn via a ::before pseudo so
-   react-resizable's background-image SVG and transforms don't bleed
-   through. Use !important on transform/background to win against the
-   library's stylesheet regardless of load order. */
+/* ── Resize Handle (react-grid-layout) ──
+   Single SE handle using react-resizable's default corner-triangle SVG. */
 
-.react-grid-item .react-resizable-handle {
-  position: absolute;
-  background: transparent !important;
-  background-image: none !important;
-  transform: none !important;
-  padding: 0;
-  z-index: 10;
-  opacity: 0;
-  transition: opacity 0.15s;
-}
-
-.react-grid-item:hover .react-resizable-handle,
-.react-grid-item:has(.widget-wrapper.selected) .react-resizable-handle {
-  opacity: 1;
-}
-
-/* The visible signifier drawn inside each handle */
-.react-grid-item .react-resizable-handle::before {
-  content: '';
-  position: absolute;
-  background: #3d5afe;
-  border: 2px solid #fff;
-  box-shadow: 0 1px 4px rgba(61, 90, 254, 0.35);
-  pointer-events: none;
-}
-
-/* ── Corner handles ─────────────────────────────────────────── */
-.react-grid-item .react-resizable-handle-nw,
-.react-grid-item .react-resizable-handle-ne,
-.react-grid-item .react-resizable-handle-sw,
-.react-grid-item .react-resizable-handle-se {
-  width: 20px;
-  height: 20px;
-}
-
-.react-grid-item .react-resizable-handle-nw { top: -10px;   left: -10px;   cursor: nw-resize; }
-.react-grid-item .react-resizable-handle-ne { top: -10px;   right: -10px;  cursor: ne-resize; }
-.react-grid-item .react-resizable-handle-sw { bottom: -10px; left: -10px;  cursor: sw-resize; }
-.react-grid-item .react-resizable-handle-se { bottom: -10px; right: -10px; cursor: se-resize; }
-
-/* Corner signifier: 10px round dot centered in the hit target */
-.react-grid-item .react-resizable-handle-nw::before,
-.react-grid-item .react-resizable-handle-ne::before,
-.react-grid-item .react-resizable-handle-sw::before,
-.react-grid-item .react-resizable-handle-se::before {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
-
-/* ── Edge handles ───────────────────────────────────────────── */
-.react-grid-item .react-resizable-handle-n,
-.react-grid-item .react-resizable-handle-s {
-  height: 14px;
-  left: 12%;
-  right: 12%;
-  width: auto;
-  margin: 0;
-  cursor: ns-resize;
-}
-
-.react-grid-item .react-resizable-handle-n { top: -7px;    }
-.react-grid-item .react-resizable-handle-s { bottom: -7px; }
-
-.react-grid-item .react-resizable-handle-e,
-.react-grid-item .react-resizable-handle-w {
-  width: 14px;
-  top: 12%;
-  bottom: 12%;
-  height: auto;
-  margin: 0;
-  cursor: ew-resize;
-}
-
-.react-grid-item .react-resizable-handle-e { right: -7px; }
-.react-grid-item .react-resizable-handle-w { left: -7px;  }
-
-/* Edge signifier: short rounded bar centered along the edge */
-.react-grid-item .react-resizable-handle-n::before,
-.react-grid-item .react-resizable-handle-s::before {
-  height: 4px;
-  width: 32px;
-  border-radius: 2px;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
-
-.react-grid-item .react-resizable-handle-e::before,
-.react-grid-item .react-resizable-handle-w::before {
-  width: 4px;
-  height: 32px;
-  border-radius: 2px;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
-
-.react-grid-item .react-resizable-handle:hover::before {
-  background: #2540e0;
-  box-shadow: 0 1px 6px rgba(61, 90, 254, 0.55);
+.react-grid-item > .react-resizable-handle {
+  width: 16px;
+  height: 16px;
 }
 
 /* Fill the react-grid-item box with the widget wrapper */
