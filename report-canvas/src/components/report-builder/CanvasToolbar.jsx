@@ -13,7 +13,7 @@ export default function CanvasToolbar() {
   return (
     <div className="canvas-toolbar">
       <div className="toolbar-group">
-        <ForgeIconButton density="small" on-click={() => setZoom(z => Math.max(50, z - 10))}>
+        <ForgeIconButton density="small" on-click={() => setZoom(z => Math.max(20, z - 10))}>
           <ForgeIcon name="remove" />
         </ForgeIconButton>
         <span className="toolbar-zoom-label">{zoom}%</span>
@@ -23,12 +23,28 @@ export default function CanvasToolbar() {
         <input
           type="range"
           className="toolbar-zoom-slider"
-          min={50}
+          min={20}
           max={200}
-          step={10}
+          step={5}
           value={zoom}
           onChange={(e) => setZoom(Number(e.target.value))}
         />
+        <ForgeIconButton
+          density="small"
+          on-click={() => setZoom(100)}
+          aria-label="Reset zoom to 100%"
+          title="Reset zoom to 100%"
+        >
+          <ForgeIcon name="center_focus_strong" />
+        </ForgeIconButton>
+        <ForgeIconButton
+          density="small"
+          on-click={() => setZoom(40)}
+          aria-label="Fit pages"
+          title="Fit all pages"
+        >
+          <ForgeIcon name="fit_screen" />
+        </ForgeIconButton>
       </div>
 
       <div className="toolbar-divider" />

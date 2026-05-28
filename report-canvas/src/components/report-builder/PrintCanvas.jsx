@@ -54,7 +54,7 @@ export default function PrintCanvas() {
     selectedWidgetId, setSelectedWidgetId,
     removeWidget, duplicateWidget,
     activeTemplateId, handoffContext,
-    zoom, pageSize, orientation, margins, showRulers,
+    zoom, setZoom, pageSize, orientation, margins, showRulers,
     paletteDragging, setPaletteDragging,
   } = useReport();
 
@@ -114,6 +114,34 @@ export default function PrintCanvas() {
       });
     }
   }, []);
+
+  // Pinch-to-zoom (trackpad pinch fires wheel with ctrlKey) and Ctrl/Cmd+wheel
+  // explicit zoom. Native scroll without modifier passes through.
+  useEffect(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+
+    const onWheel = (e) => {
+      // Trackpad pinch on macOS fires wheel events with ctrlKey set
+      // (even without the actual Ctrl key being pressed). Cmd/Meta also.
+      if (!e.ctrlKey && !e.metaKey) return;
+      e.preventDefault();
+
+      // deltaY: negative = zoom in, positive = zoom out
+      // Use a multiplicative step proportional to current zoom so the
+      // feel is consistent across the range.
+      const direction = e.deltaY < 0 ? 1 : -1;
+      const magnitude = Math.min(0.3, Math.abs(e.deltaY) * 0.01);
+      setZoom(z => {
+        const next = Math.round(z * (1 + direction * magnitude));
+        return Math.max(20, Math.min(200, next));
+      });
+    };
+
+    // Need passive: false so we can preventDefault on pinch
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, [setZoom]);
 
   const handleCanvasClick = (e) => {
     if (e.target.closest('.widget-wrapper')) return;
@@ -280,7 +308,7 @@ export default function PrintCanvas() {
                       margin={[ROW_GAP, ROW_GAP]}
                       containerPadding={[0, 0]}
                       draggableHandle=".widget-drag-handle"
-                      resizeHandles={['se']}
+                      resizeHandles={['s', 'w', 'e', 'n', 'sw', 'nw', 'se', 'ne']}
                       compactType="vertical"
                       preventCollision={false}
                       isDroppable={!!paletteDragging && pageIndex === 0}
