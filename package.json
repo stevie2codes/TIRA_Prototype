@@ -27,6 +27,7 @@
     "codemirror": "^6.0.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-grid-layout": "^2.2.3",
     "recharts": "^2.15.0"
   },
   "devDependencies": {

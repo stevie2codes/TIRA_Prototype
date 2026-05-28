@@ -920,32 +920,21 @@ html, body, #root { height: 100%; font-family: 'DM Sans', system-ui, sans-serif;
   padding: 14px;
 }
 
-/* ── Resize Handles ── */
+/* ── Resize Handles (react-grid-layout) ── */
 
-.resize-handle {
-  position: absolute;
-  width: 8px;
-  height: 8px;
-  background: #3d5afe;
-  border: 2px solid #fff;
-  border-radius: 50%;
-  z-index: 2;
-  transition: transform 0.1s;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+.react-grid-item > .react-resizable-handle {
+  width: 14px;
+  height: 14px;
+  bottom: 4px;
+  right: 4px;
 }
 
-.resize-handle:hover {
-  transform: scale(1.4);
+/* Fill the react-grid-item box with the widget wrapper */
+.print-grid .react-grid-item > div,
+.print-grid .react-grid-item > .widget-wrapper {
+  width: 100%;
+  height: 100%;
 }
-
-.resize-handle.nw { top: -4px; left: -4px; cursor: nw-resize; }
-.resize-handle.n  { top: -4px; left: 50%; margin-left: -4px; cursor: n-resize; }
-.resize-handle.ne { top: -4px; right: -4px; cursor: ne-resize; }
-.resize-handle.e  { top: 50%; margin-top: -4px; right: -4px; cursor: e-resize; }
-.resize-handle.se { bottom: -4px; right: -4px; cursor: se-resize; }
-.resize-handle.s  { bottom: -4px; left: 50%; margin-left: -4px; cursor: s-resize; }
-.resize-handle.sw { bottom: -4px; left: -4px; cursor: sw-resize; }
-.resize-handle.w  { top: 50%; margin-top: -4px; left: -4px; cursor: w-resize; }
 
 /* ── Widget Placeholder ── */
 
@@ -2252,7 +2241,7 @@ html, body, #root { height: 100%; font-family: 'DM Sans', system-ui, sans-serif;
     display: none !important;
   }
 
-  .resize-handle {
+  .react-resizable-handle {
     display: none !important;
   }
 
@@ -2260,37 +2249,4 @@ html, body, #root { height: 100%; font-family: 'DM Sans', system-ui, sans-serif;
     border-color: transparent !important;
     box-shadow: none !important;
   }
-}
-
-.canvas-drop-indicator {
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: #3b6ea5;
-  border-radius: 2px;
-  pointer-events: none;
-  z-index: 50;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.8), 0 0 8px rgba(59, 110, 165, 0.5);
-  transition: top 0.08s ease-out;
-}
-
-.canvas-drop-indicator::before,
-.canvas-drop-indicator::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  width: 8px;
-  height: 8px;
-  background: #3b6ea5;
-  border-radius: 50%;
-  transform: translateY(-50%);
-}
-
-.canvas-drop-indicator::before {
-  left: -4px;
-}
-
-.canvas-drop-indicator::after {
-  right: -4px;
 }

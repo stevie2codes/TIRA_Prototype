@@ -31,7 +31,7 @@ const ICON_STYLES = {
 };
 
 function WidgetsTab() {
-  const { widgets, addWidget } = useReport();
+  const { widgets, addWidget, setPaletteDragging } = useReport();
   const getNextRow = () => widgets.length === 0 ? 1 : Math.max(...widgets.map(w => w.gridRow + w.rowSpan));
 
   const handleClick = (config) => {
@@ -50,7 +50,10 @@ function WidgetsTab() {
   const onDragStart = (event, config) => {
     event.dataTransfer.setData('application/widget', JSON.stringify(config));
     event.dataTransfer.effectAllowed = 'copy';
+    setPaletteDragging({ ...config, i: '__palette__' });
   };
+
+  const onDragEnd = () => setPaletteDragging(null);
 
   const renderItem = (w, colorClass, iconStyle) => (
     <div
@@ -58,6 +61,7 @@ function WidgetsTab() {
       className={`palette-node ${colorClass}`}
       draggable
       onDragStart={(e) => onDragStart(e, w)}
+      onDragEnd={onDragEnd}
       onClick={() => handleClick(w)}
     >
       <div className="palette-icon-container" style={{ background: iconStyle.bg }}>

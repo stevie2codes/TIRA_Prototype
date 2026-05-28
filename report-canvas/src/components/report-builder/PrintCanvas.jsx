@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
-import { DndContext, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
+import GridLayout from 'react-grid-layout';
 import { ForgeIcon } from '@tylertech/forge-react';
 import { useReport } from '../../context/ReportContext.jsx';
 import { getTemplateById } from '../../../../src/output-templates.js';
@@ -38,20 +38,29 @@ const ROW_GAP = 8;
 const HEADER_HEIGHT = 64; // template header area
 const FOOTER_HEIGHT = 40; // template footer area
 
+function widgetToLayoutItem(widget, rowOffset) {
+  return {
+    i: widget.id,
+    x: (widget.gridColumn - 1),
+    y: (widget.gridRow - 1) - rowOffset,
+    w: widget.colSpan,
+    h: widget.rowSpan,
+  };
+}
+
 export default function PrintCanvas() {
   const {
-    widgets, addWidget, updateWidget, insertWidgetAtRow, moveWidgetToRow,
+    widgets, addWidget, updateWidget,
     selectedWidgetId, setSelectedWidgetId,
     removeWidget, duplicateWidget,
     activeTemplateId, handoffContext,
     zoom, pageSize, orientation, margins, showRulers,
+    paletteDragging, setPaletteDragging,
   } = useReport();
 
   const template = activeTemplateId ? getTemplateById(activeTemplateId) : null;
   const viewportRef = useRef(null);
   const [scrollPos, setScrollPos] = useState({ top: 0, left: 0 });
-  const [dropIndicator, setDropIndicator] = useState(null); // { pageIndex, row, top } | null
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   const pageDims = useMemo(() => getPageDimensions(pageSize, orientation), [pageSize, orientation]);
   const contentArea = useMemo(() => getContentArea(pageSize, orientation, margins), [pageSize, orientation, margins]);
@@ -71,10 +80,9 @@ export default function PrintCanvas() {
     widgets.forEach(w => {
       const pageIndex = Math.floor((w.gridRow - 1) / rowsPerPage);
       if (!pageMap[pageIndex]) pageMap[pageIndex] = [];
-      pageMap[pageIndex].push({
-        ...w,
-        gridRow: ((w.gridRow - 1) % rowsPerPage) + 1,
-      });
+      // Keep original gridRow on the widget; we'll subtract the page rowOffset
+      // when computing the RGL layout item.
+      pageMap[pageIndex].push(w);
     });
     const maxPage = Math.max(...Object.keys(pageMap).map(Number), 0);
     const result = [];
@@ -107,143 +115,54 @@ export default function PrintCanvas() {
     }
   }, []);
 
-  /**
-   * Given a page-content DOM element and a mouse Y position, return the gridRow
-   * where a widget would be inserted. Looks at each child widget's bounding box
-   * and picks the nearest "between rows" gap (or above-first / below-last).
-   *
-   * Returns { row, indicatorTop } — row is a 1-based grid row; indicatorTop is
-   * the Y coordinate (relative to the page-content) where the visual line
-   * should render.
-   */
-  function computeDropTarget(pageContentEl, mouseY, pageRowOffset) {
-    if (!pageContentEl) return null;
-    const rect = pageContentEl.getBoundingClientRect();
-    const relativeY = mouseY - rect.top;
-
-    // Collect widget wrappers in this page (rendered children)
-    const wrappers = Array.from(pageContentEl.querySelectorAll('.widget-wrapper'));
-
-    if (wrappers.length === 0) {
-      return { row: 1 + pageRowOffset, indicatorTop: 0 };
-    }
-
-    // Find the gap with the smallest distance to the cursor
-    let bestRow = null;
-    let bestDist = Infinity;
-    let bestTop = 0;
-
-    // Above first
-    const firstRect = wrappers[0].getBoundingClientRect();
-    const firstTopRel = firstRect.top - rect.top;
-    if (relativeY < firstTopRel + firstRect.height / 2) {
-      bestRow = parseInt(wrappers[0].dataset.gridRow, 10) || 1;
-      bestDist = Math.abs(relativeY - firstTopRel);
-      bestTop = Math.max(0, firstTopRel - 4);
-    }
-
-    for (let i = 0; i < wrappers.length - 1; i++) {
-      const aRect = wrappers[i].getBoundingClientRect();
-      const bRect = wrappers[i + 1].getBoundingClientRect();
-      const gapMid = ((aRect.bottom + bRect.top) / 2) - rect.top;
-      const dist = Math.abs(relativeY - gapMid);
-      if (dist < bestDist) {
-        bestDist = dist;
-        // The "between" insertion goes at the row of the LATER widget
-        bestRow = parseInt(wrappers[i + 1].dataset.gridRow, 10);
-        bestTop = gapMid - 2;
-      }
-    }
-
-    // Below last
-    const lastRect = wrappers[wrappers.length - 1].getBoundingClientRect();
-    const lastBottomRel = lastRect.bottom - rect.top;
-    if (relativeY > lastBottomRel - lastRect.height / 2) {
-      const lastRow = parseInt(wrappers[wrappers.length - 1].dataset.gridRow, 10) || 1;
-      const lastRowSpan = parseInt(wrappers[wrappers.length - 1].dataset.rowSpan, 10) || 1;
-      const dist = Math.abs(relativeY - lastBottomRel);
-      if (dist < bestDist) {
-        bestRow = lastRow + lastRowSpan;
-        bestTop = Math.min(rect.height, lastBottomRel + 4);
-      }
-    }
-
-    return { row: bestRow, indicatorTop: bestTop };
-  }
-
-  const handleDragEnd = (event) => {
-    const { active, delta } = event;
-    if (!active || !delta) return;
-    const widget = widgets.find(w => w.id === active.id);
-    if (!widget) return;
-    const scale = zoom / 100;
-    const colDelta = Math.round(delta.x / (scale * (contentArea.widthPx / 12)));
-    const rowDelta = Math.round(delta.y / (scale * (ROW_HEIGHT + ROW_GAP)));
-    if (colDelta === 0 && rowDelta === 0) return;
-    const newCol = Math.max(1, Math.min(13 - widget.colSpan, widget.gridColumn + colDelta));
-    const newRow = Math.max(1, widget.gridRow + rowDelta);
-    moveWidgetToRow(widget.id, newRow, newCol);
-  };
-
-  // Handle drops from widget palette
-  const onDragOver = useCallback((e) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'copy';
-    // Only respond to widget palette drags
-    const types = Array.from(e.dataTransfer.types || []);
-    if (!types.includes('application/widget')) return;
-
-    // Find the page-content element under the cursor
-    const pageEl = e.target.closest?.('.print-page-content');
-    if (!pageEl) {
-      setDropIndicator(null);
-      return;
-    }
-    const pageIndex = parseInt(pageEl.dataset.pageIndex, 10) || 0;
-    const pageRowOffset = pageIndex * rowsPerPage;
-    const target = computeDropTarget(pageEl, e.clientY, pageRowOffset);
-    if (target) setDropIndicator({ pageIndex, ...target });
-  }, [rowsPerPage]);
-
-  const onDrop = useCallback((e) => {
-    e.preventDefault();
-    const raw = e.dataTransfer.getData('application/widget');
-    if (!raw) { setDropIndicator(null); return; }
-    const config = JSON.parse(raw);
-
-    const pageEl = e.target.closest?.('.print-page-content');
-    let targetRow = 1;
-    if (pageEl) {
-      const pageIndex = parseInt(pageEl.dataset.pageIndex, 10) || 0;
-      const pageRowOffset = pageIndex * rowsPerPage;
-      const target = computeDropTarget(pageEl, e.clientY, pageRowOffset);
-      if (target) targetRow = target.row;
-    }
-
-    const newWidget = {
-      id: `widget-${Date.now()}`,
-      type: config.type,
-      title: config.label,
-      gridColumn: 1,
-      rowSpan: config.rowSpan,
-      colSpan: config.colSpan,
-      config: config.subtype ? { subtype: config.subtype } : {},
-    };
-
-    insertWidgetAtRow(newWidget, targetRow);
-    setDropIndicator(null);
-  }, [insertWidgetAtRow, rowsPerPage]);
-
-  const onDragLeave = useCallback((e) => {
-    // Only clear if leaving the canvas entirely
-    if (e.currentTarget.contains(e.relatedTarget)) return;
-    setDropIndicator(null);
-  }, []);
-
   const handleCanvasClick = (e) => {
     if (e.target.closest('.widget-wrapper')) return;
     setSelectedWidgetId(null);
   };
+
+  const onLayoutChange = useCallback((layout, pageIndex) => {
+    const rowOffset = pageIndex * rowsPerPage;
+    layout.forEach(item => {
+      // Skip the dropping placeholder item, if present
+      if (item.i === '__palette__' || item.i === '__placeholder__') return;
+      const widget = widgets.find(w => w.id === item.i);
+      if (!widget) return;
+      const newCol = item.x + 1;
+      const newRow = item.y + 1 + rowOffset;
+      const newColSpan = item.w;
+      const newRowSpan = item.h;
+      if (
+        widget.gridColumn !== newCol ||
+        widget.gridRow !== newRow ||
+        widget.colSpan !== newColSpan ||
+        widget.rowSpan !== newRowSpan
+      ) {
+        updateWidget(widget.id, {
+          gridColumn: newCol,
+          gridRow: newRow,
+          colSpan: newColSpan,
+          rowSpan: newRowSpan,
+        });
+      }
+    });
+  }, [widgets, updateWidget, rowsPerPage]);
+
+  const onPaletteDrop = useCallback((layout, item, pageIndex) => {
+    if (!paletteDragging) return;
+    const config = paletteDragging;
+    const rowOffset = pageIndex * rowsPerPage;
+    addWidget({
+      id: `widget-${Date.now()}`,
+      type: config.type,
+      title: config.label,
+      gridColumn: (item.x ?? 0) + 1,
+      gridRow: (item.y ?? 0) + 1 + rowOffset,
+      colSpan: config.colSpan,
+      rowSpan: config.rowSpan,
+      config: config.subtype ? { subtype: config.subtype } : {},
+    });
+    setPaletteDragging(null);
+  }, [paletteDragging, addWidget, setPaletteDragging, rowsPerPage]);
 
   const reportTitle = handoffContext?.reportTitle || 'Report';
   const dataSource = handoffContext?.dataSource || '';
@@ -263,9 +182,12 @@ export default function PrintCanvas() {
 
   const isEmpty = widgets.length === 0;
 
+  const dropping = paletteDragging
+    ? { i: '__palette__', w: paletteDragging.colSpan, h: paletteDragging.rowSpan }
+    : { i: '__placeholder__', w: 6, h: 3 };
+
   return (
-    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-      <div className="print-canvas-outer">
+    <div className="print-canvas-outer">
       <ParameterStrip />
       <div className="print-canvas-wrapper">
         {showRulers && (
@@ -281,9 +203,6 @@ export default function PrintCanvas() {
           className="print-canvas-viewport"
           onScroll={handleScroll}
           onClick={handleCanvasClick}
-          onDragOver={onDragOver}
-          onDrop={onDrop}
-          onDragLeave={onDragLeave}
         >
           <div
             className="print-pages-container"
@@ -336,7 +255,6 @@ export default function PrintCanvas() {
                   className="print-page-content"
                   data-page-index={pageIndex}
                   style={{
-                    position: 'relative',
                     padding: template
                       ? `12px ${margins.right * DPI}px 0 ${margins.left * DPI}px`
                       : `${margins.top * DPI}px ${margins.right * DPI}px 0 ${margins.left * DPI}px`,
@@ -353,17 +271,31 @@ export default function PrintCanvas() {
                       </p>
                     </div>
                   ) : (
-                    pageWidgets.map(widget => (
-                      <WidgetWrapper key={widget.id} widget={widget}>
-                        <WidgetRenderer widget={widget} />
-                      </WidgetWrapper>
-                    ))
-                  )}
-                  {dropIndicator && dropIndicator.pageIndex === pageIndex && (
-                    <div
-                      className="canvas-drop-indicator"
-                      style={{ top: `${dropIndicator.indicatorTop}px` }}
-                    />
+                    <GridLayout
+                      className="print-grid"
+                      layout={pageWidgets.map(w => widgetToLayoutItem(w, pageIndex * rowsPerPage))}
+                      cols={12}
+                      rowHeight={ROW_HEIGHT}
+                      width={contentArea.widthPx}
+                      margin={[ROW_GAP, ROW_GAP]}
+                      containerPadding={[0, 0]}
+                      draggableHandle=".widget-drag-handle"
+                      resizeHandles={['se']}
+                      compactType="vertical"
+                      preventCollision={false}
+                      isDroppable={!!paletteDragging && pageIndex === 0}
+                      droppingItem={dropping}
+                      onLayoutChange={(layout) => onLayoutChange(layout, pageIndex)}
+                      onDrop={(layout, item) => onPaletteDrop(layout, item, pageIndex)}
+                    >
+                      {pageWidgets.map(widget => (
+                        <div key={widget.id}>
+                          <WidgetWrapper widget={widget}>
+                            <WidgetRenderer widget={widget} />
+                          </WidgetWrapper>
+                        </div>
+                      ))}
+                    </GridLayout>
                   )}
                 </div>
 
@@ -390,7 +322,6 @@ export default function PrintCanvas() {
           </div>
         </div>
       </div>
-      </div>
-    </DndContext>
+    </div>
   );
 }
