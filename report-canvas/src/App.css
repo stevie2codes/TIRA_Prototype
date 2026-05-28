@@ -922,22 +922,17 @@ html, body, #root { height: 100%; font-family: 'DM Sans', system-ui, sans-serif;
 
 /* ── Resize Handles (react-grid-layout) ── */
 
-/* Make handles a bit larger and slightly more visible than the default.
-   Don't touch position — react-resizable's per-direction classes
-   (.react-resizable-handle-sw, -ne, -e, etc.) handle that. */
+/* All 8 handles visible by default. react-resizable's per-direction
+   classes (-sw, -ne, -e, etc.) own position; we only tweak size + opacity. */
 .react-grid-item > .react-resizable-handle {
   width: 16px;
   height: 16px;
-  opacity: 0;
-  transition: opacity 0.15s;
+  opacity: 0.55;
+  z-index: 5;
 }
 
-/* Show all handles when hovering or selecting the widget. */
-.react-grid-item:hover > .react-resizable-handle,
-.react-grid-item.react-grid-item--selected > .react-resizable-handle,
-.widget-wrapper.selected ~ .react-resizable-handle,
-.react-grid-item:has(.widget-wrapper.selected) > .react-resizable-handle {
-  opacity: 0.9;
+.react-grid-item:hover > .react-resizable-handle {
+  opacity: 1;
 }
 
 /* Edge handles (N/S/E/W) stretch along the edge so they're easier to grab. */
