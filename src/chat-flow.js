@@ -8,6 +8,74 @@ import { matchStandardReports, getConfidenceTier } from './report-matcher.js';
 import { buildStandardReportCard, getDomainLabel } from './standard-report-card.js';
 import { buildStandardReportPanel, wireStandardReportPanel } from './standard-report-viewer.js';
 import { getVisibleStandardReports } from './user-context.js';
+import { reloadView } from './router.js';
+
+/**
+ * Closes a chat surface. The reporting-assistant chat now mounts inside
+ * #view-container (a plain element), so closing means re-rendering the
+ * landing view. The standard-report / library flows still use a real
+ * <forge-dialog>, which we close via its `open` property.
+ * @param {HTMLElement} dialog
+ */
+function closeChat(dialog) {
+  if (dialog && dialog.tagName === 'FORGE-DIALOG') {
+    dialog.open = false;
+  } else {
+    reloadView();
+  }
+}
+
+/** Truncates a question into a short conversation title (derived from the first ask). */
+function deriveChatTitle(text) {
+  const t = String(text || '').trim();
+  if (!t) return 'New conversation';
+  return t.length > 42 ? `${t.slice(0, 42).trimEnd()}…` : t;
+}
+
+/**
+ * Header chrome shared across chat surfaces — matches the design:
+ * a discreet back control, the assistant name + status dot + a derived
+ * conversation title (with a rename chevron), and history + overflow actions.
+ * The back control keeps id="chat-close-btn" so existing close wiring resolves.
+ */
+function chatHeaderHTML(title) {
+  const safe = String(title || 'New conversation').replace(/</g, '&lt;');
+  return `
+    <button class="chat-back-btn" id="chat-close-btn" type="button" aria-label="Back to home">
+      <forge-icon name="arrow_back"></forge-icon>
+    </button>
+    <div class="chat-header-identity">
+      <span class="chat-assistant-name">Reporting assistant</span>
+      <span class="chat-status-dot" aria-hidden="true"></span>
+      <button class="chat-thread-title" type="button" aria-label="Rename conversation" title="${safe}">
+        <span class="chat-thread-title-text">${safe}</span>
+        <forge-icon name="arrow_drop_down"></forge-icon>
+      </button>
+    </div>
+    <div class="chat-header-actions">
+      <forge-icon-button aria-label="Chat history"><forge-icon name="history"></forge-icon></forge-icon-button>
+      <forge-icon-button aria-label="More options"><forge-icon name="more_vert"></forge-icon></forge-icon-button>
+    </div>
+  `;
+}
+
+/** Bottom input chrome shared across chat surfaces — matches the design. */
+function chatInputHTML() {
+  return `
+    <div class="chat-input">
+      <input class="chat-input-field" type="text" placeholder="Ask a question..." aria-label="Ask a question" />
+      <div class="chat-input-actions">
+        <div class="chat-input-actions-start">
+          <forge-icon-button aria-label="Add attachment"><forge-icon name="add"></forge-icon></forge-icon-button>
+          <forge-icon-button aria-label="Voice input"><forge-icon name="mic"></forge-icon></forge-icon-button>
+        </div>
+        <button class="chat-send-btn" type="button" aria-label="Send">
+          <forge-icon name="arrow_upward"></forge-icon>
+        </button>
+      </div>
+    </div>
+  `;
+}
 
 /** @param {string} md */
 function markdownToHtml(md) {
@@ -28,70 +96,38 @@ export function openChatFlow(index, options = {}) {
   const suggestion = suggestions[index];
   if (!suggestion) return;
 
-  // Create or reuse dialog
-  let dialog = document.querySelector('#chat-dialog');
-  if (!dialog) {
-    dialog = document.createElement('forge-dialog');
-    dialog.id = 'chat-dialog';
-    dialog.className = 'chat-dialog';
-    dialog.setAttribute('fullscreen', '');
-    dialog.setAttribute('mode', 'modal');
-    dialog.setAttribute('persistent', '');
-    dialog.setAttribute('animation-type', 'fade');
-    document.body.appendChild(dialog);
-  }
+  // Mount the chat surface inside the body card so the rail and page framing
+  // stay visible. The host keeps id="chat-dialog" so existing lookups (e.g. the
+  // React designer mount points) continue to resolve unchanged.
+  const viewContainer = document.querySelector('#view-container');
+  if (!viewContainer) return;
+  document.getElementById('chat-dialog')?.remove(); // clear any prior chat surface
+  viewContainer.innerHTML = '';
+  const dialog = document.createElement('div');
+  dialog.id = 'chat-dialog';
+  dialog.className = 'chat-dialog chat-surface';
+  viewContainer.appendChild(dialog);
+
+  const chatTitle = deriveChatTitle(suggestion.query);
+  dialog.dataset.chatTitle = chatTitle; // remembered for header rebuilds (split ↔ full)
 
   // Build dialog content
   dialog.innerHTML = `
     <div class="chat-dialog-content">
-      <div class="chat-header">
-        <div class="ai-header-icon">
-          <div class="ai-icon-wrapper">
-            <forge-icon name="auto_awesome"></forge-icon>
-          </div>
-        </div>
-        <span class="chat-header-title">Report Assistant</span>
-        <div class="chat-header-actions">
-          <forge-icon-button aria-label="More options">
-            <forge-icon name="more_vert"></forge-icon>
-          </forge-icon-button>
-          <forge-icon-button aria-label="Close" id="chat-close-btn">
-            <forge-icon name="close"></forge-icon>
-          </forge-icon-button>
-        </div>
-      </div>
+      <div class="chat-header">${chatHeaderHTML(chatTitle)}</div>
       <div class="chat-body">
         <div class="chat-container">
           <div class="chat-messages-spacer"></div>
           <div class="chat-messages" id="chat-messages"></div>
         </div>
       </div>
-      <div class="chat-footer">
-        <div class="prompt-area">
-          <div class="prompt-input-row">
-            <input type="text" placeholder="Ask a question..." />
-            <forge-icon-button aria-label="Send">
-              <forge-icon name="send"></forge-icon>
-            </forge-icon-button>
-          </div>
-          <div class="prompt-actions-row">
-            <forge-icon-button aria-label="Add attachment">
-              <forge-icon name="add"></forge-icon>
-            </forge-icon-button>
-            <forge-icon-button aria-label="Voice input">
-              <forge-icon name="mic"></forge-icon>
-            </forge-icon-button>
-          </div>
-        </div>
-      </div>
+      <div class="chat-footer">${chatInputHTML()}</div>
     </div>
   `;
 
-  dialog.open = true;
-
-  // Close handler
+  // Close handler — returns to the landing view
   dialog.querySelector('#chat-close-btn').addEventListener('click', () => {
-    dialog.open = false;
+    closeChat(dialog);
   });
 
   // Start conversation sequence
@@ -1227,22 +1263,7 @@ function collapseToFullChat(dialog, splitChatContainer, splitFooter) {
   // Rebuild the full chat header
   const chatHeader = document.createElement('div');
   chatHeader.className = 'chat-header';
-  chatHeader.innerHTML = `
-    <div class="ai-header-icon">
-      <div class="ai-icon-wrapper">
-        <forge-icon name="auto_awesome"></forge-icon>
-      </div>
-    </div>
-    <span class="chat-header-title">Report Assistant</span>
-    <div class="chat-header-actions">
-      <forge-icon-button aria-label="More options">
-        <forge-icon name="more_vert"></forge-icon>
-      </forge-icon-button>
-      <forge-icon-button aria-label="Close" class="close-chat-btn">
-        <forge-icon name="close"></forge-icon>
-      </forge-icon-button>
-    </div>
-  `;
+  chatHeader.innerHTML = chatHeaderHTML(dialog.dataset.chatTitle);
   content.appendChild(chatHeader);
 
   // Rebuild chat body with spacer + messages
@@ -1270,10 +1291,10 @@ function collapseToFullChat(dialog, splitChatContainer, splitFooter) {
   }
 
   // Wire close button
-  const closeBtn = chatHeader.querySelector('.close-chat-btn');
+  const closeBtn = chatHeader.querySelector('#chat-close-btn');
   if (closeBtn) {
     closeBtn.addEventListener('click', () => {
-      dialog.open = false;
+      closeChat(dialog);
     });
   }
 
@@ -1330,20 +1351,9 @@ function transitionToSplitView(dialog, chatMessages, suggestion) {
   // Add chat header to left panel
   const leftHeader = document.createElement('div');
   leftHeader.className = 'chat-header split-chat-header';
-  leftHeader.innerHTML = `
-    <div class="ai-header-icon">
-      <div class="ai-icon-wrapper">
-        <forge-icon name="auto_awesome"></forge-icon>
-      </div>
-    </div>
-    <span class="chat-header-title">Report Assistant</span>
-    <div class="chat-header-actions">
-      <forge-icon-button aria-label="More options">
-        <forge-icon name="more_vert"></forge-icon>
-      </forge-icon-button>
-    </div>
-  `;
+  leftHeader.innerHTML = chatHeaderHTML(dialog.dataset.chatTitle);
   splitChatContainer.appendChild(leftHeader);
+  leftHeader.querySelector('#chat-close-btn')?.addEventListener('click', () => closeChat(dialog));
 
   // Move existing chat messages into left panel
   const chatMessagesContainer = document.createElement('div');
@@ -1887,7 +1897,7 @@ function openStandardReport(report, dialog, initialParams) {
         addSRChatMessage(leftPanel, 'ai', `View "<strong>${view.name}</strong>" saved. You can select it anytime from the view dropdown.`);
       },
       onClose: () => {
-        dialog.open = false;
+        closeChat(dialog);
       },
       onOpenDesigner: (currentParams) => {
         // Build handoff context from standard report
@@ -2114,35 +2124,22 @@ export function openStandardReportInChat(reportId, initialParams) {
   const report = getStandardReportById(reportId);
   if (!report) return;
 
-  // Create or reuse dialog
-  let dialog = document.querySelector('#chat-dialog');
-  if (!dialog) {
-    dialog = document.createElement('forge-dialog');
-    dialog.id = 'chat-dialog';
-    dialog.className = 'chat-dialog';
-    dialog.setAttribute('fullscreen', '');
-    dialog.setAttribute('mode', 'modal');
-    dialog.setAttribute('persistent', '');
-    dialog.setAttribute('animation-type', 'fade');
-    document.body.appendChild(dialog);
-  }
+  // Mount inside the body card so the rail and page framing stay visible
+  // (same surface as the reporting-assistant chat).
+  const viewContainer = document.querySelector('#view-container');
+  if (!viewContainer) return;
+  document.getElementById('chat-dialog')?.remove(); // clear any prior chat surface
+  viewContainer.innerHTML = '';
+  const dialog = document.createElement('div');
+  dialog.id = 'chat-dialog';
+  dialog.className = 'chat-dialog chat-surface';
+  viewContainer.appendChild(dialog);
+
+  dialog.dataset.chatTitle = report.name; // remembered for header rebuilds (split ↔ full)
 
   dialog.innerHTML = `
     <div class="chat-dialog-content">
-      <div class="chat-header">
-        <div class="ai-header-icon">
-          <div class="ai-icon-wrapper">
-            <forge-icon name="auto_awesome"></forge-icon>
-          </div>
-        </div>
-        <span class="chat-header-title">${report.name}</span>
-        <span style="background: var(--forge-theme-primary, #3f51b5); color: #fff; font-size: 9px; padding: 2px 6px; border-radius: 3px; text-transform: uppercase; margin-left: 8px;">Standard</span>
-        <div class="chat-header-actions">
-          <forge-icon-button aria-label="Close" id="chat-close-btn">
-            <forge-icon name="close"></forge-icon>
-          </forge-icon-button>
-        </div>
-      </div>
+      <div class="chat-header">${chatHeaderHTML(report.name)}</div>
       <div class="chat-body">
         <div class="chat-container">
           <div class="chat-messages-spacer"></div>
@@ -2156,11 +2153,9 @@ export function openStandardReportInChat(reportId, initialParams) {
     </div>
   `;
 
-  dialog.open = true;
-
-  // Close handler
+  // Close handler — returns to the landing view
   dialog.querySelector('#chat-close-btn').addEventListener('click', () => {
-    dialog.open = false;
+    closeChat(dialog);
   });
 
   // Immediately transition to split-view, passing initial params

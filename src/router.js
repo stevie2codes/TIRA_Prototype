@@ -26,6 +26,21 @@ export function getCurrentView() {
   return currentView;
 }
 
+/**
+ * Re-render the currently active view in place.
+ * Used to return to the landing view after an in-container overlay (e.g. chat)
+ * has replaced #view-container's contents.
+ */
+export function reloadView() {
+  if (!currentView || !viewContainer) return;
+  if (views[currentView]?.destroy) {
+    views[currentView].destroy();
+  }
+  viewContainer.innerHTML = '';
+  views[currentView].render(viewContainer);
+  document.dispatchEvent(new CustomEvent('view-changed', { detail: { view: currentView } }));
+}
+
 /** Start the router — call once after registering views. */
 export function startRouter(defaultView = 'tira') {
   viewContainer = document.querySelector('#view-container');

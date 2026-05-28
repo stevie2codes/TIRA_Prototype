@@ -87,6 +87,11 @@ import {
   tylIconForum,
   tylIconLocalLibrary,
   tylIconMenuOpen,
+  tylIconHistory,
+  tylIconArrowUpward,
+  tylIconStar,
+  tylIconStarOutline,
+  tylIconViewList,
 } from '@tylertech/tyler-icons';
 
 // Define components
@@ -171,6 +176,11 @@ IconRegistry.define([
   tylIconForum,
   tylIconLocalLibrary,
   tylIconMenuOpen,
+  tylIconHistory,
+  tylIconArrowUpward,
+  tylIconStar,
+  tylIconStarOutline,
+  tylIconViewList,
 ]);
 
 // Forge AI components (Lit-based, self-register on import)
@@ -188,6 +198,7 @@ import { registerView, startRouter, navigateTo, getCurrentView } from './router.
 // Views
 import * as tiraView from './views/tira-view.js';
 import * as hubView from './views/hub-view.js';
+import * as conversationsView from './views/conversations-view.js';
 
 // TIRA rail (persistent left sidebar)
 import { mountTiraRail, showTiraRail, hideTiraRail } from './tira-rail.js';
@@ -205,6 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Register views
   registerView('tira', tiraView);
   registerView('hub', hubView);
+  registerView('conversations', conversationsView);
 
   // Mount the persistent rail (hidden by default until first view-changed fires)
   const railRoot = document.querySelector('#tira-rail-root');

@@ -8,8 +8,13 @@
  */
 
 import './tira-rail.css';
+import { navigateTo } from './router.js';
+import { openLibraryView } from './chat-flow.js';
 
 const STORAGE_KEY = 'tira-rail-expanded';
+
+// Maps the active view to the rail item that should be highlighted.
+const VIEW_TO_ACTION = { conversations: 'chats', tira: 'new-chat' };
 
 let railEl = null;
 
@@ -81,11 +86,28 @@ export function mountTiraRail(rootEl) {
     toggleBtn.setAttribute('aria-label', nowExpanded ? 'Collapse menu' : 'Expand menu');
   });
 
-  // Placeholder click handler — no destinations wired yet.
+  // Navigation
   rootEl.addEventListener('click', (e) => {
     const item = e.target.closest('.tira-rail__item[data-action]');
     if (!item) return;
-    // Intentional no-op for prototype. Hover/active styling still fires.
+    switch (item.dataset.action) {
+      case 'new-chat':       navigateTo('tira'); break;
+      case 'chats':          navigateTo('conversations'); break;
+      case 'report-library': openLibraryView(); break;
+      default: break; // help — no destination yet
+    }
+  });
+
+  // Keep the active item in sync with the current view
+  document.addEventListener('view-changed', (e) => {
+    syncActiveItem(VIEW_TO_ACTION[e.detail?.view] || null);
+  });
+}
+
+function syncActiveItem(action) {
+  if (!railEl) return;
+  railEl.querySelectorAll('.tira-rail__item').forEach(el => {
+    el.classList.toggle('tira-rail__item--active', el.dataset.action === action);
   });
 }
 

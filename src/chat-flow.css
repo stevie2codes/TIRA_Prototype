@@ -25,6 +25,12 @@ forge-dialog.chat-dialog::part(dialog) {
   margin: 0;
 }
 
+/* Chat surface — host mounted inside #view-container (body card).
+   Fills the card so the chat keeps the same framing as the landing view. */
+.chat-surface {
+  height: 100%;
+}
+
 /* Dialog inner layout */
 .chat-dialog-content {
   display: flex;
@@ -32,60 +38,116 @@ forge-dialog.chat-dialog::part(dialog) {
   width: 100%;
   height: 100%;
   overflow: hidden;
+  position: relative; /* anchors the floating chat input */
 }
 
-/* Dialog header bar */
+/* Chat header bar — assistant identity + conversation title + actions */
 .chat-header {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 8px 0px 8px 16px;
+  gap: 10px;
+  padding: 10px 12px 10px 8px;
   flex-shrink: 0;
   position: relative;
   z-index: 2;
-  width: auto;
-  border-bottom:1px solid lightgrey
+  border-bottom: 1px solid #ededed;
 }
 
-.ai-header-icon {
+/* Discreet back-to-home control (keeps id="chat-close-btn") */
+.chat-back-btn {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  color: rgba(0, 0, 0, 0.55);
+  flex-shrink: 0;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.chat-back-btn:hover {
+  background: rgba(63, 81, 181, 0.08);
+  color: #3f51b5;
+}
+
+.chat-back-btn forge-icon {
+  --forge-icon-font-size: 20px;
+}
+
+.chat-header-identity {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.chat-assistant-name {
+  font-family: 'Roboto', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.82);
+  letter-spacing: 0.1px;
+  white-space: nowrap;
   flex-shrink: 0;
 }
 
-.ai-icon-wrapper {
-  width: 36px;
-  height: 36px;
+.chat-status-dot {
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  border: 2px solid #c2c2c2;
-  display: flex;
+  background: #c2c6e8;
+  flex-shrink: 0;
+}
+
+.chat-thread-title {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  padding: 4px;
-  background: #fff;
-}
-
-.ai-icon-wrapper forge-icon {
-  --forge-icon-font-size: 18px;
-  color: rgba(0, 0, 0, 0.54);
-}
-
-.chat-header-title {
-  flex: 1;
+  gap: 2px;
+  min-width: 0;
+  padding: 4px 4px 4px 6px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
   font-family: 'Roboto', sans-serif;
-  font-weight: 500;
-  font-size: 18px;
-  line-height: 36px;
+  font-size: 15px;
+  font-weight: 400;
   color: rgba(0, 0, 0, 0.6);
-  letter-spacing: 0.15px;
+  letter-spacing: 0.1px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.chat-thread-title:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: rgba(0, 0, 0, 0.82);
+}
+
+.chat-thread-title-text {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+.chat-thread-title forge-icon {
+  --forge-icon-font-size: 20px;
+  color: rgba(0, 0, 0, 0.4);
+  flex-shrink: 0;
+}
+
 .chat-header-actions {
   display: flex;
   align-items: center;
-  gap: 0;
+  gap: 2px;
   flex-shrink: 0;
+}
+
+.chat-header-actions forge-icon-button {
+  --forge-icon-button-color: rgba(0, 0, 0, 0.5);
 }
 
 /* Chat body with gradient */
@@ -94,7 +156,6 @@ forge-dialog.chat-dialog::part(dialog) {
   display: flex;
   width: 100%;
   overflow: hidden;
-  border-bottom: 1px solid #e0e0e0;
   position: relative;
   z-index: 1;
 }
@@ -107,7 +168,8 @@ forge-dialog.chat-dialog::part(dialog) {
   align-items: center;
   overflow-x: hidden;
   overflow-y: auto;
-  padding: 32px 24px 32px;
+  /* generous bottom padding so messages scroll clear of the floating input */
+  padding: 32px 24px 132px;
   background: linear-gradient(180deg, #fff 9.615%, #f7f8ff 100%);
   width: 100%;
 }
@@ -179,20 +241,119 @@ forge-ai-response-message::part(content) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 24px;
-  background: #fff;
+  padding: 16px 24px 24px;
   flex-shrink: 0;
   width: 100%;
   margin-top: auto;
   min-width: 0;
 }
 
+/* Full chat: the input floats over the conversation. Messages stream behind it
+   and fade into the body's background, so there is no separate footer band. */
+.chat-footer:not(.split-chat-footer) {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin-top: 0;
+  padding-top: 56px;
+  background: linear-gradient(180deg, rgba(247, 248, 255, 0) 0%, #f7f8ff 52%);
+  pointer-events: none; /* let clicks fall through the transparent fade to messages */
+  z-index: 2;
+}
+
+/* …but the input field itself stays interactive */
+.chat-footer:not(.split-chat-footer) > * {
+  pointer-events: auto;
+}
+
 /* Responsive padding for smaller screens */
 @media (max-width: 768px) {
   .chat-footer {
-    padding: 16px;
+    padding: 12px 16px 16px;
   }
+}
+
+/* Chat input bar — single rounded field with actions + circular send */
+.chat-input {
+  width: 100%;
+  max-width: 760px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 10px 8px 16px;
+  background: #fff;
+  border: 1px solid #e3e4ec;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.chat-input:focus-within {
+  border-color: #b9bdf0;
+  box-shadow: 0 0 0 3px rgba(63, 81, 181, 0.10), 0 2px 12px rgba(63, 81, 181, 0.10);
+}
+
+.chat-input-field {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: 'Roboto', sans-serif;
+  font-size: 15px;
+  line-height: 22px;
+  letter-spacing: 0.25px;
+  color: rgba(0, 0, 0, 0.87);
+  padding: 6px 4px;
+  min-width: 0;
+}
+
+.chat-input-field::placeholder {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.chat-input-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.chat-input-actions-start {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.chat-input-actions-start forge-icon-button {
+  --forge-icon-button-color: rgba(0, 0, 0, 0.5);
+}
+
+.chat-send-btn {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: #3f51b5;
+  color: #fff;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.chat-send-btn:hover {
+  background: #3949ab;
+}
+
+.chat-send-btn:active {
+  transform: scale(0.94);
+}
+
+.chat-send-btn forge-icon {
+  --forge-icon-font-size: 20px;
+  color: #fff;
 }
 
 .prompt-area {
@@ -490,6 +651,19 @@ forge-ai-response-message::part(content) {
 .split-chat-header {
   border-bottom: 1px solid #e0e0e0;
   border-right: 1px solid #e0e0e0;
+}
+
+/* Condense the header chrome inside the narrow split-view chat panel */
+.split-chat-header .chat-assistant-name {
+  font-size: 14px;
+}
+
+.split-chat-header .chat-header-actions forge-icon-button[aria-label="Chat history"] {
+  display: none;
+}
+
+.split-chat-footer .chat-input {
+  max-width: 100%;
 }
 
 /* Chat messages area in split view */

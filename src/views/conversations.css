@@ -1,0 +1,214 @@
+/* ── Conversations page ───────────────────────────────────────────────── */
+.conv-page {
+  height: 100%;
+  overflow-y: auto;
+  background: #fff;
+  font-family: 'Roboto', sans-serif;
+}
+
+.conv-inner {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 28px 48px 48px;
+}
+
+.conv-title {
+  font-size: 28px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.87);
+  letter-spacing: 0.1px;
+  margin: 4px 0 24px;
+}
+
+/* ── Toolbar: search + filter + new chat ──────────────────────────────── */
+.conv-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.conv-search {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 20px;
+  background: #fff;
+  border: 1px solid #dadce0;
+  border-radius: 26px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.conv-search:focus-within {
+  border-color: #3f51b5;
+  box-shadow: 0 0 0 3px rgba(63, 81, 181, 0.08);
+}
+
+.conv-search forge-icon {
+  --forge-icon-font-size: 22px;
+  color: rgba(0, 0, 0, 0.45);
+  flex-shrink: 0;
+}
+
+.conv-search-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: 'Roboto', sans-serif;
+  font-size: 16px;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.conv-search-input::placeholder {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+/* Segmented All / Starred control */
+.conv-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  background: #fff;
+  border: 1px solid #dadce0;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.conv-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 16px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  cursor: pointer;
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.6);
+  letter-spacing: 0.2px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.conv-filter-btn forge-icon {
+  --forge-icon-font-size: 18px;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.conv-filter-btn:hover {
+  color: rgba(0, 0, 0, 0.82);
+}
+
+.conv-filter-btn--active {
+  background: #e8eaf6;
+  color: #3f51b5;
+}
+
+.conv-filter-btn--active forge-icon {
+  color: #3f51b5;
+}
+
+.conv-new-btn {
+  flex-shrink: 0;
+  padding: 11px 22px;
+  border: none;
+  border-radius: 10px;
+  background: #3f51b5;
+  color: #fff;
+  cursor: pointer;
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.25px;
+  transition: background 0.15s ease;
+}
+
+.conv-new-btn:hover {
+  background: #3949ab;
+}
+
+/* ── Conversation list ────────────────────────────────────────────────── */
+.conv-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.conv-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 6px 20px 8px;
+  border-bottom: 1px solid #ececec;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.conv-row:hover {
+  background: #f7f8ff;
+}
+
+.conv-row:focus-visible {
+  outline: 2px solid #3f51b5;
+  outline-offset: -2px;
+  border-radius: 6px;
+}
+
+.conv-row-main {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.conv-row-title {
+  font-size: 17px;
+  font-weight: 400;
+  color: rgba(0, 0, 0, 0.82);
+  letter-spacing: 0.1px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.conv-row-time {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.6);
+  letter-spacing: 0.2px;
+  background: #ededed;
+  border-radius: 12px;
+  padding: 4px 11px;
+  white-space: nowrap;
+}
+
+.conv-row-menu {
+  flex-shrink: 0;
+  --forge-icon-button-color: rgba(0, 0, 0, 0.5);
+}
+
+.conv-empty {
+  padding: 56px 0;
+  text-align: center;
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.4);
+}
+
+@media (max-width: 768px) {
+  .conv-inner {
+    padding: 20px 20px 40px;
+  }
+  .conv-toolbar {
+    flex-wrap: wrap;
+  }
+  .conv-search {
+    flex-basis: 100%;
+  }
+}
