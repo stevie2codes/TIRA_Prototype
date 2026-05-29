@@ -9,7 +9,7 @@
 
 import './tira-rail.css';
 import { navigateTo } from './router.js';
-import { openLibraryView } from './chat-flow.js';
+import { openLibraryView, openReportDesigner, openGuidedReportSetup } from './chat-flow.js';
 
 const STORAGE_KEY = 'tira-rail-expanded';
 
@@ -67,6 +67,20 @@ export function mountTiraRail(rootEl) {
         </button>
       </div>
       <div class="tira-rail__body">
+        <div class="tira-rail__create-wrap">
+          <button class="tira-rail__create" type="button" aria-haspopup="true" aria-expanded="false" title="Create a report">
+            <span class="tira-rail__item-icon"><forge-icon name="add"></forge-icon></span>
+            <span class="tira-rail__item-label">Create</span>
+          </button>
+          <div class="tira-rail__popover" role="menu" hidden>
+            <button class="tira-rail__popover-item" type="button" role="menuitem" data-create="scratch">
+              <forge-icon name="description"></forge-icon><span>Create from scratch</span>
+            </button>
+            <button class="tira-rail__popover-item" type="button" role="menuitem" data-create="ai">
+              <forge-icon name="auto_awesome"></forge-icon><span>Create with AI</span>
+            </button>
+          </div>
+        </div>
         ${items.map(renderItem).join('')}
       </div>
       <div class="tira-rail__footer">
@@ -97,6 +111,42 @@ export function mountTiraRail(rootEl) {
       default: break; // help — no destination yet
     }
   });
+
+  // Create button + popover wiring
+  const createBtn = rootEl.querySelector('.tira-rail__create');
+  const popover = rootEl.querySelector('.tira-rail__popover');
+
+  const positionPopover = () => {
+    const rect = createBtn.getBoundingClientRect();
+    popover.style.top = `${rect.top}px`;
+    popover.style.left = `${rect.right + 4}px`;
+  };
+
+  const closePopover = () => {
+    popover.hidden = true;
+    createBtn.setAttribute('aria-expanded', 'false');
+  };
+  const togglePopover = () => {
+    const willOpen = popover.hidden;
+    if (willOpen) positionPopover();
+    popover.hidden = !willOpen;
+    createBtn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+  };
+
+  createBtn.addEventListener('click', (e) => { e.stopPropagation(); togglePopover(); });
+
+  popover.addEventListener('click', (e) => {
+    const item = e.target.closest('.tira-rail__popover-item');
+    if (!item) return;
+    closePopover();
+    if (item.dataset.create === 'scratch') openReportDesigner();
+    else openGuidedReportSetup();
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!popover.hidden && !e.target.closest('.tira-rail__create-wrap')) closePopover();
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closePopover(); });
 
   // Keep the active item in sync with the current view
   document.addEventListener('view-changed', (e) => {

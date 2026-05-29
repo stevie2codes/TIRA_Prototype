@@ -182,3 +182,34 @@
 .tira-rail--collapsed .tira-rail__item-label {
   display: none;
 }
+
+/* ── Create button + popover ─────────────────────────────────────────── */
+.tira-rail__create-wrap { position: relative; padding: 4px 8px 8px; }
+
+.tira-rail__create {
+  display: flex; align-items: center; gap: 14px; width: 100%;
+  padding: 10px 12px; border: none; border-radius: 8px;
+  background: #3f51b5; color: #fff; cursor: pointer;
+  font-family: 'Roboto', sans-serif; font-size: 14px; font-weight: 600;
+  letter-spacing: 0.25px; transition: background 0.15s ease;
+}
+.tira-rail__create:hover { background: #3949ab; }
+.tira-rail__create .tira-rail__item-icon forge-icon { color: #fff; }
+
+.tira-rail--collapsed .tira-rail__create { justify-content: center; padding: 10px 0; gap: 0; }
+.tira-rail--collapsed .tira-rail__create .tira-rail__item-label { display: none; }
+
+.tira-rail__popover {
+  position: fixed; z-index: 500;
+  min-width: 210px; background: #fff; border: 1px solid #e0e0e0;
+  border-radius: 10px; box-shadow: 0 8px 28px rgba(0,0,0,0.16); padding: 6px;
+}
+.tira-rail__popover-item {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  padding: 10px 12px; border: none; background: transparent; border-radius: 6px;
+  cursor: pointer; text-align: left; font-family: 'Roboto', sans-serif;
+  font-size: 14px; font-weight: 500; color: rgba(0,0,0,0.82);
+}
+.tira-rail__popover-item:hover { background: rgba(63,81,181,0.08); color: #3f51b5; }
+.tira-rail__popover-item forge-icon { --forge-icon-font-size: 20px; color: rgba(0,0,0,0.55); }
+.tira-rail__popover-item:hover forge-icon { color: #3f51b5; }
