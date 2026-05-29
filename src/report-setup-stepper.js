@@ -14,6 +14,12 @@ const SUBJECT_CHIPS = ['Building permits', 'Department budgets', 'Code violation
 const SHOW_CHIPS = ['Permits issued', 'Fees collected', 'Applicant & address', 'Inspector'];
 const ORGANIZE_CHIPS = ['District', 'Month', 'Permit type'];
 
+function esc(s) {
+  return String(s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 export function createReportSetupStepper({ messagesEl, onOpenDesigner }) {
   const config = { subject: '', show: [], organizeBy: '' };
   let step = 1;
@@ -41,9 +47,9 @@ export function createReportSetupStepper({ messagesEl, onOpenDesigner }) {
     if (c) requestAnimationFrame(() => { c.scrollTop = c.scrollHeight; });
   }
 
-  function chipRow(chips, { multi = false } = {}) {
-    return `<div class="rss-chips">${chips
-      .map(c => `<button class="rss-chip" type="button" data-chip="${c}">${c}</button>`)
+  function chipRow(chips, { group = '' } = {}) {
+    return `<div class="rss-chips"${group ? ` data-group="${group}"` : ''}>${chips
+      .map(c => `<button class="rss-chip" type="button" data-chip="${esc(c)}">${esc(c)}</button>`)
       .join('')}</div>`;
   }
 
@@ -75,16 +81,14 @@ export function createReportSetupStepper({ messagesEl, onOpenDesigner }) {
         <span class="rss-step-q">What should this report include?</span>
         <span class="rss-step-hint">Pick the details to show and how to organize them, or describe it.</span>
         <span class="rss-group-label">Show</span>
-        ${chipRow(SHOW_CHIPS, { multi: true })}
+        ${chipRow(SHOW_CHIPS, { group: 'show' })}
         <span class="rss-group-label">Organize by</span>
-        ${chipRow(ORGANIZE_CHIPS)}
+        ${chipRow(ORGANIZE_CHIPS, { group: 'organize' })}
         <div style="margin-top:6px;"><button class="rss-open-designer-btn" type="button" data-done>Build report →</button></div>
       </div>
     `);
-    const showChips = Array.from(el.querySelectorAll('.rss-group-label'))[0]
-      .nextElementSibling.querySelectorAll('.rss-chip');
-    const organizeChips = Array.from(el.querySelectorAll('.rss-group-label'))[1]
-      .nextElementSibling.querySelectorAll('.rss-chip');
+    const showChips = el.querySelector('[data-group="show"]').querySelectorAll('.rss-chip');
+    const organizeChips = el.querySelector('[data-group="organize"]').querySelectorAll('.rss-chip');
 
     showChips.forEach(chip => chip.addEventListener('click', () => {
       const v = chip.dataset.chip;
@@ -107,8 +111,8 @@ export function createReportSetupStepper({ messagesEl, onOpenDesigner }) {
       : config.subject;
     const el = assistant(`
       <div class="rss-proposal">
-        <div class="rss-proposal-title">${title}</div>
-        <div class="rss-proposal-meta">Print-ready table${config.show.length ? ' · ' + config.show.join(', ') : ''}</div>
+        <div class="rss-proposal-title">${esc(title)}</div>
+        <div class="rss-proposal-meta">Print-ready table${config.show.length ? ' · ' + config.show.map(esc).join(', ') : ''}</div>
         <button class="rss-open-designer-btn" type="button" data-open>
           <forge-icon name="bar_chart"></forge-icon> Open in report designer
         </button>
