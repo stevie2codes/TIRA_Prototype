@@ -3,25 +3,20 @@
  * Extracted from index.html + main.js — renders the AI-prompt-forward reporting homepage.
  */
 
-import { openChatFlow, openStandardReportInChat } from '../chat-flow.js';
+import { openChatFlow } from '../chat-flow.js';
 import { navigateTo } from '../router.js';
-import { showConfigPanel } from '../standard-report-viewer.js';
-import { getStandardReportById } from '../standard-reports.js';
 import {
   currentUser,
   domains,
-  getStandardReportsForDomain,
   getQuestionsForDomain,
   recentActivity,
 } from '../user-context.js';
-import { standardReports } from '../standard-reports.js';
-import { getViewsForReport } from '../saved-views.js';
 
 // ---------------------------------------------------------------------------
 // State
 // ---------------------------------------------------------------------------
 let selectedDomainId = null;
-let activeTab = 'reports'; // 'reports' | 'ask' | 'recent'
+let activeTab = 'ask'; // 'ask' | 'recent'
 let cleanupFns = [];
 
 // ---------------------------------------------------------------------------
@@ -137,7 +132,6 @@ function renderTabbedContent(domainId) {
 
   container.innerHTML = `
     <div class="domain-tabs">
-      <button class="domain-tab ${activeTab === 'reports' ? 'domain-tab--active' : ''}" data-tab="reports">Reports</button>
       <button class="domain-tab ${activeTab === 'ask' ? 'domain-tab--active' : ''}" data-tab="ask">Ask a Question</button>
       <button class="domain-tab ${activeTab === 'recent' ? 'domain-tab--active' : ''}" data-tab="recent">Recent</button>
     </div>
@@ -162,55 +156,9 @@ function renderTabContent(domainId, tab) {
   if (!contentEl) return;
 
   switch (tab) {
-    case 'reports': renderReportsTab(contentEl, domainId); break;
     case 'ask': renderAskTab(contentEl, domainId); break;
     case 'recent': renderRecentTab(contentEl, domainId); break;
   }
-}
-
-function renderReportsTab(contentEl, domainId) {
-  const reports = getStandardReportsForDomain(standardReports, domainId);
-
-  if (reports.length === 0) {
-    contentEl.innerHTML = `<div style="color: #999; font-size: 13px; padding: 20px 0;">No standard reports available for this domain.</div>`;
-    return;
-  }
-
-  contentEl.innerHTML = reports.map(report => {
-    const savedViews = getViewsForReport(report.id);
-    const viewsBadge = savedViews.length > 0
-      ? `<span style="background: #e8eaf6; color: var(--forge-theme-primary, #3f51b5); font-size: 10px; padding: 2px 6px; border-radius: 10px;">${savedViews.length} saved view${savedViews.length > 1 ? 's' : ''}</span>`
-      : '';
-    return `
-      <div class="report-list-item">
-        <div style="flex: 1;">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-weight: 600; font-size: 14px;">${report.name}</span>
-            <span class="report-badge">STANDARD</span>
-            ${viewsBadge}
-          </div>
-          <div style="color: #666; font-size: 12px; margin-top: 2px;">${report.description} &middot; ${report.freshness} &middot; ${report.parameters.length} parameters</div>
-        </div>
-        <button class="std-report-open-btn" data-report-id="${report.id}">Open</button>
-      </div>
-    `;
-  }).join('');
-
-  // Wire open buttons → config panel
-  contentEl.querySelectorAll('.std-report-open-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const report = getStandardReportById(btn.dataset.reportId);
-      if (!report) return;
-      showConfigPanel(report, {
-        onPreview: (params) => {
-          openPreviewReport(report, params);
-        },
-        onOpenInChat: (params) => {
-          openStandardReportInChat(report.id, params);
-        },
-      });
-    });
-  });
 }
 
 function renderAskTab(contentEl, domainId) {
@@ -357,42 +305,3 @@ function wireEvents(container) {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Preview Report — full-width viewer (no chat)
-// ---------------------------------------------------------------------------
-function openPreviewReport(report, initialParams) {
-  let dialog = document.querySelector('#report-preview-dialog');
-  if (!dialog) {
-    dialog = document.createElement('forge-dialog');
-    dialog.id = 'report-preview-dialog';
-    dialog.className = 'chat-dialog';
-    dialog.setAttribute('fullscreen', '');
-    dialog.setAttribute('mode', 'modal');
-    dialog.setAttribute('persistent', '');
-    dialog.setAttribute('animation-type', 'fade');
-    document.body.appendChild(dialog);
-  }
-
-  // Import and use the viewer
-  import('../standard-report-viewer.js').then(({ buildStandardReportPanel, wireStandardReportPanel }) => {
-    dialog.innerHTML = `
-      <div class="report-preview__container">
-        ${buildStandardReportPanel(report)}
-      </div>
-    `;
-
-    dialog.open = true;
-
-    const viewerEl = dialog.querySelector('.sr-viewer');
-    const controls = wireStandardReportPanel(viewerEl, report, {
-      onClose: () => { dialog.open = false; },
-    });
-
-    // Apply initial params from config panel
-    if (initialParams) {
-      for (const [paramId, value] of Object.entries(initialParams)) {
-        controls.setParam(paramId, value);
-      }
-    }
-  });
-}

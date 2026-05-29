@@ -6,20 +6,29 @@
  * / Scheduled tabs + search filter the current list. Rendered in-body in
  * #view-container; reached from the rail's "Report Library" item.
  *
- * Per current scope: report rows and the ⋮ kebab are visual only (no-op).
+ * Each row's ⋮ menu opens the report (config setup), a preview, or in chat.
  */
 
 import './report-library.css';
+import { standardReports } from '../standard-reports.js';
+import { showConfigPanel, openReportPreview } from '../standard-report-viewer.js';
+import { openStandardReportInChat } from '../chat-flow.js';
 
 // ---------------------------------------------------------------------------
-// Mock data
+// Data — folders are the report domains; rows wrap the real standard reports.
 // ---------------------------------------------------------------------------
-const folders = [
-  { id: 'financial', name: 'Financial Reports', count: 24, color: '#3f51b5', bg: '#e8eaf6' },
-  { id: 'hr',        name: 'HR & Personnel',    count: 18, color: '#2e7d32', bg: '#e8f5e9' },
-  { id: 'infra',     name: 'Infrastructure',    count: 12, color: '#ef6c00', bg: '#fff3e0' },
-  { id: 'public',    name: 'Public Services',   count: 31, color: '#7b1fa2', bg: '#f3e5f5' },
-];
+const DOMAIN_META = {
+  financial:           { name: 'Financial',           color: '#3f51b5', bg: '#e8eaf6' },
+  'permits-licensing': { name: 'Permits & Licensing', color: '#2e7d32', bg: '#e8f5e9' },
+  'code-enforcement':  { name: 'Code Enforcement',    color: '#ef6c00', bg: '#fff3e0' },
+  justice:             { name: 'Justice',             color: '#7b1fa2', bg: '#f3e5f5' },
+};
+
+// Folders default to the report domains; custom folders can be appended.
+let folders = Object.entries(DOMAIN_META).map(([id, m]) => ({
+  id, name: m.name, color: m.color, bg: m.bg,
+  count: standardReports.filter(r => r.domain === id).length,
+}));
 
 // Palette offered when creating a folder — each is an { icon color, light bg } pair.
 const FOLDER_COLORS = [
@@ -33,21 +42,32 @@ const FOLDER_COLORS = [
   { color: '#f9a825', bg: '#fff8e1' },
 ];
 
-const reports = [
-  { id: 'r1',  name: 'Annual Budget Report FY2025',        timeAgo: '2 days ago',  folderId: 'financial', recent: true,  scheduled: false },
-  { id: 'r2',  name: 'Quarterly Sales Analysis Q2 2025',   timeAgo: '1 week ago',  folderId: 'financial', recent: false, scheduled: false },
-  { id: 'r3',  name: 'General Ledger Summary Q2 2025',     timeAgo: '2 days ago',  folderId: 'financial', recent: true,  scheduled: false },
-  { id: 'r4',  name: 'Accounts Payable Aging Report',      timeAgo: '2 days ago',  folderId: 'financial', recent: true,  scheduled: true  },
-  { id: 'r5',  name: 'Revenue Recognition Report Q1 2025', timeAgo: '2 days ago',  folderId: 'financial', recent: false, scheduled: false },
-  { id: 'r6',  name: 'Cash Flow Forecast Q3 2025',         timeAgo: '2 days ago',  folderId: 'financial', recent: true,  scheduled: true  },
-  { id: 'r7',  name: 'Tax Compliance Report FY2025',       timeAgo: '2 days ago',  folderId: 'financial', recent: false, scheduled: false },
-  { id: 'r8',  name: 'Payroll Summary Report May 2025',    timeAgo: '2 days ago',  folderId: 'hr',        recent: true,  scheduled: true  },
-  { id: 'r9',  name: 'Fixed Assets Register FY2025',       timeAgo: '2 days ago',  folderId: 'infra',     recent: false, scheduled: false },
-  { id: 'r10', name: 'Inventory Valuation Report FY2025',  timeAgo: '2 days ago',  folderId: 'infra',     recent: true,  scheduled: true  },
-  { id: 'r11', name: 'Purchase Order Status Report',       timeAgo: '2 days ago',  folderId: 'public',    recent: false, scheduled: false },
-  { id: 'r12', name: 'Vendor Performance Report 2025',     timeAgo: '2 days ago',  folderId: 'public',    recent: true,  scheduled: false },
-  { id: 'r13', name: 'Cost Center Analysis FY2025',        timeAgo: '2 days ago',  folderId: 'public',    recent: false, scheduled: false },
-];
+// Library rows wrap real standard reports; recent/scheduled are derived flags.
+const libReports = standardReports.map((r, i) => ({
+  id: r.id,
+  name: r.name,
+  domain: r.domain,
+  meta: r.freshness,
+  recent: i % 2 === 0,
+  scheduled: i % 3 === 0,
+  report: r,
+}));
+
+function rowMenuAction(action, reportId) {
+  const lib = libReports.find(x => x.id === reportId);
+  if (!lib) return;
+  const report = lib.report;
+  if (action === 'open') {
+    showConfigPanel(report, {
+      onPreview: (params) => openReportPreview(report, params),
+      onOpenInChat: (params) => openStandardReportInChat(report.id, params),
+    });
+  } else if (action === 'preview') {
+    openReportPreview(report);
+  } else if (action === 'chat') {
+    openStandardReportInChat(report.id);
+  }
+}
 
 // ---------------------------------------------------------------------------
 // State
@@ -115,6 +135,18 @@ export function render(container) {
           </div>
         </div>
       </div>
+
+      <div class="rl-rowmenu" id="rl-rowmenu" role="menu" hidden>
+        <button class="rl-rowmenu-item" type="button" role="menuitem" data-rowaction="open">
+          <forge-icon name="description"></forge-icon><span>Open</span>
+        </button>
+        <button class="rl-rowmenu-item" type="button" role="menuitem" data-rowaction="preview">
+          <forge-icon name="play_arrow"></forge-icon><span>Preview</span>
+        </button>
+        <button class="rl-rowmenu-item" type="button" role="menuitem" data-rowaction="chat">
+          <forge-icon name="forum"></forge-icon><span>Open in chat</span>
+        </button>
+      </div>
     </div>
   `;
 
@@ -160,8 +192,8 @@ function renderList() {
   if (!list) return;
 
   let scope = viewMode === 'folders'
-    ? reports.filter(r => r.folderId === selectedFolderId)
-    : reports.slice();
+    ? libReports.filter(r => r.domain === selectedFolderId)
+    : libReports.slice();
 
   if (activeTab === 'recent') scope = scope.filter(r => r.recent);
   else if (activeTab === 'scheduled') scope = scope.filter(r => r.scheduled);
@@ -174,7 +206,7 @@ function renderList() {
       <div class="rl-row" data-id="${r.id}">
         <div class="rl-row-main">
           <span class="rl-row-name">${escapeHtml(r.name)}</span>
-          <span class="rl-row-time">${escapeHtml(r.timeAgo)}</span>
+          <span class="rl-row-time">${escapeHtml(r.meta)}</span>
         </div>
         <forge-icon-button class="rl-row-menu" aria-label="Report options">
           <forge-icon name="more_vert"></forge-icon>
@@ -336,6 +368,48 @@ function wireEvents(container) {
   const onInput = (e) => { searchTerm = e.target.value; renderList(); };
   searchInput.addEventListener('input', onInput);
   cleanupFns.push(() => searchInput.removeEventListener('input', onInput));
+
+  // Row ⋮ menu (Open / Preview / Open in chat)
+  const list = container.querySelector('#rl-list');
+  const rowMenu = container.querySelector('#rl-rowmenu');
+  let menuReportId = null;
+
+  const closeRowMenu = () => { rowMenu.hidden = true; menuReportId = null; };
+
+  const onListClick = (e) => {
+    const kebab = e.target.closest('.rl-row-menu');
+    if (!kebab) return;
+    e.stopPropagation();
+    const row = kebab.closest('.rl-row');
+    menuReportId = row?.dataset.id || null;
+    rowMenu.hidden = false; // show first so offsetWidth is measurable
+    const rect = kebab.getBoundingClientRect();
+    rowMenu.style.top = `${rect.bottom + 4}px`;
+    rowMenu.style.left = `${rect.right - rowMenu.offsetWidth}px`;
+  };
+  list.addEventListener('click', onListClick);
+  cleanupFns.push(() => list.removeEventListener('click', onListClick));
+
+  const onRowMenuClick = (e) => {
+    const item = e.target.closest('[data-rowaction]');
+    if (!item) return;
+    const action = item.dataset.rowaction;
+    const id = menuReportId;
+    closeRowMenu();
+    rowMenuAction(action, id);
+  };
+  rowMenu.addEventListener('click', onRowMenuClick);
+  cleanupFns.push(() => rowMenu.removeEventListener('click', onRowMenuClick));
+
+  const onDocClick = (e) => {
+    if (!rowMenu.hidden && !e.target.closest('#rl-rowmenu') && !e.target.closest('.rl-row-menu')) closeRowMenu();
+  };
+  document.addEventListener('click', onDocClick);
+  cleanupFns.push(() => document.removeEventListener('click', onDocClick));
+
+  const onRowMenuKey = (e) => { if (e.key === 'Escape' && !rowMenu.hidden) closeRowMenu(); };
+  document.addEventListener('keydown', onRowMenuKey);
+  cleanupFns.push(() => document.removeEventListener('keydown', onRowMenuKey));
 }
 
 function escapeHtml(str) {

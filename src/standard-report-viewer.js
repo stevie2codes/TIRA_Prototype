@@ -660,3 +660,40 @@ export function showConfigPanel(report, callbacks = {}) {
     if (callbacks.onOpenInChat) callbacks.onOpenInChat({ ...currentParams });
   });
 }
+
+/**
+ * Opens a standard report in a full-screen preview dialog (no chat).
+ * Shared by the homepage and the Report Library. `initialParams` (optional)
+ * seeds the viewer's parameter controls.
+ */
+export function openReportPreview(report, initialParams) {
+  let dialog = document.querySelector('#report-preview-dialog');
+  if (!dialog) {
+    dialog = document.createElement('forge-dialog');
+    dialog.id = 'report-preview-dialog';
+    dialog.className = 'chat-dialog';
+    dialog.setAttribute('fullscreen', '');
+    dialog.setAttribute('mode', 'modal');
+    dialog.setAttribute('persistent', '');
+    dialog.setAttribute('animation-type', 'fade');
+    document.body.appendChild(dialog);
+  }
+
+  dialog.innerHTML = `
+    <div class="report-preview__container">
+      ${buildStandardReportPanel(report)}
+    </div>
+  `;
+  dialog.open = true;
+
+  const viewerEl = dialog.querySelector('.sr-viewer');
+  const controls = wireStandardReportPanel(viewerEl, report, {
+    onClose: () => { dialog.open = false; },
+  });
+
+  if (initialParams) {
+    for (const [paramId, value] of Object.entries(initialParams)) {
+      controls.setParam(paramId, value);
+    }
+  }
+}
