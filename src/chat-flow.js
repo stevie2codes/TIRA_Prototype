@@ -146,6 +146,7 @@ export function openGuidedReportSetup() {
   const viewContainer = document.querySelector('#view-container');
   if (!viewContainer) return;
   document.getElementById('chat-dialog')?.remove();
+  if (_reactRoot) { _reactRoot.unmount(); _reactRoot = null; } // tear down a live designer first
   viewContainer.innerHTML = '';
 
   const dialog = document.createElement('div');
