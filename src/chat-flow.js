@@ -1,4 +1,5 @@
 import { suggestions } from './mock-data.js';
+import { createReportSetupStepper } from './report-setup-stepper.js';
 import { outputTemplates, getTemplateById } from './output-templates.js';
 import './chat-flow.css';
 
@@ -133,6 +134,77 @@ export function openChatFlow(index, options = {}) {
   // Start conversation sequence
   const messagesEl = dialog.querySelector('#chat-messages');
   runConversation(messagesEl, suggestion, dialog, options);
+}
+
+/**
+ * Create-with-AI entry: opens the in-body chat surface seeded with a prompt and
+ * runs the report setup stepper. When the user clicks "Open in report designer",
+ * builds handoff context from their choices and swaps the chat -> designer
+ * (no back-to-chat).
+ */
+export function openGuidedReportSetup() {
+  const viewContainer = document.querySelector('#view-container');
+  if (!viewContainer) return;
+  document.getElementById('chat-dialog')?.remove();
+  viewContainer.innerHTML = '';
+
+  const dialog = document.createElement('div');
+  dialog.id = 'chat-dialog';
+  dialog.className = 'chat-dialog chat-surface';
+  viewContainer.appendChild(dialog);
+
+  const title = 'New report';
+  dialog.dataset.chatTitle = title;
+  dialog.innerHTML = `
+    <div class="chat-dialog-content">
+      <div class="chat-header">${chatHeaderHTML(title)}</div>
+      <div class="chat-body">
+        <div class="chat-container">
+          <div class="chat-messages-spacer"></div>
+          <div class="chat-messages" id="chat-messages"></div>
+        </div>
+      </div>
+      <div class="chat-footer">${chatInputHTML()}</div>
+    </div>
+  `;
+
+  dialog.querySelector('#chat-close-btn')?.addEventListener('click', () => closeChat(dialog));
+
+  const messagesEl = dialog.querySelector('#chat-messages');
+
+  // Seed user message that kicks off the guided setup
+  const seed = document.createElement('forge-ai-user-message');
+  seed.textContent = 'Create a new report';
+  messagesEl.appendChild(seed);
+
+  const stepper = createReportSetupStepper({
+    messagesEl,
+    onOpenDesigner: (cfg) => {
+      const sample = suggestions[0]; // prototype seed data for a populated table
+      const handoff = {
+        reportTitle: cfg.title,
+        dataSource: sample?.dataSource || 'Permits dataset',
+        freshness: sample?.freshness || 'Updated daily',
+        columns: sample?.columns || [],
+        data: sample?.data || [],
+        query: cfg.subject,
+        outputFormat: 'print-table',
+      };
+      sessionStorage.setItem('tira-handoff-context', JSON.stringify(handoff));
+      mountReportDesigner(dialog, { backToChat: false });
+    },
+  });
+
+  // Wire the chat input's send to the stepper (free-text / hybrid)
+  const input = dialog.querySelector('.chat-input-field');
+  const sendBtn = dialog.querySelector('.chat-send-btn');
+  const submit = () => {
+    const v = input.value;
+    input.value = '';
+    stepper.submitText(v);
+  };
+  sendBtn?.addEventListener('click', submit);
+  input?.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
 }
 
 /**
