@@ -144,7 +144,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 20px 6px 20px 8px;
+  padding: 4px 6px 4px 8px;
   border-bottom: 1px solid #ececec;
   cursor: pointer;
   transition: background 0.12s ease;

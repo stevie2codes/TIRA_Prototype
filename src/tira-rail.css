@@ -111,9 +111,11 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  width: 100%;
+  width: calc(100% - 16px);
+  margin: 0 8px;
   padding: 10px 16px;
   border: none;
+  border-radius: 4px;
   background: transparent;
   cursor: pointer;
   font-family: 'Roboto', sans-serif;
@@ -128,8 +130,7 @@
 }
 
 .tira-rail__item:hover {
-  background: rgba(63, 81, 181, 0.08);
-  color: #3f51b5;
+  background: rgba(0, 0, 0, 0.04);
 }
 
 .tira-rail__item:focus-visible {
@@ -161,9 +162,6 @@
   transition: color 0.12s ease;
 }
 
-.tira-rail__item:hover .tira-rail__item-icon forge-icon {
-  color: #3f51b5;
-}
 
 .tira-rail__item-label {
   flex: 1;
@@ -187,8 +185,8 @@
 .tira-rail__create-wrap { position: relative; padding: 4px 8px 8px; }
 
 .tira-rail__create {
-  display: flex; align-items: center; gap: 10px; width: 100%;
-  padding: 8px 12px; border: 1px solid #e2e4f0; border-radius: 8px;
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  padding: 4px; border: 1px solid #e2e4f0; border-radius: 8px; justify-content: center;
   background: #fff; color: #3f51b5; cursor: pointer;
   font-family: 'Roboto', sans-serif; font-size: 13px; font-weight: 500;
   letter-spacing: 0.2px;
@@ -201,8 +199,11 @@
 }
 .tira-rail__create .tira-rail__item-icon forge-icon { color: #3f51b5; --forge-icon-font-size: 18px; }
 
-.tira-rail--collapsed .tira-rail__create { justify-content: center; padding: 8px 0; gap: 0; }
+.tira-rail--collapsed .tira-rail__create { justify-content: center; padding: 4px; gap: 0; }
 .tira-rail--collapsed .tira-rail__create .tira-rail__item-label { display: none; }
+
+/* Icon + label stay centered as a group */
+.tira-rail__create .tira-rail__item-label { flex: 0 0 auto; }
 
 .tira-rail__popover {
   position: fixed; z-index: 500;

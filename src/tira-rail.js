@@ -68,9 +68,9 @@ export function mountTiraRail(rootEl) {
       </div>
       <div class="tira-rail__body">
         <div class="tira-rail__create-wrap">
-          <button class="tira-rail__create" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Create a report" title="Create a report">
+          <button class="tira-rail__create" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Create new report" title="Create new report">
             <span class="tira-rail__item-icon"><forge-icon name="add"></forge-icon></span>
-            <span class="tira-rail__item-label">Create</span>
+            <span class="tira-rail__item-label">Create new report</span>
           </button>
           <div class="tira-rail__popover" role="menu" aria-label="Create a report" hidden>
             <div class="tira-rail__popover-title">Create a report</div>

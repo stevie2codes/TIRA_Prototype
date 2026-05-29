@@ -43,12 +43,12 @@ export function render(container) {
   container.innerHTML = `
     <div class="conv-page">
       <div class="conv-inner">
-        <h1 class="conv-title">Conversations</h1>
+        <h1 class="conv-title">Chats</h1>
 
         <div class="conv-toolbar">
           <div class="conv-search">
             <forge-icon name="search"></forge-icon>
-            <input type="text" class="conv-search-input" placeholder="Search conversations..." aria-label="Search conversations" />
+            <input type="text" class="conv-search-input" placeholder="Search chats..." aria-label="Search chats" />
           </div>
 
           <div class="conv-filter" role="group" aria-label="Filter conversations">
