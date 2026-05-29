@@ -1073,7 +1073,7 @@ async function mountDesignerReact(hostEl) {
   }
 }
 
-async function mountReportDesigner(dialog) {
+async function mountReportDesigner(dialog, { backToChat = true } = {}) {
   const content = dialog.querySelector('.chat-dialog-content');
 
   // Save current chat content so we can restore on back
@@ -1086,10 +1086,11 @@ async function mountReportDesigner(dialog) {
   content.innerHTML = `
     <div style="display:flex;flex-direction:column;height:100%;background:#f0f1f4;">
       <div style="display:flex;align-items:center;gap:12px;padding:16px;background:#fff;border-bottom:1px solid #e0e0e0;">
+        ${backToChat ? `
         <button type="button" id="designer-back-btn" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid #dadce0;border-radius:6px;background:#fff;cursor:pointer;font-size:13px;font-weight:500;color:rgba(0,0,0,0.7);">
           <forge-icon name="arrow_back"></forge-icon>
           Back to Chat
-        </button>
+        </button>` : ''}
         <span style="font-size:14px;font-weight:500;color:rgba(0,0,0,0.87);">Loading Report Designer...</span>
       </div>
       <div style="flex:1;display:flex;align-items:center;justify-content:center;">
@@ -1099,59 +1100,34 @@ async function mountReportDesigner(dialog) {
   `;
 
   // Wire back button immediately (works even while loading)
-  content.querySelector('#designer-back-btn').addEventListener('click', () => {
-    // Unmount React
-    if (_reactRoot) {
-      _reactRoot.unmount();
-      _reactRoot = null;
-    }
-    // Restore chat
+  content.querySelector('#designer-back-btn')?.addEventListener('click', () => {
+    if (_reactRoot) { _reactRoot.unmount(); _reactRoot = null; }
     content.className = chatClassName;
     content.innerHTML = chatSnapshot;
   });
 
   try {
-    // Patch customElements.define to skip already-registered elements
-    // (TIRA's main.js already registers Forge components; forge-react tries again)
-    const originalDefine = customElements.define.bind(customElements);
-    customElements.define = function(name, constructor, options) {
-      if (customElements.get(name)) return; // skip if already registered
-      originalDefine(name, constructor, options);
-    };
-
-    // Lazy-load the mount helper (keeps React in a single bundle — avoids duplicate instances)
-    const { mountDesigner } = await import('../report-canvas/src/mount.jsx');
-
-    // Restore original define
-    customElements.define = originalDefine;
-
-    // Build the designer container with a back-bar + React mount point
-    content.innerHTML = '';
     content.innerHTML = `
       <div style="display:flex;flex-direction:column;height:100%;">
+        ${backToChat ? `
         <div class="designer-nav-bar">
           <button type="button" id="designer-back-btn" class="designer-back-btn">
             <forge-icon name="arrow_back"></forge-icon>
             Back to Chat
           </button>
-        </div>
+        </div>` : ''}
         <div id="report-designer-root" style="flex:1;overflow:hidden;"></div>
       </div>
     `;
 
-    // Wire back button
-    content.querySelector('#designer-back-btn').addEventListener('click', () => {
-      if (_reactRoot) {
-        _reactRoot.unmount();
-        _reactRoot = null;
-      }
+    content.querySelector('#designer-back-btn')?.addEventListener('click', () => {
+      if (_reactRoot) { _reactRoot.unmount(); _reactRoot = null; }
       content.className = chatClassName;
       content.innerHTML = chatSnapshot;
     });
 
-    // Mount React app (returns the root for later unmounting)
     const mountPoint = content.querySelector('#report-designer-root');
-    _reactRoot = mountDesigner(mountPoint);
+    _reactRoot = await mountDesignerReact(mountPoint);
 
   } catch (err) {
     console.error('Failed to load Report Designer:', err);
