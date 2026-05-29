@@ -136,6 +136,42 @@ export function openChatFlow(index, options = {}) {
 }
 
 /**
+ * Opens the report designer directly in the body (no chat, no back-to-chat).
+ * Used by the rail's "Create from scratch" action. Clears any stale handoff
+ * context so the designer initializes to its empty/from-scratch state.
+ */
+export async function openReportDesigner() {
+  const viewContainer = document.querySelector('#view-container');
+  if (!viewContainer) return;
+
+  sessionStorage.removeItem('tira-handoff-context'); // ensure empty state
+
+  document.getElementById('chat-dialog')?.remove();
+  if (_reactRoot) { _reactRoot.unmount(); _reactRoot = null; }
+  viewContainer.innerHTML = '';
+
+  const surface = document.createElement('div');
+  surface.id = 'report-designer-surface';
+  surface.className = 'designer-surface';
+  surface.innerHTML = `
+    <div id="report-designer-root" style="height:100%;overflow:hidden;"></div>
+  `;
+  viewContainer.appendChild(surface);
+
+  const root = surface.querySelector('#report-designer-root');
+  try {
+    _reactRoot = await mountDesignerReact(root);
+  } catch (err) {
+    console.error('Failed to load Report Designer:', err);
+    surface.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:16px;">
+        <forge-icon name="error_outline" style="--forge-icon-font-size:48px;color:#e57373;"></forge-icon>
+        <span style="font-size:16px;color:rgba(0,0,0,0.6);">Failed to load Report Designer</span>
+      </div>`;
+  }
+}
+
+/**
  * Runs the timed conversation sequence.
  */
 function runConversation(container, suggestion, dialog, options = {}) {
@@ -1015,6 +1051,27 @@ function showHandoffNudge(container, suggestion) {
  * Lazy-loads React and the report-canvas App on first use.
  */
 let _reactRoot = null;
+
+/**
+ * Lazily loads and mounts the report-canvas React app into `hostEl`.
+ * Shared by the in-chat swap (mountReportDesigner) and the standalone
+ * from-scratch designer (openReportDesigner). Returns the React root.
+ */
+async function mountDesignerReact(hostEl) {
+  // Forge components are already registered by main.js; forge-react tries to
+  // re-register them, so skip any already-defined element during this import.
+  const originalDefine = customElements.define.bind(customElements);
+  customElements.define = function (name, ctor, options) {
+    if (customElements.get(name)) return;
+    originalDefine(name, ctor, options);
+  };
+  try {
+    const { mountDesigner } = await import('../report-canvas/src/mount.jsx');
+    return mountDesigner(hostEl);
+  } finally {
+    customElements.define = originalDefine;
+  }
+}
 
 async function mountReportDesigner(dialog) {
   const content = dialog.querySelector('.chat-dialog-content');

@@ -2951,3 +2951,10 @@ forge-ai-response-message::part(content) {
 .report-panel[data-template] .template-picker-btn forge-icon {
   color: var(--tpl-primary);
 }
+
+/* Standalone report designer surface (from-scratch / SPA mount) */
+.designer-surface {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
