@@ -194,6 +194,10 @@
   letter-spacing: 0.25px; transition: background 0.15s ease;
 }
 .tira-rail__create:hover { background: #3949ab; }
+.tira-rail__create:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.85);
+  outline-offset: -2px;
+}
 .tira-rail__create .tira-rail__item-icon forge-icon { color: #fff; }
 
 .tira-rail--collapsed .tira-rail__create { justify-content: center; padding: 10px 0; gap: 0; }

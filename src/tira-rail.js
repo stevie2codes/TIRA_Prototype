@@ -68,7 +68,7 @@ export function mountTiraRail(rootEl) {
       </div>
       <div class="tira-rail__body">
         <div class="tira-rail__create-wrap">
-          <button class="tira-rail__create" type="button" aria-haspopup="true" aria-expanded="false" title="Create a report">
+          <button class="tira-rail__create" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Create a report" title="Create a report">
             <span class="tira-rail__item-icon"><forge-icon name="add"></forge-icon></span>
             <span class="tira-rail__item-label">Create</span>
           </button>
@@ -147,6 +147,7 @@ export function mountTiraRail(rootEl) {
     if (!popover.hidden && !e.target.closest('.tira-rail__create-wrap')) closePopover();
   });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closePopover(); });
+  window.addEventListener('resize', () => { if (!popover.hidden) positionPopover(); });
 
   // Keep the active item in sync with the current view
   document.addEventListener('view-changed', (e) => {
