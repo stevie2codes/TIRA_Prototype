@@ -1,8 +1,8 @@
-// Forge components: ForgeAppBar, ForgeButtonToggleGroup, ForgeButtonToggle, ForgeIcon, ForgeIconButton, ForgeButton, ForgeAvatar, ForgeToast
+// Forge components: ForgeButtonToggleGroup, ForgeButtonToggle, ForgeIcon, ForgeIconButton, ForgeButton, ForgeToast
 import { useRef, useCallback, useState, useEffect } from 'react';
 import {
-  ForgeAppBar, ForgeIcon, ForgeIconButton, ForgeButton,
-  ForgeAvatar, ForgeButtonToggleGroup, ForgeButtonToggle, ForgeToast,
+  ForgeIcon, ForgeIconButton, ForgeButton,
+  ForgeButtonToggleGroup, ForgeButtonToggle, ForgeToast,
 } from '@tylertech/forge-react';
 import { useReport } from '../context/ReportContext.jsx';
 import { outputTemplates, getTemplateById } from '../../../src/output-templates.js';
@@ -44,7 +44,6 @@ function HandoffBanner({ context, onDismiss }) {
 export default function AppShell() {
   const { activeTab, setActiveTab, handoffContext, activeTemplateId, setActiveTemplateId, rightPanelTab, setRightPanelTab } = useReport();
   const saveToastRef = useRef(null);
-  const settingsToastRef = useRef(null);
   const [leftOpen, setLeftOpen] = useState(true);
   const [rightOpen, setRightOpen] = useState(true);
   const [showBanner, setShowBanner] = useState(!!handoffContext);
@@ -76,23 +75,8 @@ export default function AppShell() {
     }
   }, []);
 
-  const handleSettings = useCallback(() => {
-    if (settingsToastRef.current) {
-      settingsToastRef.current.open = true;
-    }
-  }, []);
-
   return (
     <div className="app-layout">
-      <ForgeAppBar title-text="Report Builder">
-        <div slot="end" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <ForgeIconButton on-click={handleSettings}>
-            <ForgeIcon name="settings" />
-          </ForgeIconButton>
-          <ForgeAvatar text="SW" />
-        </div>
-      </ForgeAppBar>
-
       {showBanner && (
         <HandoffBanner
           context={handoffContext}
@@ -230,9 +214,6 @@ export default function AppShell() {
 
       <ForgeToast ref={saveToastRef} placement="bottom">
         Report saved successfully
-      </ForgeToast>
-      <ForgeToast ref={settingsToastRef} placement="bottom">
-        Settings coming soon
       </ForgeToast>
     </div>
   );
