@@ -134,7 +134,7 @@ function buildHandoffWidgets(ctx) {
   // Chart widget bound to first dimension (xAxis) + first measure (yAxis)
   const firstDim = entry.inlineSchema.find(f => f.role === 'dimension');
   const firstMeasure = entry.inlineSchema.find(f => f.role === 'measure');
-  if (firstDim && firstMeasure) {
+  if (firstDim && firstMeasure && ctx.outputFormat !== 'print-table') {
     widgets.push({
       id: 'widget-handoff-chart',
       type: 'chart',
