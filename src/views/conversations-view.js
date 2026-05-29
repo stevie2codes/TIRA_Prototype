@@ -43,7 +43,7 @@ export function render(container) {
   container.innerHTML = `
     <div class="conv-page">
       <div class="conv-inner">
-        <h1 class="conv-title">Chats</h1>
+        <h1 class="conv-title forge-typography--heading5">Chats</h1>
 
         <div class="conv-toolbar">
           <div class="conv-search">

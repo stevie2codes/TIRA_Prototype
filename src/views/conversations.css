@@ -12,11 +12,9 @@
   padding: 28px 48px 48px;
 }
 
+/* size/weight come from forge-typography--heading5 */
 .conv-title {
-  font-size: 28px;
-  font-weight: 600;
   color: rgba(0, 0, 0, 0.87);
-  letter-spacing: 0.1px;
   margin: 4px 0 24px;
 }
 

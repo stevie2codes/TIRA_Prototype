@@ -74,7 +74,7 @@ export function render(container) {
   container.innerHTML = `
     <div class="rl-page">
       <div class="rl-inner">
-        <h1 class="rl-title">Report Library<span class="rl-crumb" id="rl-crumb" hidden> <span class="rl-crumb-sep">›</span> <span class="rl-crumb-name"></span></span></h1>
+        <h1 class="rl-title forge-typography--heading5">Report Library<span class="rl-crumb" id="rl-crumb" hidden> <span class="rl-crumb-sep">›</span> <span class="rl-crumb-name"></span></span></h1>
 
         <div class="rl-viewtoggle" role="group" aria-label="Library view">
           <button class="rl-viewtoggle-btn" type="button" data-view="folders">

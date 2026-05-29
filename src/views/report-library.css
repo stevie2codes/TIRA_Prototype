@@ -18,16 +18,14 @@
 .rl-toolbar[hidden],
 .rl-list[hidden] { display: none; }
 
+/* size/weight come from forge-typography--heading5 */
 .rl-title {
-  font-size: 30px;
-  font-weight: 600;
   color: rgba(0, 0, 0, 0.87);
-  letter-spacing: 0.1px;
   margin: 0 0 20px;
 }
 
 .rl-crumb {
-  font-size: 22px;
+  font-size: 16px;
   font-weight: 400;
   color: rgba(0, 0, 0, 0.45);
   letter-spacing: 0;
