@@ -1,0 +1,399 @@
+/* ── Report Library page ──────────────────────────────────────────────── */
+.rl-page {
+  height: 100%;
+  overflow-y: auto;
+  background: #fff;
+  font-family: 'Roboto', sans-serif;
+}
+
+.rl-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 28px 48px 48px;
+}
+
+/* The flex display rules below outrank the UA [hidden] rule, so restore it
+   explicitly for the containers we toggle (folders, toolbar, list). */
+.rl-folders[hidden],
+.rl-toolbar[hidden],
+.rl-list[hidden] { display: none; }
+
+.rl-title {
+  font-size: 30px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.87);
+  letter-spacing: 0.1px;
+  margin: 0 0 20px;
+}
+
+.rl-crumb {
+  font-size: 22px;
+  font-weight: 400;
+  color: rgba(0, 0, 0, 0.45);
+  letter-spacing: 0;
+}
+
+.rl-crumb-sep {
+  margin: 0 4px;
+  color: rgba(0, 0, 0, 0.35);
+}
+
+/* ── View toggle (Folders / All reports) ──────────────────────────────── */
+.rl-viewtoggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+}
+
+.rl-viewtoggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 12px;
+  border: none;
+  border-radius: 3px;
+  background: transparent;
+  cursor: pointer;
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.6);
+  letter-spacing: 0.2px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.rl-viewtoggle-btn forge-icon {
+  --forge-icon-font-size: 18px;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.rl-viewtoggle-btn:hover { color: rgba(0, 0, 0, 0.82); }
+
+.rl-viewtoggle-btn--active {
+  background: #e8eaf6;
+  color: #3f51b5;
+}
+
+.rl-viewtoggle-btn--active forge-icon { color: #3f51b5; }
+
+/* ── Folder cards ─────────────────────────────────────────────────────── */
+.rl-folders {
+  display: flex;
+  gap: 16px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+
+.rl-folder {
+  flex: 1;
+  min-width: 230px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border: 1px solid #e4e6ee;
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.rl-folder:hover {
+  border-color: #c5cae9;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05);
+}
+
+.rl-folder--selected {
+  border-color: #9fa8da;
+  background: #f5f6ff;
+}
+
+.rl-folder-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.rl-folder-icon forge-icon { --forge-icon-font-size: 24px; }
+
+.rl-folder-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.rl-folder-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.85);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rl-folder-count {
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+/* "New folder" card — hugs its content instead of stretching */
+.rl-folder--create {
+  flex: 0 0 auto;
+  min-width: auto;
+  border-style: dashed;
+  border-color: #c9ccd8;
+  background: #fafbff;
+}
+.rl-folder--create:hover {
+  border-color: #9fa8da;
+  background: #f5f6ff;
+  box-shadow: none;
+}
+.rl-folder-icon--create {
+  background: #eef0f5;
+  color: rgba(0, 0, 0, 0.45);
+}
+.rl-folder--create:hover .rl-folder-icon--create {
+  background: #e8eaf6;
+  color: #3f51b5;
+}
+.rl-folder--create .rl-folder-name { color: rgba(0, 0, 0, 0.7); }
+
+/* ── Create-folder modal ──────────────────────────────────────────────── */
+.rl-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: rl-fade 0.15s ease;
+}
+.rl-modal-overlay[hidden] { display: none; }
+
+@keyframes rl-fade { from { opacity: 0; } to { opacity: 1; } }
+
+.rl-modal {
+  width: 420px;
+  max-width: calc(100vw - 32px);
+  background: #fff;
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.24);
+  font-family: 'Roboto', sans-serif;
+}
+
+.rl-modal-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.87);
+  margin-bottom: 18px;
+}
+
+.rl-modal-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.5);
+  margin-bottom: 8px;
+}
+
+.rl-modal-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px 14px;
+  border: 1px solid #dadce0;
+  border-radius: 8px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 15px;
+  color: rgba(0, 0, 0, 0.87);
+  outline: none;
+  margin-bottom: 20px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.rl-modal-input:focus {
+  border-color: #3f51b5;
+  box-shadow: 0 0 0 3px rgba(63, 81, 181, 0.10);
+}
+
+.rl-color-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.rl-swatch {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.15s ease;
+}
+.rl-swatch forge-icon { --forge-icon-font-size: 20px; }
+.rl-swatch:hover { transform: translateY(-1px); }
+.rl-swatch--selected { box-shadow: 0 0 0 2px #fff, 0 0 0 4px #3f51b5; }
+
+.rl-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.rl-modal-btn {
+  padding: 9px 18px;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.rl-modal-btn--ghost { background: transparent; color: rgba(0, 0, 0, 0.6); }
+.rl-modal-btn--ghost:hover { background: rgba(0, 0, 0, 0.05); }
+.rl-modal-btn--primary { background: #3f51b5; color: #fff; }
+.rl-modal-btn--primary:hover { background: #3949ab; }
+
+/* ── Toolbar: tabs + search ───────────────────────────────────────────── */
+.rl-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-top: 28px;
+  border-bottom: 1px solid #ececec;
+}
+
+.rl-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.rl-tab {
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.55);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.rl-tab:hover { color: rgba(0, 0, 0, 0.8); }
+
+.rl-tab--active {
+  color: #3f51b5;
+  border-bottom-color: #3f51b5;
+}
+
+.rl-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 18px;
+  margin-bottom: 8px;
+  background: #fff;
+  border: 1px solid #dadce0;
+  border-radius: 24px;
+  min-width: 320px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.rl-search:focus-within {
+  border-color: #3f51b5;
+  box-shadow: 0 0 0 3px rgba(63, 81, 181, 0.08);
+}
+
+.rl-search forge-icon {
+  --forge-icon-font-size: 20px;
+  color: rgba(0, 0, 0, 0.45);
+  flex-shrink: 0;
+}
+
+.rl-search-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: 'Roboto', sans-serif;
+  font-size: 15px;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.rl-search-input::placeholder { color: rgba(0, 0, 0, 0.5); }
+
+/* ── Report list ──────────────────────────────────────────────────────── */
+.rl-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.rl-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 6px 16px 2px;
+  border-bottom: 1px solid #ececec;
+}
+
+.rl-row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.rl-row-name {
+  font-size: 16px;
+  font-weight: 400;
+  color: rgba(0, 0, 0, 0.85);
+  letter-spacing: 0.1px;
+}
+
+.rl-row-time {
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.rl-row-menu {
+  flex-shrink: 0;
+  --forge-icon-button-color: rgba(0, 0, 0, 0.5);
+}
+
+.rl-empty {
+  padding: 56px 0;
+  text-align: center;
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.4);
+}
+
+@media (max-width: 768px) {
+  .rl-inner { padding: 20px 20px 40px; }
+  .rl-toolbar { flex-wrap: wrap; gap: 12px; }
+  .rl-search { min-width: 0; flex-basis: 100%; }
+}

@@ -9,12 +9,12 @@
 
 import './tira-rail.css';
 import { navigateTo } from './router.js';
-import { openLibraryView, openReportDesigner, openGuidedReportSetup } from './chat-flow.js';
+import { openReportDesigner, openGuidedReportSetup } from './chat-flow.js';
 
 const STORAGE_KEY = 'tira-rail-expanded';
 
 // Maps the active view to the rail item that should be highlighted.
-const VIEW_TO_ACTION = { conversations: 'chats', tira: 'new-chat' };
+const VIEW_TO_ACTION = { conversations: 'chats', tira: 'new-chat', 'report-library': 'report-library' };
 
 let railEl = null;
 
@@ -116,7 +116,7 @@ export function mountTiraRail(rootEl) {
     switch (item.dataset.action) {
       case 'new-chat':       navigateTo('tira'); break;
       case 'chats':          navigateTo('conversations'); break;
-      case 'report-library': openLibraryView(); break;
+      case 'report-library': navigateTo('report-library'); break;
       default: break; // help — no destination yet
     }
   });

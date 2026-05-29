@@ -199,6 +199,7 @@ import { registerView, startRouter, navigateTo, getCurrentView } from './router.
 import * as tiraView from './views/tira-view.js';
 import * as hubView from './views/hub-view.js';
 import * as conversationsView from './views/conversations-view.js';
+import * as reportLibraryView from './views/report-library-view.js';
 
 // TIRA rail (persistent left sidebar)
 import { mountTiraRail, showTiraRail, hideTiraRail } from './tira-rail.js';
@@ -207,7 +208,7 @@ import { mountTiraRail, showTiraRail, hideTiraRail } from './tira-rail.js';
 import { initAppSwitcher } from './app-switcher.js';
 
 // Chat flow (for ?state= auto-triggers)
-import { openChatFlow, openLibraryView } from './chat-flow.js';
+import { openChatFlow } from './chat-flow.js';
 
 // ---------------------------------------------------------------------------
 // Init
@@ -217,6 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
   registerView('tira', tiraView);
   registerView('hub', hubView);
   registerView('conversations', conversationsView);
+  registerView('report-library', reportLibraryView);
 
   // Mount the persistent rail (hidden by default until first view-changed fires)
   const railRoot = document.querySelector('#tira-rail-root');
@@ -252,7 +254,7 @@ document.addEventListener('DOMContentLoaded', () => {
   } else if (autoState === 'chat' || autoState === 'report') {
     openChatFlow(0, { autoOpenReport: autoState === 'report' });
   } else if (autoState === 'library') {
-    openLibraryView();
+    navigateTo('report-library');
   } else if (autoState === 'designer') {
     openChatFlow(0, { autoOpenReport: false });
   } else if (autoState === 'standard-report') {

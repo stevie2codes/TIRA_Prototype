@@ -3,7 +3,8 @@
  * Extracted from index.html + main.js — renders the AI-prompt-forward reporting homepage.
  */
 
-import { openChatFlow, openLibraryView, openStandardReportInChat } from '../chat-flow.js';
+import { openChatFlow, openStandardReportInChat } from '../chat-flow.js';
+import { navigateTo } from '../router.js';
 import { showConfigPanel } from '../standard-report-viewer.js';
 import { getStandardReportById } from '../standard-reports.js';
 import {
@@ -327,7 +328,7 @@ function wireEvents(container) {
         case 'shared-reports':
         case 'scheduled-reports':
         case 'templates':
-          openLibraryView();
+          navigateTo('report-library');
           break;
       }
     };
