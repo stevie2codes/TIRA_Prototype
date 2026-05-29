@@ -187,33 +187,41 @@
 .tira-rail__create-wrap { position: relative; padding: 4px 8px 8px; }
 
 .tira-rail__create {
-  display: flex; align-items: center; gap: 14px; width: 100%;
-  padding: 10px 12px; border: none; border-radius: 8px;
-  background: #3f51b5; color: #fff; cursor: pointer;
-  font-family: 'Roboto', sans-serif; font-size: 14px; font-weight: 600;
-  letter-spacing: 0.25px; transition: background 0.15s ease;
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 8px 12px; border: 1px solid #e2e4f0; border-radius: 8px;
+  background: #fff; color: #3f51b5; cursor: pointer;
+  font-family: 'Roboto', sans-serif; font-size: 13px; font-weight: 500;
+  letter-spacing: 0.2px;
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
-.tira-rail__create:hover { background: #3949ab; }
+.tira-rail__create:hover { background: #f6f7fd; border-color: #c5cae9; }
 .tira-rail__create:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.85);
+  outline: 2px solid #3f51b5;
   outline-offset: -2px;
 }
-.tira-rail__create .tira-rail__item-icon forge-icon { color: #fff; }
+.tira-rail__create .tira-rail__item-icon forge-icon { color: #3f51b5; --forge-icon-font-size: 18px; }
 
-.tira-rail--collapsed .tira-rail__create { justify-content: center; padding: 10px 0; gap: 0; }
+.tira-rail--collapsed .tira-rail__create { justify-content: center; padding: 8px 0; gap: 0; }
 .tira-rail--collapsed .tira-rail__create .tira-rail__item-label { display: none; }
 
 .tira-rail__popover {
   position: fixed; z-index: 500;
-  min-width: 210px; background: #fff; border: 1px solid #e0e0e0;
-  border-radius: 10px; box-shadow: 0 8px 28px rgba(0,0,0,0.16); padding: 6px;
+  min-width: 256px; background: #fff; border: 1px solid #e0e0e0;
+  border-radius: 12px; box-shadow: 0 10px 32px rgba(0,0,0,0.16); padding: 6px;
+}
+.tira-rail__popover-title {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase;
+  color: rgba(0,0,0,0.4); padding: 8px 10px 6px;
 }
 .tira-rail__popover-item {
-  display: flex; align-items: center; gap: 12px; width: 100%;
-  padding: 10px 12px; border: none; background: transparent; border-radius: 6px;
+  display: flex; align-items: flex-start; gap: 12px; width: 100%;
+  padding: 9px 10px; border: none; background: transparent; border-radius: 8px;
   cursor: pointer; text-align: left; font-family: 'Roboto', sans-serif;
-  font-size: 14px; font-weight: 500; color: rgba(0,0,0,0.82);
 }
-.tira-rail__popover-item:hover { background: rgba(63,81,181,0.08); color: #3f51b5; }
-.tira-rail__popover-item forge-icon { --forge-icon-font-size: 20px; color: rgba(0,0,0,0.55); }
+.tira-rail__popover-item:hover { background: rgba(63,81,181,0.08); }
+.tira-rail__popover-item forge-icon { --forge-icon-font-size: 20px; color: rgba(0,0,0,0.5); margin-top: 1px; flex-shrink: 0; }
 .tira-rail__popover-item:hover forge-icon { color: #3f51b5; }
+.tira-rail__popover-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.tira-rail__popover-label { font-size: 14px; font-weight: 500; color: rgba(0,0,0,0.85); letter-spacing: 0.1px; }
+.tira-rail__popover-item:hover .tira-rail__popover-label { color: #3f51b5; }
+.tira-rail__popover-desc { font-size: 12px; color: rgba(0,0,0,0.5); line-height: 1.3; }

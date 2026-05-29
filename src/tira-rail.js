@@ -72,12 +72,21 @@ export function mountTiraRail(rootEl) {
             <span class="tira-rail__item-icon"><forge-icon name="add"></forge-icon></span>
             <span class="tira-rail__item-label">Create</span>
           </button>
-          <div class="tira-rail__popover" role="menu" hidden>
+          <div class="tira-rail__popover" role="menu" aria-label="Create a report" hidden>
+            <div class="tira-rail__popover-title">Create a report</div>
             <button class="tira-rail__popover-item" type="button" role="menuitem" data-create="scratch">
-              <forge-icon name="description"></forge-icon><span>Create from scratch</span>
+              <forge-icon name="description"></forge-icon>
+              <span class="tira-rail__popover-text">
+                <span class="tira-rail__popover-label">From scratch</span>
+                <span class="tira-rail__popover-desc">Open a blank report in the designer</span>
+              </span>
             </button>
             <button class="tira-rail__popover-item" type="button" role="menuitem" data-create="ai">
-              <forge-icon name="auto_awesome"></forge-icon><span>Create with AI</span>
+              <forge-icon name="auto_awesome"></forge-icon>
+              <span class="tira-rail__popover-text">
+                <span class="tira-rail__popover-label">With AI</span>
+                <span class="tira-rail__popover-desc">Answer a couple questions &amp; AI sets it up</span>
+              </span>
             </button>
           </div>
         </div>
