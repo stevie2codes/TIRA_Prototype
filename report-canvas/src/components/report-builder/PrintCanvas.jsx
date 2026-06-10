@@ -12,7 +12,6 @@ import KpiWidget from './widgets/KpiWidget.jsx';
 import TextWidget from './widgets/TextWidget.jsx';
 import ImageWidget from './widgets/ImageWidget.jsx';
 import DividerWidget from './widgets/DividerWidget.jsx';
-import SectionHeader from './widgets/SectionHeader.jsx';
 import ParameterStrip from './ParameterStrip.jsx';
 
 const WIDGET_MAP = {
@@ -22,7 +21,8 @@ const WIDGET_MAP = {
   text: TextWidget,
   image: ImageWidget,
   divider: DividerWidget,
-  'section-header': SectionHeader,
+  // Section Header merged into the rich text block.
+  'section-header': TextWidget,
 };
 
 function WidgetRenderer({ widget }) {

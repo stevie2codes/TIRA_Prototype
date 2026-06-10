@@ -20,7 +20,6 @@ const widgetTypes = {
     { type: 'text', icon: 'article', label: 'Rich Text Block', colSpan: 12, rowSpan: 1 },
     { type: 'image', icon: 'image', label: 'Image', colSpan: 6, rowSpan: 2 },
     { type: 'divider', icon: 'horizontal_rule', label: 'Divider', colSpan: 12, rowSpan: 1 },
-    { type: 'section-header', icon: 'title', label: 'Section Header', colSpan: 12, rowSpan: 1 },
   ],
 };
 

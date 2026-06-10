@@ -1,13 +1,13 @@
 export const demoWidgets = [
   {
     id: 'widget-header',
-    type: 'section-header',
+    type: 'text',
     title: 'FY2026 Budget vs. Actuals',
     gridColumn: 1,
     gridRow: 1,
     colSpan: 12,
     rowSpan: 1,
-    config: {},
+    config: { text: 'FY2026 Budget vs. Actuals', fontSize: 22, bold: true, color: '#111827' },
   },
   {
     id: 'widget-kpi-budget',

@@ -103,16 +103,17 @@ function buildHandoffWidgets(ctx) {
   const entry = buildHandoffSelectedSource(ctx);
   const sourceId = entry?.sourceId;
 
-  // Section header with report title
+  // Report title as a bold rich text block (formerly a section header)
+  const headerTitle = ctx.reportTitle || 'Report';
   widgets.push({
     id: 'widget-handoff-header',
-    type: 'section-header',
-    title: ctx.reportTitle || 'Report',
+    type: 'text',
+    title: headerTitle,
     gridColumn: 1,
     gridRow: 1,
     colSpan: 12,
     rowSpan: 1,
-    config: {},
+    config: { text: headerTitle, fontSize: 22, bold: true, color: '#111827' },
   });
 
   if (!sourceId || !entry) return widgets;

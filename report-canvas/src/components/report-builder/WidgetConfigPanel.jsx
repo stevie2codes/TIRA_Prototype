@@ -161,6 +161,8 @@ export default function WidgetConfigPanel() {
   const update = (updates) => updateWidget(widget.id, updates);
   const updateConfig = (configUpdates) => update({ config: { ...widget.config, ...configUpdates } });
   const showDataSource = DATA_WIDGET_TYPES.includes(widget.type);
+  // Section Header merged into the rich text block — treat both the same.
+  const isTextBlock = widget.type === 'text' || widget.type === 'section-header';
 
   return (
     <div className="config-panel">
@@ -228,19 +230,25 @@ export default function WidgetConfigPanel() {
       {/* Display Section */}
       <div className="config-section">
         <h3 className="config-section-title">Display</h3>
-        <ForgeTextField>
-          <label>Title</label>
-          <input
-            type="text"
-            value={widget.title}
-            onChange={(e) => update({ title: e.target.value })}
-          />
-        </ForgeTextField>
+        {!isTextBlock && (
+          <ForgeTextField>
+            <label>Title</label>
+            <input
+              type="text"
+              value={widget.title}
+              onChange={(e) => update({ title: e.target.value })}
+            />
+          </ForgeTextField>
+        )}
 
         <div className="config-row">
           <span className="config-label">Type</span>
           <span className="config-value">{widget.type}</span>
         </div>
+
+        {isTextBlock && (
+          <p className="config-hint">Format text directly in the block — select text to open the formatting menu. Resize by dragging the widget's corner.</p>
+        )}
 
         {/* Chart-specific config */}
         {widget.type === 'chart' && (
@@ -279,20 +287,10 @@ export default function WidgetConfigPanel() {
           </ForgeSelect>
         )}
 
-        {/* Text-specific config */}
-        {widget.type === 'text' && (
-          <ForgeTextField>
-            <label>Content</label>
-            <textarea
-              rows="4"
-              value={widget.config?.text || ''}
-              onChange={(e) => updateConfig({ text: e.target.value })}
-            />
-          </ForgeTextField>
-        )}
       </div>
 
-      {/* Layout Section */}
+      {/* Layout Section — hidden for text blocks (resize via canvas corners) */}
+      {!isTextBlock && (
       <div className="config-section">
         <h3 className="config-section-title">Layout</h3>
         <div className="config-slider-row">
@@ -326,6 +324,7 @@ export default function WidgetConfigPanel() {
           <span className="config-value">{widget.gridRow}</span>
         </div>
       </div>
+      )}
 
       {editColumnsOpen && widget.type === 'table' && (
         <EditColumnsModal widget={widget} onClose={() => setEditColumnsOpen(false)} />
