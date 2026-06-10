@@ -1,5 +1,10 @@
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
-import GridLayout from 'react-grid-layout';
+// Use the package's classic (1.x-compatible) API. The v2 default export has a
+// redesigned prop surface (gridConfig/dragConfig/dropConfig + onDropDragOver)
+// that silently ignores isDroppable/draggableHandle/resizeHandles/cols/etc.,
+// which broke external drops and handle-only dragging. The /legacy build keeps
+// the classic API this canvas is written against and is React-19-safe.
+import GridLayout from 'react-grid-layout/legacy';
 import { ForgeIcon } from '@tylertech/forge-react';
 import { useReport } from '../../context/ReportContext.jsx';
 import { getTemplateById } from '../../../../src/output-templates.js';
