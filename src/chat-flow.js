@@ -471,7 +471,6 @@ function buildQueryCard(suggestion) {
   const sourceLabel = datasets.length > 1
     ? `${datasets.length} datasets`
     : (datasets[0]?.name || suggestion.dataSource);
-  const sourceIcon = datasets.length > 1 ? 'apps' : 'database_outline';
   const hasAssumptions = t && t.assumptions && t.assumptions.length;
   let transparencyHtml = '';
   if (datasetsHtml || hasAssumptions) {
@@ -513,7 +512,7 @@ function buildQueryCard(suggestion) {
 
       <div class="qc-meta-row">
         <span class="qc-meta-item">
-          <forge-icon name="${sourceIcon}"></forge-icon>
+          <forge-icon name="database_outline"></forge-icon>
           ${sourceLabel}
         </span>
         <span class="qc-meta-dot"></span>
