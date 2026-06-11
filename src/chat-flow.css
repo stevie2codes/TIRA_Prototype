@@ -2269,16 +2269,16 @@ forge-ai-response-message::part(content) {
   background: #354499;
 }
 
-/* ===== Query Card (progressive disclosure response) ===== */
+/* ===== Query Card — Artifact Shell ===== */
 
-.query-card {
-  background: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 12px;
+forge-ai-artifact.query-card {
+  background-color: var(--forge-theme-surface, #fff);
+  width: 100%;
+  max-width: 100%;
+  margin-top: var(--forge-spacing-xsmall);
+  box-sizing: border-box;
   overflow: hidden;
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
   animation: qcSlideIn 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-  max-width: 720px;
 }
 
 @keyframes qcSlideIn {
@@ -2286,59 +2286,44 @@ forge-ai-response-message::part(content) {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Card header */
-.qc-header {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 16px 20px 12px;
-  background: linear-gradient(135deg, #f8f9ff 0%, #f0f1fa 100%);
-  border-bottom: 1px solid #ecedf5;
+/* Suppress nested artifact border inside data-table */
+forge-ai-artifact.query-card .qc-data-table {
+  border: none;
+  box-shadow: none;
+  overflow-x: auto;
+  max-width: 100%;
 }
 
-.qc-header-left {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  flex: 1;
+/* Title in artifact toolbar */
+forge-ai-artifact.query-card .qc-title {
+  font-weight: 600;
+  font-size: 16px;
+  color: rgba(0, 0, 0, 0.87);
 }
 
-.qc-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #3f51b5, #5c6bc0);
+/* Header actions (copy button) */
+forge-ai-artifact.query-card .qc-header-actions {
   display: flex;
   align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  margin-top: 1px;
 }
 
-.qc-icon forge-icon {
-  --forge-icon-font-size: 18px;
-  color: #fff;
+forge-ai-artifact.query-card .qc-header-actions forge-icon-button {
+  --forge-icon-button-color: rgba(0, 0, 0, 0.4);
 }
 
-.qc-header-text {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
+forge-ai-artifact.query-card .qc-header-actions forge-icon-button:hover {
+  --forge-icon-button-color: rgba(0, 0, 0, 0.7);
 }
 
-.qc-title {
-  font-family: 'Roboto', sans-serif;
-  font-weight: 600;
-  font-size: 15px;
-  color: rgba(0, 0, 0, 0.87);
-  line-height: 1.3;
-}
+/* ===== Metadata Row ===== */
 
 .qc-meta-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  padding: 0 0 12px 0;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.54);
   flex-wrap: wrap;
 }
 
@@ -2346,21 +2331,18 @@ forge-ai-response-message::part(content) {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-family: 'Roboto', sans-serif;
-  font-size: 12px;
-  color: rgba(0, 0, 0, 0.5);
 }
 
 .qc-meta-item forge-icon {
   --forge-icon-font-size: 14px;
-  color: rgba(0, 0, 0, 0.35);
+  color: rgba(0, 0, 0, 0.4);
 }
 
 .qc-meta-dot {
   width: 3px;
   height: 3px;
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.3);
   flex-shrink: 0;
 }
 
@@ -2378,354 +2360,401 @@ forge-ai-response-message::part(content) {
   flex-shrink: 0;
 }
 
-/* Summary text - positioned above card */
-.qc-summary {
-  padding: 0 0 16px 0;
-  font-family: 'Roboto', sans-serif;
-  font-size: 14px;
-  line-height: 1.6;
-  color: rgba(0, 0, 0, 0.8);
-  max-width: 800px;
-}
+/* ===== Tab Bar ===== */
 
-/* Section headers within card */
-.qc-section-header {
-  font-family: 'Roboto', sans-serif;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  color: rgba(0, 0, 0, 0.5);
-  padding: 16px 20px 8px;
-  border-top: 1px solid #f0f0f0;
-}
-
-/* First section header (Results Preview) - no top border */
-.qc-header + .qc-section-header {
-  border-top: none;
-  padding-top: 12px;
-}
-
-.qc-summary p {
-  margin: 0 0 10px 0;
-}
-
-.qc-summary p:last-child {
+.qc-tab-bar {
+  --forge-tab-bar-divider-color: rgba(0, 0, 0, 0.08);
   margin-bottom: 0;
 }
 
-.qc-summary ul {
-  margin: 6px 0 10px 0;
-  padding-left: 20px;
-}
+/* ===== Tab Panels ===== */
 
-.qc-summary li {
-  margin-bottom: 4px;
-}
-
-.qc-summary strong {
-  font-weight: 500;
-  color: rgba(0, 0, 0, 0.87);
-}
-
-/* Mini data preview table */
-.qc-data-preview {
-  margin: 0 20px 4px;
-  border: 1px solid #e8e8e8;
-  border-radius: 8px;
+.qc-tab-panels {
+  min-height: 80px;
   overflow: hidden;
-}
-
-.qc-mini-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-family: 'Roboto', sans-serif;
-  font-size: 12px;
-}
-
-.qc-mini-table thead {
-  background: #f5f6fa;
-}
-
-.qc-mini-table th {
-  padding: 8px 12px;
-  text-align: left;
-  font-weight: 600;
-  font-size: 11px;
-  letter-spacing: 0.3px;
-  color: rgba(0, 0, 0, 0.54);
-  text-transform: uppercase;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.qc-mini-table td {
-  padding: 7px 12px;
-  color: rgba(0, 0, 0, 0.75);
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.qc-mini-table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.qc-mini-table tbody tr:hover {
-  background: #fafbff;
-}
-
-.qc-preview-more {
-  padding: 8px 12px;
-  font-family: 'Roboto', sans-serif;
-  font-size: 12px;
-  color: rgba(0, 0, 0, 0.4);
-  background: #fafafa;
-  border-top: 1px solid #f0f0f0;
-}
-
-/* Disclosure sections */
-.qc-disclosures {
-  margin: 0 20px 0;
-  border: 1px solid #e8e8e8;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.qc-disclosure {
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.qc-disclosure:last-child {
-  border-bottom: none;
-}
-
-.qc-disclosure-toggle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 10px 14px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  font-family: 'Roboto', sans-serif;
-  font-size: 13px;
-  font-weight: 500;
-  color: rgba(0, 0, 0, 0.7);
-  text-align: left;
-  transition: background 0.15s ease;
-}
-
-.qc-disclosure-toggle:hover {
-  background: #f8f9ff;
-}
-
-.qc-disclosure.open .qc-disclosure-toggle {
-  background: #f5f6fa;
-  color: #3f51b5;
-}
-
-.qc-disclosure-toggle forge-icon {
-  --forge-icon-font-size: 16px;
-  color: rgba(0, 0, 0, 0.4);
-  flex-shrink: 0;
-}
-
-.qc-disclosure.open .qc-disclosure-toggle forge-icon {
-  color: #3f51b5;
-}
-
-.qc-disclosure-detail {
-  flex: 1;
-  text-align: right;
-  font-weight: 400;
-  font-size: 12px;
-  color: rgba(0, 0, 0, 0.38);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.qc-disclosure-arrow {
-  --forge-icon-font-size: 18px !important;
-  transition: transform 0.2s ease;
-  margin-left: -2px;
-}
-
-.qc-disclosure-body {
-  animation: qcDisclosureOpen 0.2s ease;
-}
-
-@keyframes qcDisclosureOpen {
-  from { opacity: 0; max-height: 0; }
-  to { opacity: 1; max-height: 500px; }
-}
-
-.qc-disclosure-content {
-  padding: 10px 14px 14px;
-  border-top: 1px solid #f0f0f0;
-}
-
-/* Info rows inside disclosures */
-.qc-info-row {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  padding: 4px 0;
-}
-
-.qc-info-label {
-  font-family: 'Roboto', sans-serif;
-  font-size: 12px;
-  font-weight: 500;
-  color: rgba(0, 0, 0, 0.5);
-  min-width: 100px;
-  flex-shrink: 0;
-}
-
-.qc-info-value {
-  font-family: 'Roboto', sans-serif;
-  font-size: 13px;
-  color: rgba(0, 0, 0, 0.8);
-}
-
-/* Card actions */
-.qc-actions {
-  padding: 12px 20px 16px;
-}
-
-.qc-actions .refinement-chips-row {
-  margin-top: 4px;
-  margin-bottom: 12px;
-}
-
-.qc-actions-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.qc-open-report-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 22px;
-  background: #3f51b5;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-family: 'Roboto', sans-serif;
-  font-size: 13px;
-  font-weight: 500;
-  letter-spacing: 0.25px;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 4px rgba(63, 81, 181, 0.25);
-}
-
-.qc-open-report-btn:hover {
-  background: #354499;
-  box-shadow: 0 2px 8px rgba(63, 81, 181, 0.3);
-  transform: translateY(-1px);
-}
-
-.qc-open-report-btn:active {
-  background: #2c3a7f;
-  transform: translateY(0);
-}
-
-.qc-open-report-btn forge-icon {
-  --forge-icon-font-size: 18px;
-  color: #fff;
-}
-
-.qc-secondary-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 9px 16px;
-  background: transparent;
-  color: rgba(0, 0, 0, 0.6);
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  cursor: pointer;
-  font-family: 'Roboto', sans-serif;
-  font-size: 13px;
-  font-weight: 500;
-  letter-spacing: 0.25px;
-  transition: all 0.15s ease;
-}
-
-.qc-secondary-btn:hover {
-  background: #f5f5f5;
-  border-color: #bdbdbd;
-}
-
-.qc-secondary-btn forge-icon {
-  --forge-icon-font-size: 16px;
-  color: rgba(0, 0, 0, 0.45);
-}
-
-/* Query card in split view — narrower */
-.split-chat-messages .query-card {
   max-width: 100%;
 }
 
-.split-chat-messages .qc-meta-row {
+.qc-tab-panel {
+  display: none;
+}
+
+.qc-tab-panel--active {
+  display: block;
+}
+
+/* ===== Data Preview Tab ===== */
+
+.qc-preview-more {
+  padding: 10px 16px;
+  font-size: 13px;
+  color: var(--forge-theme-primary, #3f51b5);
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.qc-preview-more:hover {
+  text-decoration: underline;
+}
+
+/* ===== SQL Query Tab ===== */
+
+.qc-sql-panel {
+  padding: 12px 0;
+}
+
+.qc-sql-code {
+  background: #f5f5f5;
+  border-radius: 6px;
+  padding: 12px 16px;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-x: auto;
+  margin: 0 0 12px 0;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.qc-sql-code code {
+  font-family: 'Roboto Mono', monospace;
+  white-space: pre;
+}
+
+.qc-sql-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ===== Transparency Tab (Consolidated) ===== */
+
+.qc-transparency-section {
+  display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
+  gap: 16px;
+  padding: 12px 0;
+}
+
+.qc-transparency-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.qc-transparency-group-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: rgba(0, 0, 0, 0.5);
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.qc-transparency-group-title forge-icon {
+  --forge-icon-font-size: 14px;
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.qc-info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: 13px;
+}
+
+.qc-info-label {
+  color: rgba(0, 0, 0, 0.5);
+  font-weight: 500;
+}
+
+.qc-info-value {
+  color: rgba(0, 0, 0, 0.87);
+  text-align: right;
+}
+
+.qc-assumptions-list {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.7);
+  line-height: 1.6;
+}
+
+/* ===== Data used (datasets + joins) ===== */
+.qc-ds-lede {
+  margin: 0 0 10px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.qc-ds-lede strong {
+  color: rgba(0, 0, 0, 0.87);
+  font-weight: 600;
+}
+
+.qc-ds-lede code {
+  font-family: 'Roboto Mono', ui-monospace, monospace;
+  font-size: 12px;
+  background: rgba(0, 0, 0, 0.05);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.qc-ds-card {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+
+.qc-ds-card:last-child {
+  margin-bottom: 0;
+}
+
+.qc-ds-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.qc-ds-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.qc-ds-pill {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+  background: rgba(0, 0, 0, 0.06);
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.qc-ds-pill--primary {
+  background: rgba(63, 81, 181, 0.1);
+  color: #3f51b5;
+}
+
+.qc-ds-meta {
+  margin: 4px 0 7px;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.55);
+  line-height: 1.5;
+}
+
+.qc-ds-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: #3f51b5;
+  text-decoration: none;
+}
+
+.qc-ds-link:hover {
+  text-decoration: underline;
+}
+
+.qc-ds-link forge-icon {
+  --forge-icon-font-size: 15px;
+}
+
+.qc-citation-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: 13px;
+}
+
+.qc-citation-label {
+  color: rgba(0, 0, 0, 0.87);
+  font-weight: 500;
+}
+
+.qc-citation-detail {
+  color: rgba(0, 0, 0, 0.5);
+  text-align: right;
+}
+
+/* ===== Actions Row ===== */
+
+.qc-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: var(--forge-spacing-small);
+}
+
+forge-button.qc-open-report-btn {
+  --forge-button-primary-color: var(--forge-theme-primary, #3f51b5);
+}
+
+/* ===== Summary (above card) ===== */
+
+.qc-summary {
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(0, 0, 0, 0.8);
+  margin-bottom: 12px;
+}
+
+.qc-summary p { margin: 0 0 8px; }
+.qc-summary p:last-child { margin-bottom: 0; }
+.qc-summary ul { margin: 8px 0; padding-left: 20px; }
+.qc-summary li { margin-bottom: 4px; }
+.qc-summary strong { color: rgba(0, 0, 0, 0.87); }
+
+/* ===== Report Match (between summary and card) ===== */
+
+.qc-report-match {
+  margin-bottom: 12px;
+}
+
+/* ===== Refinement Row (appended after query card in thread) ===== */
+
+.qc-refinement-row {
+  margin: var(--forge-spacing-small) 0;
+  max-width: 800px;
+}
+
+/* ===== Split View Overrides ===== */
+
+/* All content must respect parent width */
+.split-chat-messages .ai-response-content,
+.split-chat-messages .qc-summary,
+.split-chat-messages forge-ai-response-message {
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+}
+
+/* Artifact card must not exceed the panel */
+.split-chat-messages forge-ai-artifact.query-card {
+  max-width: 100%;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* Truncate the artifact title in the toolbar */
+.split-chat-messages forge-ai-artifact.query-card .qc-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+}
+
+/* Meta row wraps and scales down */
+.split-chat-messages .qc-meta-row {
+  flex-wrap: wrap;
+  font-size: 11px;
+  gap: 4px;
 }
 
 .split-chat-messages .qc-meta-dot {
   display: none;
 }
 
+/* Tabs: allow scrolling if needed, smaller text */
+.split-chat-messages .qc-tab-bar {
+  --forge-tab-bar-clustered-justify-content: flex-start;
+  overflow-x: auto;
+}
+
+.split-chat-messages .qc-tab-bar forge-tab {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* Tab panels must clip */
+.split-chat-messages .qc-tab-panels {
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* Data table scrolls horizontally */
+.split-chat-messages .qc-data-table {
+  overflow-x: auto;
+  min-width: 0;
+}
+
+/* SQL code block wraps */
+.split-chat-messages .qc-sql-code {
+  overflow-x: auto;
+  word-break: break-all;
+}
+
+/* Actions row wraps */
+.split-chat-messages .qc-actions {
+  flex-wrap: wrap;
+}
+
+.split-chat-messages .qc-actions .qc-open-report-btn {
+  font-size: 13px;
+}
+
+/* Refinement chips scroll if needed */
+.split-chat-messages .qc-refinement-row {
+  overflow-x: auto;
+  min-width: 0;
+}
+
+/* Transparency section wraps properly */
+.split-chat-messages .qc-transparency-section {
+  overflow: hidden;
+  word-wrap: break-word;
+}
+
+.split-chat-messages .qc-info-row {
+  flex-wrap: wrap;
+}
+
+/* Report opened badge wraps */
+.split-chat-messages .report-opened-badge {
+  font-size: 12px;
+}
+
 /* ===== Collapsed Query Card ===== */
 
-.query-card.qc-collapsed {
-  max-height: 44px;
+forge-ai-artifact.query-card.qc-collapsed {
+  max-height: 48px;
   overflow: hidden;
-  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
   opacity: 0.7;
-  border-color: #e8e8e8;
-  box-shadow: none;
+  transition: opacity 0.2s;
 }
 
-.query-card.qc-collapsed:hover {
-  opacity: 0.9;
-  border-color: #d0d0d0;
-}
-
-.query-card.qc-collapsed .qc-header,
-.query-card.qc-collapsed .qc-data-preview,
-.query-card.qc-collapsed .qc-disclosures,
-.query-card.qc-collapsed .qc-actions {
-  display: none;
+forge-ai-artifact.query-card.qc-collapsed:hover {
+  opacity: 1;
 }
 
 .qc-collapsed-bar {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 16px;
+  gap: 8px;
+  padding: 12px 16px;
   cursor: pointer;
-  transition: background 0.15s ease;
-  border-radius: 12px;
 }
 
-.qc-collapsed-bar:hover {
-  background: #f5f6fa;
-}
-
-.qc-collapsed-bar forge-icon:first-child {
-  --forge-icon-font-size: 16px;
-  color: #3f51b5;
+.qc-collapsed-accent {
+  width: 3px;
+  height: 20px;
+  border-radius: 2px;
+  background: var(--forge-theme-primary, #3f51b5);
   flex-shrink: 0;
 }
 
 .qc-collapsed-title {
-  font-family: 'Roboto', sans-serif;
+  font-weight: 600;
   font-size: 13px;
-  font-weight: 500;
   color: rgba(0, 0, 0, 0.7);
   white-space: nowrap;
   overflow: hidden;
@@ -2733,25 +2762,22 @@ forge-ai-response-message::part(content) {
 }
 
 .qc-collapsed-meta {
-  flex: 1;
-  font-family: 'Roboto', sans-serif;
-  font-size: 12px;
-  color: rgba(0, 0, 0, 0.35);
+  font-size: 11px;
+  color: rgba(0, 0, 0, 0.4);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-align: right;
+  margin-left: auto;
 }
 
 .qc-collapsed-expand {
-  --forge-icon-font-size: 18px !important;
+  --forge-icon-font-size: 18px;
   color: rgba(0, 0, 0, 0.3);
   flex-shrink: 0;
-  transition: transform 0.2s ease;
 }
 
 .qc-collapsed-bar:hover .qc-collapsed-expand {
-  color: #3f51b5;
+  color: var(--forge-theme-primary, #3f51b5);
 }
 
 /* ===== Output Template Picker ===== */

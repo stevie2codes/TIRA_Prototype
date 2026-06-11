@@ -21,6 +21,8 @@ import {
   defineTableComponent,
   defineToolbarComponent,
   defineChipComponent,
+  defineTabBarComponent,
+  defineTabComponent,
 } from '@tylertech/forge';
 
 // Tyler Icons
@@ -112,6 +114,8 @@ defineSplitViewPanelComponent();
 defineTableComponent();
 defineToolbarComponent();
 defineChipComponent();
+defineTabBarComponent();
+defineTabComponent();
 
 // Register icons
 IconRegistry.define([
@@ -191,6 +195,8 @@ import '@tylertech/forge-ai/ai-user-message';
 import '@tylertech/forge-ai/ai-response-message';
 import '@tylertech/forge-ai/ai-thinking-indicator';
 import '@tylertech/forge-ai/ai-chatbot';
+import '@tylertech/forge-ai/ai-artifact';
+import '@tylertech/forge-ai/tools';
 
 // Router
 import { registerView, startRouter, navigateTo, getCurrentView } from './router.js';

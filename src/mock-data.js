@@ -26,6 +26,10 @@ The table below shows the full monthly breakdown by district. I can also break t
     dataSource: 'Permits & Licensing DB',
     freshness: 'Updated 2 hours ago',
     reportTitle: 'Building Permits by Month',
+    datasets: [
+      { name: 'Permits', id: 'prm-48k2', role: 'primary', description: 'Issued building & construction permits', category: 'Permitting', lastUpdated: 'March 20, 2026 10:14 AM', url: '#' },
+      { name: 'District Boundaries', id: 'geo-9xqs', role: 'joined', joinKey: 'geo_zone_id', description: 'District & geo-zone reference map', category: 'Reference', lastUpdated: 'Jan 5, 2026 8:00 AM', url: '#' },
+    ],
     // Chat refinement chips — data-shaping only (§3.3)
     refinementChips: [
       'Filter by date range',
@@ -108,6 +112,10 @@ Below is the detailed breakdown by violation type and priority level.`,
     dataSource: 'Code Enforcement System',
     freshness: 'Updated 45 min ago',
     reportTitle: 'Code Violations Summary',
+    datasets: [
+      { name: 'Code Violations', id: 'cv-14k8', role: 'primary', description: 'Reported code enforcement violations', category: 'Code Enforcement', lastUpdated: 'March 20, 2026 9:35 AM', url: '#' },
+      { name: 'Enforcement Zones', id: 'ez-3m1p', role: 'joined', joinKey: 'zone_id', description: 'Enforcement zone definitions', category: 'Reference', lastUpdated: 'Feb 1, 2026 7:00 AM', url: '#' },
+    ],
     refinementChips: [
       'Filter by zone',
       'Show only high priority',
@@ -189,6 +197,11 @@ The detailed department-level comparison is shown below.`,
     dataSource: 'Financial Management System',
     freshness: 'Updated daily at 6:00 AM',
     reportTitle: 'Budget vs. Actuals — FY2025',
+    datasets: [
+      { name: 'Budgets', id: 'bud-fy25', role: 'primary', description: 'FY2025 budget allocations', category: 'Finance', lastUpdated: 'March 20, 2026 6:00 AM', url: '#' },
+      { name: 'Departments', id: 'dept-0021', role: 'joined', joinKey: 'department_id', description: 'Department master records', category: 'Reference', lastUpdated: 'Jan 2, 2026 6:00 AM', url: '#' },
+      { name: 'Expenditures', id: 'exp-2025', role: 'joined', joinKey: 'department_id', description: 'Aggregated actual spend', category: 'Finance', lastUpdated: 'March 20, 2026 6:00 AM', url: '#' },
+    ],
     refinementChips: [
       'Filter by department',
       'Show only over-pace',
@@ -269,6 +282,10 @@ The table below shows the detailed breakdown by arrest type and current status.`
     dataSource: 'Law Enforcement Records Management System',
     freshness: 'Updated 15 min ago',
     reportTitle: 'Arrests Summary — Last 30 Days',
+    datasets: [
+      { name: 'Arrests', id: 'arr-30d1', role: 'primary', description: 'Arrest records, last 30 days', category: 'Law Enforcement', lastUpdated: 'March 20, 2026 9:50 AM', url: '#' },
+      { name: 'Agency Codes', id: 'ori-cwk2', role: 'joined', joinKey: 'agency_ori', description: 'ORI agency crosswalk', category: 'Reference', lastUpdated: 'Dec 12, 2025 5:00 PM', url: '#' },
+    ],
     refinementChips: [
       'Filter by agency',
       'Show only juvenile arrests',
@@ -351,6 +368,11 @@ The table below breaks down case outcomes by incident type.`,
     dataSource: 'Law Enforcement Records Management System',
     freshness: 'Updated 20 min ago',
     reportTitle: 'Case Disposition Report — Q1 2026',
+    datasets: [
+      { name: 'Cases', id: 'cas-q126', role: 'primary', description: 'Criminal case records, Q1 2026', category: 'Law Enforcement', lastUpdated: 'March 20, 2026 9:40 AM', url: '#' },
+      { name: 'Incident Type Codes', id: 'inc-ucr1', role: 'joined', joinKey: 'incident_type_id', description: 'UCR/NIBRS incident definitions', category: 'Reference', lastUpdated: 'Nov 1, 2025 12:00 PM', url: '#' },
+      { name: 'Disposition Codes', id: 'dsp-def1', role: 'joined', joinKey: 'disposition_id', description: 'Case disposition definitions', category: 'Reference', lastUpdated: 'Nov 1, 2025 12:00 PM', url: '#' },
+    ],
     refinementChips: [
       'Filter by reporting district',
       'Show only open cases',
