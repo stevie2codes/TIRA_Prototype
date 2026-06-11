@@ -86,19 +86,14 @@ export function render(container) {
           </div>
 
           <div class="prompt-area">
-            <div class="prompt-input-row">
-              <input type="text" placeholder="Ask a question about your data..." />
-              <forge-icon-button aria-label="Send" id="tira-send-btn">
-                <forge-icon name="send"></forge-icon>
+            <!-- forge-ai design-system chat input (stacked variant): built-in
+                 auto-growing textarea + send button. The attachment action is
+                 slotted into actions-start (bottom-left of the prompt). -->
+            <forge-ai-prompt id="tira-prompt" placeholder="Ask a question about your data...">
+              <forge-icon-button slot="actions-start" aria-label="Add attachment">
+                <forge-icon name="add"></forge-icon>
               </forge-icon-button>
-            </div>
-            <div class="prompt-button-row">
-              <div class="prompt-actions">
-                <forge-icon-button aria-label="Add attachment">
-                  <forge-icon name="add"></forge-icon>
-                </forge-icon-button>
-              </div>
-            </div>
+            </forge-ai-prompt>
             <div class="disclaimer">AI can make mistakes. Always verify responses.</div>
           </div>
         </div>
@@ -284,24 +279,15 @@ function wireEvents(container) {
     cleanupFns.push(() => sideMenu.removeEventListener('click', sideMenuHandler));
   }
 
-  // Prompt input
-  const promptInput = container.querySelector('.prompt-input-row input');
-  const sendBtn = container.querySelector('#tira-send-btn');
-  if (promptInput) {
-    const keyHandler = (e) => {
-      if (e.key === 'Enter' && promptInput.value.trim()) {
-        openChatFlow(0);
-      }
+  // Prompt input — forge-ai-prompt fires forge-ai-prompt-send on Enter / send click
+  const prompt = container.querySelector('#tira-prompt');
+  if (prompt) {
+    const sendHandler = (e) => {
+      const value = (e.detail?.value || '').trim();
+      if (value) openChatFlow(0);
     };
-    promptInput.addEventListener('keydown', keyHandler);
-    cleanupFns.push(() => promptInput.removeEventListener('keydown', keyHandler));
-  }
-  if (sendBtn) {
-    const clickHandler = () => {
-      if (promptInput && promptInput.value.trim()) openChatFlow(0);
-    };
-    sendBtn.addEventListener('click', clickHandler);
-    cleanupFns.push(() => sendBtn.removeEventListener('click', clickHandler));
+    prompt.addEventListener('forge-ai-prompt-send', sendHandler);
+    cleanupFns.push(() => prompt.removeEventListener('forge-ai-prompt-send', sendHandler));
   }
 }
 

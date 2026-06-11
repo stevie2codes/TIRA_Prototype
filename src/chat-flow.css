@@ -361,51 +361,22 @@ forge-ai-response-message::part(content) {
   max-width: 800px;
   display: flex;
   flex-direction: column;
-  gap: 0;
-  border-radius: 8px;
-  min-width: 0;
-}
-
-.prompt-input-row {
-  display: flex;
-  align-items: center;
   gap: 8px;
-  padding: 10px 12px;
-  background: #fff;
-  border: 1px solid #e0e0e0;
-  border-bottom: none;
-  border-radius: 8px 8px 0 0;
   min-width: 0;
 }
 
-.prompt-input-row input {
-  flex: 1;
-  border: none;
-  outline: none;
-  font-family: 'Roboto', sans-serif;
-  font-size: 15px;
-  line-height: 20px;
-  letter-spacing: 0.25px;
-  color: rgba(0, 0, 0, 0.87);
-  padding: 4px 0;
-  background: transparent;
-  min-height: 20px;
-  min-width: 0;
+/* forge-ai-prompt owns its own chrome (card, textarea, send button); we only
+   ensure it fills the prompt area width. */
+.prompt-area forge-ai-prompt {
+  width: 100%;
+  display: block;
 }
 
-.prompt-input-row input::placeholder {
+.disclaimer {
+  font-size: 12px;
+  line-height: 16px;
   color: rgba(0, 0, 0, 0.6);
-}
-
-.prompt-actions-row {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  padding: 6px 6px 6px 10px;
-  background: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 0 0 8px 8px;
-  min-width: 0;
+  text-align: center;
 }
 
 /* AI response content styling */
@@ -700,52 +671,10 @@ forge-ai-response-message::part(content) {
   min-width: 0;
 }
 
-.split-chat-footer .prompt-area {
-  max-width: 100%;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-}
-
-.split-chat-footer .prompt-input-row {
-  padding: 8px 10px;
-  gap: 6px;
-}
-
-.split-chat-footer .prompt-input-row input {
-  font-size: 14px;
-  line-height: 18px;
-}
-
-.split-chat-footer .prompt-actions-row {
-  padding: 4px 4px 4px 8px;
-  gap: 0;
-}
-
-/* Ensure icon buttons are appropriately sized */
-.prompt-input-row forge-icon-button,
-.prompt-actions-row forge-icon-button {
-  flex-shrink: 0;
-}
-
-/* Make prompt area more compact in narrow split views */
-.split-chat-footer .prompt-area {
-  width: 100%;
-  min-width: 0;
-}
-
 /* Responsive adjustments for very narrow panels */
 @media (max-width: 400px) {
   .split-chat-footer {
     padding: 8px;
-  }
-
-  .split-chat-footer .prompt-input-row {
-    gap: 4px;
-    padding: 6px 8px;
-  }
-
-  .split-chat-footer .prompt-actions-row {
-    gap: 0;
-    padding: 4px;
   }
 }
 
@@ -1996,15 +1925,6 @@ forge-ai-response-message::part(content) {
 .designer-chat-input {
   padding: 12px;
   border-top: 1px solid #e0e0e0;
-}
-
-.prompt-input-row.compact {
-  padding: 6px 8px;
-  gap: 4px;
-}
-
-.prompt-input-row.compact input {
-  font-size: 13px;
 }
 
 /* ===== Saved Reports Library (§1.4) ===== */
