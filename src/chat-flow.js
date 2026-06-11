@@ -467,6 +467,11 @@ function buildQueryCard(suggestion) {
   // Build transparency content: "Data used" (datasets, incl. joins) + Assumptions
   const datasets = getQueryDatasets(suggestion);
   const datasetsHtml = buildDatasetsGroup(datasets);
+  // Join-aware source chip for the meta row: dataset name when one, count when joined.
+  const sourceLabel = datasets.length > 1
+    ? `${datasets.length} datasets`
+    : (datasets[0]?.name || suggestion.dataSource);
+  const sourceIcon = datasets.length > 1 ? 'apps' : 'database_outline';
   const hasAssumptions = t && t.assumptions && t.assumptions.length;
   let transparencyHtml = '';
   if (datasetsHtml || hasAssumptions) {
@@ -508,8 +513,8 @@ function buildQueryCard(suggestion) {
 
       <div class="qc-meta-row">
         <span class="qc-meta-item">
-          <forge-icon name="database_outline"></forge-icon>
-          ${suggestion.dataSource}
+          <forge-icon name="${sourceIcon}"></forge-icon>
+          ${sourceLabel}
         </span>
         <span class="qc-meta-dot"></span>
         <span class="qc-meta-item qc-freshness">
